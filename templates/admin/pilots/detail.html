@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block title %}{{ pilot.display_name }} - {{ app_settings.business_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a href="{{ url_for('pilots.list_pilots') }}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+        <strong class="fs-5">{{ pilot.display_name }}</strong>
+        <span class="badge avail-{{ pilot.availability_status }} ms-2">
+            {{ pilot.availability_status|replace('_', ' ')|title }}
+        </span>
+        {% if not pilot.is_active %}
+        <span class="badge bg-secondary ms-1">Inactive</span>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <form method="POST" action="{{ url_for('pilots.set_availability', pilot_id=pilot.id) }}" class="d-flex gap-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="status" class="form-select form-select-sm" style="width: auto;">
+                {% for s in ['available', 'on_mission', 'unavailable'] %}
+                <option value="{{ s }}" {{ 'selected' if pilot.availability_status == s }}>
+                    {{ s|replace('_', ' ')|title }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-primary">Set</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Profile -->
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-person-badge"></i> Profile</span>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#editProfile">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+            </div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Username:</strong> {{ pilot.username }}</p>
+                <p class="mb-1"><strong>Email:</strong> {{ pilot.email or '-' }}</p>
+                <p class="mb-1"><strong>Phone:</strong> {{ pilot.phone or '-' }}</p>
+                <p class="mb-1"><strong>Flying ID:</strong> {{ pilot.flying_id or '-' }}</p>
+                <p class="mb-1"><strong>Operator ID:</strong> {{ pilot.operator_id or '-' }}</p>
+                <p class="mb-1"><strong>Insurance:</strong> {{ pilot.insurance_provider or '-' }}
+                    {% if pilot.insurance_policy_no %} ({{ pilot.insurance_policy_no }}){% endif %}
+                </p>
+                {% if pilot.insurance_expiry %}
+                <p class="mb-1"><strong>Insurance Expiry:</strong> {{ pilot.insurance_expiry.strftime('%d %b %Y') }}</p>
+                {% endif %}
+                {% if pilot.pilot_bio %}
+                <p class="mb-0"><strong>Bio:</strong> {{ pilot.pilot_bio }}</p>
+                {% endif %}
+            </div>
+            <div class="collapse" id="editProfile">
+                <div class="card-body border-top">
+                    <form method="POST" action="{{ url_for('pilots.edit_pilot', pilot_id=pilot.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% include "admin/pilots/form.html" ignore missing %}
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="display_name" class="form-control form-control-sm"
+                                       placeholder="Display Name" value="{{ pilot.display_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="email" name="email" class="form-control form-control-sm"
+                                       placeholder="Email" value="{{ pilot.email or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="phone" class="form-control form-control-sm"
+                                       placeholder="Phone" value="{{ pilot.phone or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="flying_id" class="form-control form-control-sm"
+                                       placeholder="Flying ID" value="{{ pilot.flying_id or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="operator_id" class="form-control form-control-sm"
+                                       placeholder="Operator ID" value="{{ pilot.operator_id or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="insurance_provider" class="form-control form-control-sm"
+                                       placeholder="Insurance Provider" value="{{ pilot.insurance_provider or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="insurance_policy_no" class="form-control form-control-sm"
+                                       placeholder="Policy No" value="{{ pilot.insurance_policy_no or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="date" name="insurance_expiry" class="form-control form-control-sm"
+                                       value="{{ pilot.insurance_expiry.strftime('%Y-%m-%d') if pilot.insurance_expiry else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="password" name="password" class="form-control form-control-sm"
+                                       placeholder="New password (optional)">
+                            </div>
+                            <div class="col-12">
+                                <textarea name="pilot_bio" class="form-control form-control-sm" rows="2"
+                                          placeholder="Bio / notes">{{ pilot.pilot_bio or '' }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-save"></i> Save
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order History (placeholder for Phase 3) -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-clock-history"></i> Order History</div>
+            <div class="card-body text-muted small">No orders yet.</div>
+        </div>
+    </div>
+
+    <!-- Right: Certs, Equipment, Documents -->
+    <div class="col-lg-7">
+        <!-- Certifications -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-award"></i> Certifications</span>
+                <button class="btn btn-sm btn-outline-success" data-bs-toggle="collapse" data-bs-target="#addCert">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+            </div>
+            <div class="collapse" id="addCert">
+                <div class="card-body border-bottom">
+                    <form method="POST" action="{{ url_for('pilots.add_certification', pilot_id=pilot.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="cert_name" class="form-control form-control-sm"
+                                       placeholder="Certification Name *" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="issuing_body" class="form-control form-control-sm"
+                                       placeholder="Issuing Body">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="cert_number" class="form-control form-control-sm"
+                                       placeholder="Cert Number">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="date" name="issue_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="date" name="expiry_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-plus"></i> Add Certification
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Name</th><th>Issuer</th><th>Number</th><th>Expiry</th><th></th></tr></thead>
+                    <tbody>
+                        {% for cert in pilot.certifications %}
+                        <tr>
+                            <td>{{ cert.cert_name }}</td>
+                            <td>{{ cert.issuing_body or '-' }}</td>
+                            <td>{{ cert.cert_number or '-' }}</td>
+                            <td>{{ cert.expiry_date.strftime('%d %b %Y') if cert.expiry_date else '-' }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('pilots.delete_certification', pilot_id=pilot.id, cert_id=cert.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-muted text-center small">No certifications.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Equipment -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-drone"></i> Equipment</span>
+                <button class="btn btn-sm btn-outline-success" data-bs-toggle="collapse" data-bs-target="#addEquip">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+            </div>
+            <div class="collapse" id="addEquip">
+                <div class="card-body border-bottom">
+                    <form method="POST" action="{{ url_for('pilots.add_equipment', pilot_id=pilot.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="text" name="drone_model" class="form-control form-control-sm"
+                                       placeholder="Drone Model *" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="serial_number" class="form-control form-control-sm"
+                                       placeholder="Serial Number">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="registration_id" class="form-control form-control-sm"
+                                       placeholder="Registration ID">
+                            </div>
+                            <div class="col-md-8">
+                                <input type="text" name="notes" class="form-control form-control-sm"
+                                       placeholder="Notes">
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-sm btn-success w-100">
+                                    <i class="bi bi-plus"></i> Add Equipment
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Drone</th><th>Serial</th><th>Reg ID</th><th>Notes</th><th></th></tr></thead>
+                    <tbody>
+                        {% for eq in pilot.equipment %}
+                        <tr>
+                            <td>{{ eq.drone_model }}</td>
+                            <td>{{ eq.serial_number or '-' }}</td>
+                            <td>{{ eq.registration_id or '-' }}</td>
+                            <td>{{ eq.notes or '-' }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('pilots.delete_equipment', pilot_id=pilot.id, equip_id=eq.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-muted text-center small">No equipment.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-file-earmark"></i> Documents</span>
+                <button class="btn btn-sm btn-outline-success" data-bs-toggle="collapse" data-bs-target="#addDoc">
+                    <i class="bi bi-plus"></i> Upload
+                </button>
+            </div>
+            <div class="collapse" id="addDoc">
+                <div class="card-body border-bottom">
+                    <form method="POST" action="{{ url_for('pilots.upload_document', pilot_id=pilot.id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <select name="doc_type" class="form-select form-select-sm">
+                                    <option value="certificate">Certificate</option>
+                                    <option value="insurance">Insurance</option>
+                                    <option value="license">License</option>
+                                    <option value="other" selected>Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="label" class="form-control form-control-sm"
+                                       placeholder="Label">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="date" name="expiry_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-8">
+                                <input type="file" name="file" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-sm btn-success w-100">
+                                    <i class="bi bi-upload"></i> Upload
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Type</th><th>Label</th><th>File</th><th>Expiry</th><th></th></tr></thead>
+                    <tbody>
+                        {% for doc in pilot.documents %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ doc.doc_type }}</span></td>
+                            <td>{{ doc.label }}</td>
+                            <td>
+                                <a href="{{ url_for('pilots.download_document', pilot_id=pilot.id, doc_id=doc.id) }}">
+                                    {{ doc.original_filename }}
+                                </a>
+                                <small class="text-muted">({{ (doc.file_size / 1024)|round(1) }}KB)</small>
+                            </td>
+                            <td>{{ doc.expiry_date.strftime('%d %b %Y') if doc.expiry_date else '-' }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('pilots.delete_document', pilot_id=pilot.id, doc_id=doc.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-muted text-center small">No documents.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

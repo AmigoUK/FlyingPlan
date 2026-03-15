@@ -52,11 +52,13 @@ def create_app(config_class=None):
     from blueprints.public import public_bp
     from blueprints.admin import admin_bp
     from blueprints.settings import settings_bp
+    from blueprints.pilots import pilots_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(public_bp)
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(settings_bp, url_prefix="/admin/settings")
+    app.register_blueprint(pilots_bp, url_prefix="/admin/pilots")
 
     # Context processor — inject settings and lookup data into all templates
     from models.app_settings import AppSettings
@@ -92,6 +94,7 @@ def create_app(config_class=None):
         db.create_all()
         _run_migrations()
         _seed_admin()
+        _seed_pilot()
         _seed_lookup_tables()
 
     return app
@@ -159,6 +162,22 @@ def _seed_admin():
         )
         admin.set_password("admin123")
         db.session.add(admin)
+        db.session.commit()
+
+
+def _seed_pilot():
+    from models.user import User
+
+    if not User.query.filter_by(username="pilot1").first():
+        pilot = User(
+            username="pilot1",
+            display_name="Demo Pilot",
+            role="pilot",
+            flying_id="CAA-12345",
+            operator_id="REOC-6789",
+        )
+        pilot.set_password("pilot123")
+        db.session.add(pilot)
         db.session.commit()
 
 

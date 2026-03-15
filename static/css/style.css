@@ -115,6 +115,11 @@
     margin-bottom: 1rem;
 }
 
+/* Availability badges */
+.avail-available { background-color: #198754; color: #fff; }
+.avail-on_mission { background-color: #fd7e14; color: #fff; }
+.avail-unavailable { background-color: #dc3545; color: #fff; }
+
 /* Responsive map */
 @media (max-width: 768px) {
     #customer-map, #admin-map {

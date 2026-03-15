@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Pilots - {{ app_settings.business_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> Pilots</h2>
+    <a href="{{ url_for('pilots.create_pilot') }}" class="btn btn-primary">
+        <i class="bi bi-person-plus"></i> New Pilot
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Flying ID</th>
+                <th>Email</th>
+                <th>Availability</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pilot in pilots %}
+            <tr class="{{ 'table-secondary' if not pilot.is_active }}">
+                <td>
+                    <strong>{{ pilot.display_name }}</strong>
+                    <br><small class="text-muted">@{{ pilot.username }}</small>
+                </td>
+                <td>{{ pilot.flying_id or '-' }}</td>
+                <td>{{ pilot.email or '-' }}</td>
+                <td>
+                    <span class="badge avail-{{ pilot.availability_status }}">
+                        {{ pilot.availability_status|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td>
+                    {% if pilot.is_active %}
+                    <span class="badge bg-success">Active</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('pilots.detail', pilot_id=pilot.id) }}"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                    {% if current_user.has_role_at_least('admin') %}
+                    <form method="POST" action="{{ url_for('pilots.toggle_active', pilot_id=pilot.id) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if pilot.is_active else 'success' }}">
+                            <i class="bi bi-{{ 'pause' if pilot.is_active else 'play' }}"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">No pilots yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

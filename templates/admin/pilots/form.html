@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if pilot else 'New' }} Pilot - {{ app_settings.business_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('pilots.list_pilots') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Pilots
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-person-plus"></i> {{ 'Edit' if pilot else 'New' }} Pilot
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('pilots.edit_pilot', pilot_id=pilot.id) if pilot else url_for('pilots.create_pilot') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3">
+                        {% if not pilot %}
+                        <div class="col-md-6">
+                            <label class="form-label">Username <span class="text-danger">*</span></label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password <span class="text-danger">*</span></label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        {% else %}
+                        <div class="col-md-6">
+                            <label class="form-label">New Password <small class="text-muted">(leave blank to keep)</small></label>
+                            <input type="password" name="password" class="form-control">
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-6">
+                            <label class="form-label">Display Name <span class="text-danger">*</span></label>
+                            <input type="text" name="display_name" class="form-control"
+                                   value="{{ pilot.display_name if pilot else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control"
+                                   value="{{ pilot.email or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control"
+                                   value="{{ pilot.phone or '' }}">
+                        </div>
+
+                        <hr>
+                        <h6>Pilot Details</h6>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Flying ID</label>
+                            <input type="text" name="flying_id" class="form-control"
+                                   value="{{ pilot.flying_id or '' }}" placeholder="e.g. CAA-12345">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Operator ID</label>
+                            <input type="text" name="operator_id" class="form-control"
+                                   value="{{ pilot.operator_id or '' }}" placeholder="e.g. REOC-6789">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Insurance Provider</label>
+                            <input type="text" name="insurance_provider" class="form-control"
+                                   value="{{ pilot.insurance_provider or '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Policy Number</label>
+                            <input type="text" name="insurance_policy_no" class="form-control"
+                                   value="{{ pilot.insurance_policy_no or '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Insurance Expiry</label>
+                            <input type="date" name="insurance_expiry" class="form-control"
+                                   value="{{ pilot.insurance_expiry.strftime('%Y-%m-%d') if pilot and pilot.insurance_expiry else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Bio / Notes</label>
+                            <textarea name="pilot_bio" class="form-control" rows="3">{{ pilot.pilot_bio or '' if pilot else '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> {{ 'Update' if pilot else 'Create' }} Pilot
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
