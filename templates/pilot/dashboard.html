@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Pilot Dashboard - {{ app_settings.business_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-airplane"></i> My Orders</h2>
+    <span class="badge bg-secondary">{{ orders|length }} order{{ 's' if orders|length != 1 }}</span>
+</div>
+
+{% set active_orders = orders|selectattr('status', 'in', ['assigned', 'accepted', 'in_progress'])|list %}
+{% set pending_review = orders|selectattr('status', 'in', ['flight_complete', 'delivered'])|list %}
+{% set completed_orders = orders|selectattr('status', 'in', ['closed'])|list %}
+{% set declined_orders = orders|selectattr('status', 'in', ['declined'])|list %}
+
+{% if active_orders %}
+<h5 class="mb-3"><i class="bi bi-lightning"></i> Active</h5>
+<div class="row g-3 mb-4">
+    {% for order in active_orders %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <code>{{ order.flight_plan.reference }}</code>
+                    <span class="badge badge-{{ order.status }}">
+                        {{ order.status|replace('_', ' ')|title }}
+                    </span>
+                </div>
+                <p class="mb-1"><strong>{{ order.flight_plan.customer_name }}</strong></p>
+                <p class="mb-1 small text-muted">{{ order.flight_plan.job_type|replace('_', ' ')|title }}</p>
+                {% if order.scheduled_date %}
+                <p class="mb-1 small">
+                    <i class="bi bi-calendar"></i> {{ order.scheduled_date.strftime('%d %b %Y') }}
+                    {% if order.scheduled_time %} at {{ order.scheduled_time }}{% endif %}
+                </p>
+                {% endif %}
+                {% if order.flight_plan.location_address %}
+                <p class="mb-1 small"><i class="bi bi-geo-alt"></i> {{ order.flight_plan.location_address }}</p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('pilot.order_detail', order_id=order.id) }}"
+                   class="btn btn-sm btn-primary w-100">
+                    <i class="bi bi-eye"></i> View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if pending_review %}
+<h5 class="mb-3"><i class="bi bi-hourglass-split"></i> Pending Review</h5>
+<div class="row g-3 mb-4">
+    {% for order in pending_review %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <code>{{ order.flight_plan.reference }}</code>
+                    <span class="badge badge-{{ order.status }}">
+                        {{ order.status|replace('_', ' ')|title }}
+                    </span>
+                </div>
+                <p class="mb-1"><strong>{{ order.flight_plan.customer_name }}</strong></p>
+                <p class="mb-1 small text-muted">{{ order.flight_plan.job_type|replace('_', ' ')|title }}</p>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('pilot.order_detail', order_id=order.id) }}"
+                   class="btn btn-sm btn-outline-success w-100">
+                    <i class="bi bi-eye"></i> View
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if completed_orders %}
+<h5 class="mb-3"><i class="bi bi-check-circle"></i> Completed</h5>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-hover">
+        <thead class="table-light">
+            <tr><th>Reference</th><th>Customer</th><th>Type</th><th>Closed</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for order in completed_orders %}
+            <tr>
+                <td><code>{{ order.flight_plan.reference }}</code></td>
+                <td>{{ order.flight_plan.customer_name }}</td>
+                <td>{{ order.flight_plan.job_type|replace('_', ' ')|title }}</td>
+                <td>{{ order.closed_at.strftime('%d %b %Y') if order.closed_at else '-' }}</td>
+                <td>
+                    <a href="{{ url_for('pilot.order_detail', order_id=order.id) }}"
+                       class="btn btn-sm btn-outline-secondary">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if declined_orders %}
+<h5 class="mb-3 text-muted"><i class="bi bi-x-circle"></i> Declined</h5>
+<div class="table-responsive">
+    <table class="table table-sm text-muted">
+        <thead><tr><th>Reference</th><th>Customer</th><th>Reason</th></tr></thead>
+        <tbody>
+            {% for order in declined_orders %}
+            <tr>
+                <td><code>{{ order.flight_plan.reference }}</code></td>
+                <td>{{ order.flight_plan.customer_name }}</td>
+                <td>{{ order.decline_reason or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if not orders %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+    <p class="mt-2">No orders assigned to you yet.</p>
+</div>
+{% endif %}
+{% endblock %}

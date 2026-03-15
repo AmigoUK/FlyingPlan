@@ -15,7 +15,11 @@
 </head>
 <body>
     {% if current_user.is_authenticated %}
-    {% include "partials/_navbar.html" %}
+        {% if current_user.role == 'pilot' %}
+        {% include "partials/_pilot_navbar.html" %}
+        {% else %}
+        {% include "partials/_navbar.html" %}
+        {% endif %}
     {% endif %}
 
     <main class="container py-4">

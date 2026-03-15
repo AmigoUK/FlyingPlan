@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }} - {{ app_settings.business_name }}{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a href="{{ url_for('pilot.dashboard') }}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+        <strong class="fs-5">Order #{{ order.id }}</strong>
+        <span class="badge badge-{{ order.status }} ms-2">
+            {{ order.status|replace('_', ' ')|title }}
+        </span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Info & Actions -->
+    <div class="col-lg-5">
+        <!-- Actions -->
+        {% if order.status == 'assigned' %}
+        <div class="card mb-3 border-primary">
+            <div class="card-body">
+                <h6><i class="bi bi-bell"></i> Action Required</h6>
+                <p class="small mb-2">You've been assigned this order. Accept or decline?</p>
+                <div class="d-flex gap-2">
+                    <form method="POST" action="{{ url_for('pilot.accept_order', order_id=order.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-success"><i class="bi bi-check-lg"></i> Accept</button>
+                    </form>
+                    <button class="btn btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#declineForm">
+                        <i class="bi bi-x-lg"></i> Decline
+                    </button>
+                </div>
+                <div class="collapse mt-2" id="declineForm">
+                    <form method="POST" action="{{ url_for('pilot.decline_order', order_id=order.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <textarea name="reason" class="form-control form-control-sm mb-2"
+                                  placeholder="Reason for declining..." rows="2"></textarea>
+                        <button class="btn btn-sm btn-danger">Confirm Decline</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if allowed_next and order.status not in ['assigned', 'declined', 'closed'] %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6><i class="bi bi-arrow-right-circle"></i> Update Status</h6>
+                {% for next_status in allowed_next %}
+                <form method="POST" action="{{ url_for('pilot.update_status', order_id=order.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="status" value="{{ next_status }}">
+                    <button class="btn btn-sm btn-outline-primary me-1 mb-1">
+                        {{ next_status|replace('_', ' ')|title }}
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Flight Plan Info -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-person"></i> Customer</div>
+            <div class="card-body">
+                <p class="mb-1"><strong>{{ order.flight_plan.customer_name }}</strong></p>
+                {% if order.flight_plan.customer_email %}
+                <p class="mb-1"><a href="mailto:{{ order.flight_plan.customer_email }}">{{ order.flight_plan.customer_email }}</a></p>
+                {% endif %}
+                {% if order.flight_plan.customer_phone %}
+                <p class="mb-1"><a href="tel:{{ order.flight_plan.customer_phone }}">{{ order.flight_plan.customer_phone }}</a></p>
+                {% endif %}
+                {% if order.flight_plan.customer_company %}
+                <p class="mb-0 text-muted">{{ order.flight_plan.customer_company }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-clipboard-check"></i> Job Brief</div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Reference:</strong> <code>{{ order.flight_plan.reference }}</code></p>
+                <p class="mb-1"><strong>Type:</strong> {{ order.flight_plan.job_type|replace('_', ' ')|title }}</p>
+                {% if order.flight_plan.job_description %}
+                <p class="mb-1"><strong>Description:</strong> {{ order.flight_plan.job_description }}</p>
+                {% endif %}
+                {% if order.scheduled_date %}
+                <p class="mb-1"><strong>Scheduled:</strong> {{ order.scheduled_date.strftime('%d %b %Y') }}
+                    {% if order.scheduled_time %} at {{ order.scheduled_time }}{% endif %}
+                </p>
+                {% endif %}
+                {% if order.flight_plan.location_address %}
+                <p class="mb-1"><strong>Location:</strong> {{ order.flight_plan.location_address }}</p>
+                {% endif %}
+                {% if order.assignment_notes %}
+                <p class="mb-0"><strong>Assignment Notes:</strong> {{ order.assignment_notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-sliders"></i> Flight Preferences</div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Altitude:</strong>
+                    {% if order.flight_plan.altitude_preset == 'custom' %}
+                    Custom ({{ order.flight_plan.altitude_custom_m }}m)
+                    {% else %}
+                    {{ order.flight_plan.altitude_preset|title if order.flight_plan.altitude_preset else 'Not set' }}
+                    {% endif %}
+                </p>
+                <p class="mb-1"><strong>Camera:</strong> {{ order.flight_plan.camera_angle|replace('_', ' ')|title if order.flight_plan.camera_angle else 'Pilot Decides' }}</p>
+                <p class="mb-1"><strong>Resolution:</strong> {{ order.flight_plan.video_resolution or '4K' }}</p>
+                {% if order.flight_plan.special_requirements %}
+                <p class="mb-0"><strong>Special:</strong> {{ order.flight_plan.special_requirements }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pilot Notes -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-journal-text"></i> My Notes</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('pilot.save_notes', order_id=order.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <textarea name="pilot_notes" class="form-control form-control-sm" rows="3"
+                              placeholder="Your notes...">{{ order.pilot_notes or '' }}</textarea>
+                    <button type="submit" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="bi bi-save"></i> Save Notes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Map, Deliverables, Activity -->
+    <div class="col-lg-7">
+        <!-- Map -->
+        {% if order.flight_plan.location_lat and order.flight_plan.location_lng %}
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-map"></i> Location</div>
+            <div class="card-body p-0">
+                <div id="pilot-map" style="height: 300px; border-radius: 0 0 8px 8px;"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Deliverables -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-file-earmark-arrow-up"></i> Deliverables</span>
+                <button class="btn btn-sm btn-outline-success" data-bs-toggle="collapse" data-bs-target="#uploadDeliv">
+                    <i class="bi bi-upload"></i> Upload
+                </button>
+            </div>
+            <div class="collapse" id="uploadDeliv">
+                <div class="card-body border-bottom">
+                    <form method="POST" action="{{ url_for('pilot.upload_deliverable', order_id=order.id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="file" name="file" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="description" class="form-control form-control-sm"
+                                       placeholder="Description">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-sm btn-success w-100">Upload</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% if order.deliverables %}
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>File</th><th>Size</th><th>Date</th><th></th></tr></thead>
+                    <tbody>
+                        {% for d in order.deliverables %}
+                        <tr>
+                            <td>
+                                {{ d.original_filename }}
+                                {% if d.description %}
+                                <br><small class="text-muted">{{ d.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ (d.file_size / 1024)|round(1) }}KB</td>
+                            <td>{{ d.created_at.strftime('%d %b %H:%M') }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('pilot.delete_deliverable', order_id=order.id, d_id=d.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body text-muted small">No deliverables uploaded yet.</div>
+            {% endif %}
+        </div>
+
+        <!-- Activity Log -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-clock-history"></i> Activity Log</div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% for act in order.activity_log %}
+                <div class="d-flex mb-2">
+                    <div class="me-2">
+                        <i class="bi bi-circle-fill text-primary" style="font-size: 0.5rem;"></i>
+                    </div>
+                    <div>
+                        <strong class="small">{{ act.action|replace('_', ' ')|title }}</strong>
+                        {% if act.user %}
+                        <span class="small text-muted">by {{ act.user.display_name }}</span>
+                        {% endif %}
+                        {% if act.old_value and act.new_value %}
+                        <span class="small text-muted">
+                            {{ act.old_value|replace('_', ' ')|title }} &rarr; {{ act.new_value|replace('_', ' ')|title }}
+                        </span>
+                        {% elif act.new_value %}
+                        <span class="small text-muted">{{ act.new_value }}</span>
+                        {% endif %}
+                        {% if act.details %}
+                        <br><small class="text-muted">{{ act.details }}</small>
+                        {% endif %}
+                        <br><small class="text-muted">{{ act.created_at.strftime('%d %b %Y %H:%M') }}</small>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted small">No activity yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if order.flight_plan.location_lat and order.flight_plan.location_lng %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+    var lat = {{ order.flight_plan.location_lat }};
+    var lng = {{ order.flight_plan.location_lng }};
+    var map = L.map('pilot-map').setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    L.marker([lat, lng]).addTo(map);
+})();
+</script>
+{% endif %}
+{% endblock %}
