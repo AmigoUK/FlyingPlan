@@ -1,0 +1,53 @@
+<!-- Step 5: Review & Submit -->
+<div class="form-step" data-step="5">
+    <h4 class="mb-3"><i class="bi bi-check2-square"></i> Review & Submit</h4>
+
+    <div class="review-section">
+        <h6>Your Details</h6>
+        <p class="mb-1"><strong>Name:</strong> <span id="rev-name"></span></p>
+        <p class="mb-1"><strong>Email:</strong> <span id="rev-email"></span></p>
+        <p class="mb-1"><strong>Phone:</strong> <span id="rev-phone"></span></p>
+        <p class="mb-0"><strong>Company:</strong> <span id="rev-company"></span></p>
+    </div>
+
+    <div class="review-section">
+        <h6>Job Brief</h6>
+        <p class="mb-1"><strong>Type:</strong> <span id="rev-job-type"></span></p>
+        <p class="mb-1"><strong>Urgency:</strong> <span id="rev-urgency"></span></p>
+        <p class="mb-1"><strong>Description:</strong> <span id="rev-description"></span></p>
+        <p class="mb-1"><strong>Preferred Dates:</strong> <span id="rev-dates"></span></p>
+        <p class="mb-0"><strong>Time Window:</strong> <span id="rev-time"></span></p>
+    </div>
+
+    <div class="review-section">
+        <h6>Location</h6>
+        <p class="mb-1"><strong>Address:</strong> <span id="rev-address"></span></p>
+        <p class="mb-1"><strong>Coordinates:</strong> <span id="rev-coords"></span></p>
+        <div id="review-map" style="height: 200px; border-radius: 8px; border: 1px solid #dee2e6;" class="mb-2"></div>
+    </div>
+
+    <div class="review-section">
+        <h6>Flight Preferences</h6>
+        <p class="mb-1"><strong>Altitude:</strong> <span id="rev-altitude"></span></p>
+        <p class="mb-1"><strong>Camera Angle:</strong> <span id="rev-camera"></span></p>
+        <p class="mb-0"><strong>Resolution:</strong> <span id="rev-resolution"></span></p>
+    </div>
+
+    <div class="form-check mt-3 mb-3">
+        <input class="form-check-input" type="checkbox" id="consent_given" name="consent_given" value="1" required>
+        <label class="form-check-label" for="consent_given">
+            I confirm the information above is correct and I consent to drone flight operations
+            at the specified location. <span class="text-danger">*</span>
+        </label>
+        <div class="invalid-feedback">You must give consent to submit.</div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-outline-secondary btn-prev">
+            <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="submit" class="btn btn-success btn-lg" id="btn-submit">
+            <i class="bi bi-send"></i> Submit Flight Brief
+        </button>
+    </div>
+</div>

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ fp.reference }} - FlyingPlan{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+        <code class="fs-5">{{ fp.reference }}</code>
+        <span class="badge badge-{{ fp.status }} ms-2">{{ fp.status|replace('_', ' ')|title }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        <select id="status-select" class="form-select form-select-sm" style="width: auto;">
+            {% for s in ['new', 'in_review', 'route_planned', 'completed', 'cancelled'] %}
+            <option value="{{ s }}" {{ 'selected' if fp.status == s }}>
+                {{ s|replace('_', ' ')|title }}
+            </option>
+            {% endfor %}
+        </select>
+        <a href="{{ url_for('admin.export_kmz', plan_id=fp.id) }}"
+           class="btn btn-sm btn-success" id="btn-export">
+            <i class="bi bi-download"></i> Export KMZ
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Info -->
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-person"></i> Customer</div>
+            <div class="card-body">
+                <p class="mb-1"><strong>{{ fp.customer_name }}</strong></p>
+                <p class="mb-1"><a href="mailto:{{ fp.customer_email }}">{{ fp.customer_email }}</a></p>
+                {% if fp.customer_phone %}
+                <p class="mb-1"><a href="tel:{{ fp.customer_phone }}">{{ fp.customer_phone }}</a></p>
+                {% endif %}
+                {% if fp.customer_company %}
+                <p class="mb-0 text-muted">{{ fp.customer_company }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-clipboard-check"></i> Job Brief</div>
+            <div class="card-body">
+                <p class="mb-1">
+                    <strong>Type:</strong> {{ fp.job_type|replace('_', ' ')|title }}
+                    <span class="ms-2 urgency-{{ fp.urgency }}">{{ fp.urgency|title }}</span>
+                </p>
+                <p class="mb-1"><strong>Description:</strong></p>
+                <p class="mb-2">{{ fp.job_description or '-' }}</p>
+                <p class="mb-1"><strong>Preferred Dates:</strong> {{ fp.preferred_dates or 'Flexible' }}</p>
+                <p class="mb-1"><strong>Time:</strong> {{ fp.time_window or 'Flexible' }}</p>
+                {% if fp.special_requirements %}
+                <p class="mb-0"><strong>Special:</strong> {{ fp.special_requirements }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-sliders"></i> Flight Preferences</div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Altitude:</strong>
+                    {% if fp.altitude_preset == 'custom' %}
+                    Custom ({{ fp.altitude_custom_m }}m)
+                    {% else %}
+                    {{ fp.altitude_preset|title }}
+                    {% endif %}
+                </p>
+                <p class="mb-1"><strong>Camera:</strong> {{ fp.camera_angle|replace('_', ' ')|title if fp.camera_angle else 'Pilot Decides' }}</p>
+                <p class="mb-1"><strong>Resolution:</strong> {{ fp.video_resolution or '4K' }}</p>
+                <p class="mb-1"><strong>Photo:</strong> {{ fp.photo_mode|title if fp.photo_mode else 'Single' }}</p>
+                {% if fp.no_fly_notes %}
+                <p class="mb-1"><strong>No-Fly Notes:</strong> {{ fp.no_fly_notes }}</p>
+                {% endif %}
+                {% if fp.privacy_notes %}
+                <p class="mb-0"><strong>Privacy:</strong> {{ fp.privacy_notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Waypoint panel -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-signpost-2"></i> Waypoints</span>
+                <div>
+                    <button class="btn btn-sm btn-outline-danger" id="btn-clear-waypoints">
+                        <i class="bi bi-trash"></i> Clear
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="btn-save-waypoints">
+                        <i class="bi bi-save"></i> Save
+                    </button>
+                </div>
+            </div>
+            <div class="card-body waypoint-panel" id="waypoint-list">
+                <p class="text-muted small">Click on the map to add waypoints.</p>
+            </div>
+        </div>
+
+        <!-- Admin notes -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-journal-text"></i> Pilot Notes</div>
+            <div class="card-body">
+                <textarea class="form-control" id="admin-notes" rows="3"
+                          placeholder="Internal notes...">{{ fp.admin_notes or '' }}</textarea>
+                <button class="btn btn-sm btn-outline-primary mt-2" id="btn-save-notes">
+                    <i class="bi bi-save"></i> Save Notes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Map -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-map"></i> Flight Route Editor</span>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggle-satellite">
+                    <label class="form-check-label small" for="toggle-satellite">Satellite</label>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="admin-map"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data -->
+<input type="hidden" id="plan-id" value="{{ fp.id }}">
+<input type="hidden" id="plan-lat" value="{{ fp.location_lat }}">
+<input type="hidden" id="plan-lng" value="{{ fp.location_lng }}">
+<input type="hidden" id="plan-polygon" value="{{ fp.area_polygon or '' }}">
+<input type="hidden" id="plan-pois" value='{{ pois_json }}'>
+<input type="hidden" id="plan-waypoints" value='{{ waypoints_json }}'>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/map-admin.js') }}"></script>
+{% endblock %}

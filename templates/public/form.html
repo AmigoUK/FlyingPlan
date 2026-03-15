@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Drone Flight Brief - FlyingPlan{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h2 class="mb-2"><i class="bi bi-airplane"></i> Drone Flight Brief</h2>
+        <p class="text-muted mb-4">Fill out the details for your drone flight or inspection request.</p>
+
+        <!-- Progress -->
+        <div class="step-progress mb-4">
+            <div class="step active" data-step="1">Your Details</div>
+            <div class="step" data-step="2">Job Brief</div>
+            <div class="step" data-step="3">Location</div>
+            <div class="step" data-step="4">Flight Prefs</div>
+            <div class="step" data-step="5">Review</div>
+        </div>
+
+        <form id="flightPlanForm" method="POST" action="{{ url_for('public.submit') }}"
+              enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            {% include "partials/_step1_customer.html" %}
+            {% include "partials/_step2_brief.html" %}
+            {% include "partials/_step3_location.html" %}
+            {% include "partials/_step4_flight.html" %}
+            {% include "partials/_step5_review.html" %}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="{{ url_for('static', filename='js/map-customer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/form-wizard.js') }}"></script>
+{% endblock %}

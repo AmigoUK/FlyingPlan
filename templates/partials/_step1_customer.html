@@ -1,0 +1,42 @@
+<!-- Step 1: Customer Details -->
+<div class="form-step active" data-step="1">
+    <h4 class="mb-3"><i class="bi bi-person"></i> Your Details</h4>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label for="customer_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+            <div class="invalid-feedback">Please enter your name.</div>
+        </div>
+        <div class="col-md-6">
+            <label for="customer_email" class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+            <div class="invalid-feedback">Please enter a valid email.</div>
+        </div>
+        <div class="col-md-6">
+            <label for="customer_phone" class="form-label">Phone</label>
+            <input type="tel" class="form-control" id="customer_phone" name="customer_phone">
+        </div>
+        <div class="col-md-6">
+            <label for="customer_company" class="form-label">Company</label>
+            <input type="text" class="form-control" id="customer_company" name="customer_company">
+        </div>
+        <div class="col-12">
+            <label for="heard_about" class="form-label">How did you hear about us?</label>
+            <select class="form-select" id="heard_about" name="heard_about">
+                <option value="">-- Select --</option>
+                <option value="google">Google Search</option>
+                <option value="social_media">Social Media</option>
+                <option value="referral">Referral</option>
+                <option value="website">Website</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+        <button type="button" class="btn btn-primary btn-next">
+            Next: Job Brief <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>
+</div>

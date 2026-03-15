@@ -1,0 +1,123 @@
+/* FlyingPlan custom styles */
+
+/* Form wizard */
+.form-step { display: none; }
+.form-step.active { display: block; }
+
+.step-progress {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    counter-reset: step;
+}
+
+.step-progress .step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    padding-top: 30px;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.step-progress .step::before {
+    content: counter(step);
+    counter-increment: step;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #dee2e6;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8rem;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.step-progress .step.active::before {
+    background: #0d6efd;
+    color: #fff;
+}
+
+.step-progress .step.completed::before {
+    background: #198754;
+    color: #fff;
+    content: "\2713";
+}
+
+.step-progress .step::after {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: calc(50% + 20px);
+    right: calc(-50% + 20px);
+    height: 2px;
+    background: #dee2e6;
+}
+
+.step-progress .step:last-child::after {
+    display: none;
+}
+
+.step-progress .step.completed::after {
+    background: #198754;
+}
+
+/* Customer map */
+#customer-map, #admin-map {
+    height: 450px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+/* Status badges */
+.badge-new { background-color: #0d6efd; }
+.badge-in_review { background-color: #ffc107; color: #000; }
+.badge-route_planned { background-color: #6f42c1; }
+.badge-completed { background-color: #198754; }
+.badge-cancelled { background-color: #dc3545; }
+
+/* Waypoint sidebar */
+.waypoint-panel {
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+.waypoint-item {
+    border-left: 3px solid #0d6efd;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.85rem;
+}
+
+.waypoint-item.active {
+    border-left-color: #198754;
+    background: #e8f5e9;
+}
+
+/* Urgency colors */
+.urgency-low { color: #198754; }
+.urgency-normal { color: #0d6efd; }
+.urgency-high { color: #fd7e14; }
+.urgency-urgent { color: #dc3545; font-weight: 600; }
+
+/* Review summary */
+.review-section {
+    border-left: 3px solid #0d6efd;
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive map */
+@media (max-width: 768px) {
+    #customer-map, #admin-map {
+        height: 300px;
+    }
+}

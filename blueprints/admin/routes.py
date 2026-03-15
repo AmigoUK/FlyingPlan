@@ -1,0 +1,135 @@
+import json
+from flask import (
+    render_template, redirect, url_for, flash, request, jsonify, send_file
+)
+from flask_login import login_required
+from extensions import db
+from blueprints.admin import admin_bp
+from models.flight_plan import FlightPlan
+from models.waypoint import Waypoint
+
+
+@admin_bp.route("/")
+@login_required
+def dashboard():
+    status_filter = request.args.get("status", "")
+    job_type_filter = request.args.get("job_type", "")
+    search = request.args.get("q", "").strip()
+
+    query = FlightPlan.query
+
+    if status_filter:
+        query = query.filter(FlightPlan.status == status_filter)
+    if job_type_filter:
+        query = query.filter(FlightPlan.job_type == job_type_filter)
+    if search:
+        query = query.filter(
+            db.or_(
+                FlightPlan.customer_name.ilike(f"%{search}%"),
+                FlightPlan.reference.ilike(f"%{search}%"),
+                FlightPlan.customer_email.ilike(f"%{search}%"),
+                FlightPlan.customer_company.ilike(f"%{search}%"),
+            )
+        )
+
+    plans = query.order_by(FlightPlan.created_at.desc()).all()
+    return render_template(
+        "admin/dashboard.html",
+        plans=plans,
+        status_filter=status_filter,
+        job_type_filter=job_type_filter,
+        search=search,
+    )
+
+
+@admin_bp.route("/<int:plan_id>")
+@login_required
+def detail(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    waypoints_json = json.dumps([w.to_dict() for w in fp.waypoints])
+    pois_json = json.dumps(
+        [{"lat": p.lat, "lng": p.lng, "label": p.label} for p in fp.pois]
+    )
+    return render_template(
+        "admin/detail.html",
+        fp=fp,
+        waypoints_json=waypoints_json,
+        pois_json=pois_json,
+    )
+
+
+@admin_bp.route("/<int:plan_id>/waypoints", methods=["POST"])
+@login_required
+def save_waypoints(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    if not data or not isinstance(data, list):
+        return jsonify({"error": "Invalid data"}), 400
+
+    # Replace all existing waypoints
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for i, w in enumerate(data):
+        wp = Waypoint(
+            flight_plan_id=fp.id,
+            index=i,
+            lat=float(w["lat"]),
+            lng=float(w["lng"]),
+            altitude_m=float(w.get("altitude_m", 30.0)),
+            speed_ms=float(w.get("speed_ms", 5.0)),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=float(w.get("gimbal_pitch_deg", -90.0)),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            turn_damping_dist=float(w.get("turn_damping_dist", 0.0)),
+            hover_time_s=float(w.get("hover_time_s", 0.0)),
+            action_type=w.get("action_type") or None,
+            poi_lat=w.get("poi_lat"),
+            poi_lng=w.get("poi_lng"),
+        )
+        db.session.add(wp)
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+    return jsonify({"success": True, "count": len(data)})
+
+
+@admin_bp.route("/<int:plan_id>/status", methods=["POST"])
+@login_required
+def update_status(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    new_status = data.get("status", "")
+    if new_status in FlightPlan.STATUSES:
+        fp.status = new_status
+        db.session.commit()
+        return jsonify({"success": True, "status": new_status})
+    return jsonify({"error": "Invalid status"}), 400
+
+
+@admin_bp.route("/<int:plan_id>/notes", methods=["POST"])
+@login_required
+def save_notes(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    fp.admin_notes = data.get("notes", "")
+    db.session.commit()
+    return jsonify({"success": True})
+
+
+@admin_bp.route("/<int:plan_id>/export-kmz")
+@login_required
+def export_kmz(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        flash("No waypoints to export.", "warning")
+        return redirect(url_for("admin.detail", plan_id=plan_id))
+
+    from services.kmz_generator import generate_kmz
+    kmz_buffer = generate_kmz(fp)
+
+    return send_file(
+        kmz_buffer,
+        mimetype="application/vnd.google-earth.kmz",
+        as_attachment=True,
+        download_name=f"{fp.reference}.kmz",
+    )

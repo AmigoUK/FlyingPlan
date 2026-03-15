@@ -1,0 +1,64 @@
+<!-- Step 4: Flight Preferences -->
+<div class="form-step" data-step="4">
+    <h4 class="mb-3"><i class="bi bi-sliders"></i> Flight Preferences</h4>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Altitude</label>
+            <select class="form-select" id="altitude_preset" name="altitude_preset">
+                <option value="low">Low (15-30m) - Detail shots</option>
+                <option value="medium" selected>Medium (30-60m) - Standard</option>
+                <option value="high">High (60-120m) - Wide coverage</option>
+                <option value="custom">Custom</option>
+            </select>
+        </div>
+        <div class="col-md-6" id="custom-altitude-group" style="display: none;">
+            <label for="altitude_custom_m" class="form-label">Custom Altitude (meters)</label>
+            <input type="number" class="form-control" id="altitude_custom_m"
+                   name="altitude_custom_m" min="5" max="120" value="30">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Camera Angle</label>
+            <select class="form-select" name="camera_angle">
+                <option value="straight_down">Straight Down (90&deg;)</option>
+                <option value="45deg">45&deg; Angle</option>
+                <option value="horizontal">Horizontal (0&deg;)</option>
+                <option value="pilot_decides" selected>Pilot Decides</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Video Resolution</label>
+            <select class="form-select" name="video_resolution">
+                <option value="4k" selected>4K</option>
+                <option value="1080p">1080p</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Photo Mode</label>
+            <select class="form-select" name="photo_mode">
+                <option value="single" selected>Single Shot</option>
+                <option value="interval">Interval (Timelapse)</option>
+                <option value="panorama">Panorama</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label for="no_fly_notes" class="form-label">No-Fly Zone Notes</label>
+            <textarea class="form-control" id="no_fly_notes" name="no_fly_notes" rows="2"
+                      placeholder="Any nearby airports, restricted areas, or obstacles?"></textarea>
+        </div>
+        <div class="col-12">
+            <label for="privacy_notes" class="form-label">Privacy Considerations</label>
+            <textarea class="form-control" id="privacy_notes" name="privacy_notes" rows="2"
+                      placeholder="Neighbouring properties, people, or sensitive areas?"></textarea>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-outline-secondary btn-prev">
+            <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-primary btn-next">
+            Next: Review <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>
+</div>

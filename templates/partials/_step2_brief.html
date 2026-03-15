@@ -1,0 +1,67 @@
+<!-- Step 2: Job Brief -->
+<div class="form-step" data-step="2">
+    <h4 class="mb-3"><i class="bi bi-clipboard-check"></i> Job Brief</h4>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label for="job_type" class="form-label">Job Type <span class="text-danger">*</span></label>
+            <select class="form-select" id="job_type" name="job_type" required>
+                <option value="">-- Select --</option>
+                <option value="aerial_photo">Aerial Photography</option>
+                <option value="inspection">Inspection</option>
+                <option value="survey">Survey / Mapping</option>
+            </select>
+            <div class="invalid-feedback">Please select a job type.</div>
+        </div>
+        <div class="col-md-6">
+            <label for="urgency" class="form-label">Urgency</label>
+            <select class="form-select" id="urgency" name="urgency">
+                <option value="low">Low</option>
+                <option value="normal" selected>Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label for="job_description" class="form-label">
+                Job Description <span class="text-danger">*</span>
+            </label>
+            <textarea class="form-control" id="job_description" name="job_description"
+                      rows="4" required placeholder="Describe what you need..."></textarea>
+            <div class="invalid-feedback">Please describe the job.</div>
+        </div>
+        <div class="col-md-6">
+            <label for="preferred_dates" class="form-label">Preferred Dates</label>
+            <input type="text" class="form-control" id="preferred_dates" name="preferred_dates"
+                   placeholder="e.g. Next week, March 20-25">
+        </div>
+        <div class="col-md-6">
+            <label for="time_window" class="form-label">Time Window</label>
+            <select class="form-select" id="time_window" name="time_window">
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+                <option value="flexible" selected>Flexible</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <label for="special_requirements" class="form-label">Special Requirements</label>
+            <textarea class="form-control" id="special_requirements" name="special_requirements"
+                      rows="2" placeholder="Any special instructions or requirements..."></textarea>
+        </div>
+        <div class="col-12">
+            <label for="attachments" class="form-label">Reference Files</label>
+            <input type="file" class="form-control" id="attachments" name="attachments"
+                   multiple accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx">
+            <div class="form-text">Upload images, PDFs, or documents (max 32 MB total).</div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-outline-secondary btn-prev">
+            <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-primary btn-next">
+            Next: Location <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>
+</div>

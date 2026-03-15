@@ -1,0 +1,45 @@
+<!-- Step 3: Location -->
+<div class="form-step" data-step="3">
+    <h4 class="mb-3"><i class="bi bi-geo-alt"></i> Location</h4>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <label for="address-search" class="form-label">Search Address</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="address-search"
+                       placeholder="Type an address and press Enter...">
+                <button type="button" class="btn btn-outline-primary" id="btn-search-address">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+        </div>
+        <div class="col-12">
+            <div id="customer-map"></div>
+            <div class="form-text mt-1">
+                <i class="bi bi-pin-map"></i> <strong>Click</strong> to place pin |
+                <i class="bi bi-bounding-box"></i> Use draw tools for area |
+                <i class="bi bi-star"></i> Right-click to add POI
+            </div>
+        </div>
+        <div class="col-12">
+            <label for="location_address" class="form-label">Address</label>
+            <input type="text" class="form-control" id="location_address" name="location_address"
+                   placeholder="Will auto-fill from map or type manually">
+        </div>
+    </div>
+
+    <!-- Hidden map data fields -->
+    <input type="hidden" id="location_lat" name="location_lat">
+    <input type="hidden" id="location_lng" name="location_lng">
+    <input type="hidden" id="area_polygon" name="area_polygon">
+    <input type="hidden" id="pois_json" name="pois_json">
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-outline-secondary btn-prev">
+            <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-primary btn-next">
+            Next: Flight Prefs <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>
+</div>
