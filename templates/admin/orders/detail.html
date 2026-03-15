@@ -129,6 +129,65 @@
             </div>
         </div>
 
+        <!-- Risk Assessment Summary -->
+        {% if order.risk_assessment %}
+        {% set ra = order.risk_assessment %}
+        <div class="card mb-3 border-{{ 'danger' if ra.decision == 'abort' else 'success' }}">
+            <div class="card-header bg-{{ 'danger' if ra.decision == 'abort' else 'success' }} text-white">
+                <i class="bi bi-clipboard-check"></i> Pre-Flight Risk Assessment
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Risk Level:</strong>
+                            <span class="badge bg-{{ 'success' if ra.risk_level == 'low' else ('warning' if ra.risk_level == 'medium' else 'danger') }}">
+                                {{ ra.risk_level|title }}
+                            </span>
+                        </p>
+                        <p class="mb-1"><strong>Decision:</strong>
+                            <span class="badge bg-{{ 'danger' if ra.decision == 'abort' else 'success' }}">
+                                {{ ra.decision|replace('_', ' ')|title }}
+                            </span>
+                        </p>
+                        <p class="mb-1"><strong>Pilot:</strong> {{ ra.pilot.display_name }}</p>
+                        <p class="mb-1"><strong>Completed:</strong> {{ ra.created_at.strftime('%d %b %Y %H:%M UTC') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>All 28 checks:</strong>
+                            <span class="badge bg-success">Confirmed</span>
+                        </p>
+                        {% if ra.gps_latitude and ra.gps_longitude %}
+                        <p class="mb-1"><strong>GPS Location:</strong> {{ "%.6f"|format(ra.gps_latitude) }}, {{ "%.6f"|format(ra.gps_longitude) }}</p>
+                        {% endif %}
+                        {% if ra.mitigation_notes %}
+                        <p class="mb-1"><strong>Mitigations:</strong> {{ ra.mitigation_notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <details class="mt-2">
+                    <summary class="small text-muted" style="cursor: pointer;">View weather &amp; equipment data</summary>
+                    <div class="row mt-2 small">
+                        {% if ra.weather_wind_speed is not none %}
+                        <div class="col-md-4 mb-1"><strong>Wind:</strong> {{ ra.weather_wind_speed }} km/h {{ ra.weather_wind_direction or '' }}</div>
+                        {% endif %}
+                        {% if ra.weather_visibility is not none %}
+                        <div class="col-md-4 mb-1"><strong>Visibility:</strong> {{ ra.weather_visibility }} km</div>
+                        {% endif %}
+                        {% if ra.weather_temperature is not none %}
+                        <div class="col-md-4 mb-1"><strong>Temp:</strong> {{ ra.weather_temperature }}&deg;C</div>
+                        {% endif %}
+                        {% if ra.equip_battery_level is not none %}
+                        <div class="col-md-4 mb-1"><strong>Battery:</strong> {{ ra.equip_battery_level }}%</div>
+                        {% endif %}
+                        {% if ra.airspace_planned_altitude is not none %}
+                        <div class="col-md-4 mb-1"><strong>Altitude:</strong> {{ ra.airspace_planned_altitude }}m</div>
+                        {% endif %}
+                    </div>
+                </details>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Admin Notes -->
         <div class="card mb-3">
             <div class="card-header"><i class="bi bi-journal-text"></i> Admin Notes</div>

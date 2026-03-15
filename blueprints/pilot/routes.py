@@ -15,6 +15,7 @@ from extensions import db
 from models.order import Order
 from models.order_activity import OrderActivity
 from models.order_deliverable import OrderDeliverable
+from models.risk_assessment import RiskAssessment
 from models.pilot_certification import PilotCertification
 from models.pilot_equipment import PilotEquipment
 from models.pilot_document import PilotDocument
@@ -172,6 +173,10 @@ def update_status(order_id):
         flash("Invalid status transition.", "danger")
         return redirect(url_for("pilot.order_detail", order_id=order.id))
 
+    if new_status == "in_progress" and not order.risk_assessment_completed:
+        flash("You must complete the pre-flight risk assessment before starting the flight.", "danger")
+        return redirect(url_for("pilot.order_detail", order_id=order.id))
+
     old_status = order.status
     order.status = new_status
     now = datetime.now(timezone.utc)
@@ -252,6 +257,145 @@ def delete_deliverable(order_id, d_id):
     db.session.commit()
     flash("Deliverable removed.", "success")
     return redirect(url_for("pilot.order_detail", order_id=order.id))
+
+
+# ── Risk Assessment ─────────────────────────────────────────────
+
+@pilot_bp.route("/orders/<int:order_id>/risk-assessment", methods=["GET", "POST"])
+@role_required("pilot")
+def risk_assessment(order_id):
+    order = _get_pilot_order(order_id)
+
+    # Only allow for accepted orders
+    if order.status != "accepted":
+        flash("Risk assessment is only available for accepted orders.", "warning")
+        return redirect(url_for("pilot.order_detail", order_id=order.id))
+
+    # If already completed, show read-only view
+    existing = RiskAssessment.query.filter_by(order_id=order.id).first()
+    if existing:
+        return render_template(
+            "pilot/risk_assessment.html", order=order, assessment=existing, readonly=True
+        )
+
+    if request.method == "POST":
+        # Collect all 28 boolean checks
+        missing = []
+        for field in RiskAssessment.CHECK_FIELDS:
+            if not request.form.get(field):
+                missing.append(field)
+
+        if missing:
+            flash(f"All {len(RiskAssessment.CHECK_FIELDS)} safety checks must be confirmed. {len(missing)} remaining.", "danger")
+            return render_template(
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+            )
+
+        # Validate decision fields
+        risk_level = request.form.get("risk_level", "")
+        decision = request.form.get("decision", "")
+        pilot_declaration = request.form.get("pilot_declaration")
+
+        if risk_level not in RiskAssessment.RISK_LEVELS:
+            flash("Please select a risk level.", "danger")
+            return render_template(
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+            )
+
+        if decision not in RiskAssessment.DECISIONS:
+            flash("Please select a decision.", "danger")
+            return render_template(
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+            )
+
+        if not pilot_declaration:
+            flash("You must confirm the pilot declaration.", "danger")
+            return render_template(
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+            )
+
+        # Mitigations required if proceeding with mitigations
+        mitigation_notes = request.form.get("mitigation_notes", "").strip()
+        if decision == "proceed_with_mitigations" and not mitigation_notes:
+            flash("Mitigation notes are required when proceeding with mitigations.", "danger")
+            return render_template(
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+            )
+
+        # Build assessment record
+        ra = RiskAssessment(
+            order_id=order.id,
+            pilot_id=current_user.id,
+            risk_level=risk_level,
+            decision=decision,
+            mitigation_notes=mitigation_notes or None,
+            pilot_declaration=True,
+        )
+
+        # Set all boolean checks
+        for field in RiskAssessment.CHECK_FIELDS:
+            setattr(ra, field, True)
+
+        # Numeric/text data inputs
+        try:
+            ra.airspace_planned_altitude = float(request.form.get("airspace_planned_altitude") or 0)
+        except (ValueError, TypeError):
+            ra.airspace_planned_altitude = None
+
+        try:
+            ra.weather_wind_speed = float(request.form.get("weather_wind_speed") or 0)
+        except (ValueError, TypeError):
+            ra.weather_wind_speed = None
+
+        ra.weather_wind_direction = request.form.get("weather_wind_direction", "").strip() or None
+
+        try:
+            ra.weather_visibility = float(request.form.get("weather_visibility") or 0)
+        except (ValueError, TypeError):
+            ra.weather_visibility = None
+
+        ra.weather_precipitation = request.form.get("weather_precipitation", "").strip() or None
+
+        try:
+            ra.weather_temperature = float(request.form.get("weather_temperature") or 0)
+        except (ValueError, TypeError):
+            ra.weather_temperature = None
+
+        try:
+            ra.equip_battery_level = int(request.form.get("equip_battery_level") or 0)
+        except (ValueError, TypeError):
+            ra.equip_battery_level = None
+
+        # GPS location from browser
+        try:
+            ra.gps_latitude = float(request.form.get("gps_latitude") or 0)
+            ra.gps_longitude = float(request.form.get("gps_longitude") or 0)
+        except (ValueError, TypeError):
+            pass
+
+        db.session.add(ra)
+
+        # Gate: only open if decision is proceed or proceed_with_mitigations
+        if decision in ("proceed", "proceed_with_mitigations"):
+            order.risk_assessment_completed = True
+
+        _log_activity(
+            order, "risk_assessment_completed",
+            new_value=decision,
+            details=f"Risk level: {risk_level}. Decision: {decision.replace('_', ' ').title()}.",
+        )
+        db.session.commit()
+
+        if decision == "abort":
+            flash("Risk assessment recorded. Flight aborted — this order cannot proceed.", "warning")
+        else:
+            flash("Pre-flight risk assessment completed. You may now start the flight.", "success")
+
+        return redirect(url_for("pilot.order_detail", order_id=order.id))
+
+    return render_template(
+        "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+    )
 
 
 # ── Certifications ──────────────────────────────────────────────

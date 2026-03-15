@@ -13,3 +13,4 @@ from models.pilot_document import PilotDocument
 from models.order import Order
 from models.order_activity import OrderActivity
 from models.order_deliverable import OrderDeliverable
+from models.risk_assessment import RiskAssessment

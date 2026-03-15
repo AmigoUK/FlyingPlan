@@ -48,11 +48,48 @@
         </div>
         {% endif %}
 
+        {% if order.status == 'accepted' %}
+        <!-- Risk Assessment CTA -->
+        <div class="card mb-3 border-{{ 'success' if order.risk_assessment_completed else 'warning' }}">
+            <div class="card-body">
+                {% if order.risk_assessment_completed %}
+                <h6><i class="bi bi-check-circle text-success"></i> Pre-Flight Risk Assessment</h6>
+                <p class="small mb-2 text-success">Assessment completed. You may start the flight.</p>
+                <a href="{{ url_for('pilot.risk_assessment', order_id=order.id) }}" class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-eye"></i> View Assessment
+                </a>
+                {% else %}
+                <h6><i class="bi bi-exclamation-triangle text-warning"></i> Pre-Flight Risk Assessment Required</h6>
+                <p class="small mb-2">You must complete the on-site risk assessment before starting this flight (CAA requirement).</p>
+                <a href="{{ url_for('pilot.risk_assessment', order_id=order.id) }}" class="btn btn-sm btn-warning">
+                    <i class="bi bi-clipboard-check"></i> Complete Risk Assessment
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if order.status not in ['accepted', 'assigned', 'declined', 'closed'] and order.risk_assessment %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6><i class="bi bi-check-circle text-success"></i> Risk Assessment</h6>
+                <a href="{{ url_for('pilot.risk_assessment', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-eye"></i> View Assessment
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
         {% if allowed_next and order.status not in ['assigned', 'declined', 'closed'] %}
         <div class="card mb-3">
             <div class="card-body">
                 <h6><i class="bi bi-arrow-right-circle"></i> Update Status</h6>
                 {% for next_status in allowed_next %}
+                {% if next_status == 'in_progress' and not order.risk_assessment_completed %}
+                <button class="btn btn-sm btn-outline-secondary me-1 mb-1" disabled title="Complete risk assessment first">
+                    <i class="bi bi-lock"></i> In Progress
+                </button>
+                {% else %}
                 <form method="POST" action="{{ url_for('pilot.update_status', order_id=order.id) }}" class="d-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="status" value="{{ next_status }}">
@@ -60,6 +97,7 @@
                         {{ next_status|replace('_', ' ')|title }}
                     </button>
                 </form>
+                {% endif %}
                 {% endfor %}
             </div>
         </div>

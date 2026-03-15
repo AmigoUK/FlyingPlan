@@ -153,6 +153,14 @@ def _run_migrations():
                 text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
             )
 
+    # Orders table
+    if inspector.has_table("orders"):
+        order_cols = {col["name"] for col in inspector.get_columns("orders")}
+        if "risk_assessment_completed" not in order_cols:
+            db.session.execute(
+                text("ALTER TABLE orders ADD COLUMN risk_assessment_completed BOOLEAN NOT NULL DEFAULT 0")
+            )
+
     db.session.commit()
 
 

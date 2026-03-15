@@ -24,6 +24,7 @@ class Order(db.Model):
     pilot_notes = db.Column(db.Text)
     completion_notes = db.Column(db.Text)
     decline_reason = db.Column(db.Text)
+    risk_assessment_completed = db.Column(db.Boolean, default=False, nullable=False)
 
     assigned_at = db.Column(db.DateTime)
     accepted_at = db.Column(db.DateTime)

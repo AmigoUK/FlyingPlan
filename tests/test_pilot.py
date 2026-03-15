@@ -112,8 +112,32 @@ def test_cannot_accept_already_accepted(app, pilot_client, assigned_order):
 
 # ── Status updates ──────────────────────────────────────────────
 
+def _complete_risk_assessment(pilot_client, order_id):
+    """Helper to submit a valid risk assessment for an accepted order."""
+    from models.risk_assessment import RiskAssessment
+    data = {field: "1" for field in RiskAssessment.CHECK_FIELDS}
+    data.update({
+        "risk_level": "low",
+        "decision": "proceed",
+        "pilot_declaration": "1",
+        "airspace_planned_altitude": "80",
+        "weather_wind_speed": "10",
+        "weather_wind_direction": "NW",
+        "weather_visibility": "10",
+        "weather_precipitation": "None",
+        "weather_temperature": "18",
+        "equip_battery_level": "95",
+    })
+    return pilot_client.post(
+        f"/pilot/orders/{order_id}/risk-assessment",
+        data=data,
+        follow_redirects=True,
+    )
+
+
 def test_advance_status(pilot_client, assigned_order):
     pilot_client.post(f"/pilot/orders/{assigned_order}/accept")
+    _complete_risk_assessment(pilot_client, assigned_order)
     resp = pilot_client.post(
         f"/pilot/orders/{assigned_order}/status",
         data={"status": "in_progress"},
