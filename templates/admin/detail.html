@@ -142,6 +142,39 @@
             </div>
         </div>
 
+        <!-- Order Info -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-clipboard2-check"></i> Order</div>
+            <div class="card-body">
+                {% if fp.order %}
+                <p class="mb-1">
+                    <strong>Status:</strong>
+                    <span class="badge badge-{{ fp.order.status }}">
+                        {{ fp.order.status|replace('_', ' ')|title }}
+                    </span>
+                </p>
+                {% if fp.order.pilot %}
+                <p class="mb-1"><strong>Pilot:</strong> {{ fp.order.pilot.display_name }}</p>
+                {% endif %}
+                {% if fp.order.scheduled_date %}
+                <p class="mb-1"><strong>Scheduled:</strong> {{ fp.order.scheduled_date.strftime('%d %b %Y') }}
+                    {% if fp.order.scheduled_time %} at {{ fp.order.scheduled_time }}{% endif %}
+                </p>
+                {% endif %}
+                <a href="{{ url_for('orders.detail', order_id=fp.order.id) }}" class="btn btn-sm btn-outline-primary mt-1">
+                    <i class="bi bi-eye"></i> View Order
+                </a>
+                {% else %}
+                <p class="text-muted mb-2">No order created yet.</p>
+                <button class="btn btn-sm btn-outline-success"
+                        data-bs-toggle="modal" data-bs-target="#assignModal"
+                        onclick="document.getElementById('assignForm').action='{{ url_for('orders.create_order', plan_id=fp.id) }}'">
+                    <i class="bi bi-person-plus"></i> Create Order & Assign Pilot
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
         <!-- Admin notes -->
         <div class="card mb-3">
             <div class="card-header"><i class="bi bi-journal-text"></i> Pilot Notes</div>
@@ -171,6 +204,8 @@
         </div>
     </div>
 </div>
+
+{% include "partials/_assign_modal.html" %}
 
 <!-- Hidden data -->
 <input type="hidden" id="plan-id" value="{{ fp.id }}">

@@ -6,6 +6,7 @@ from extensions import db
 from blueprints.admin import admin_bp
 from blueprints.auth.decorators import role_required
 from models.flight_plan import FlightPlan
+from models.user import User
 from models.waypoint import Waypoint
 
 
@@ -33,12 +34,16 @@ def dashboard():
         )
 
     plans = query.order_by(FlightPlan.created_at.desc()).all()
+    available_pilots = User.query.filter_by(
+        role="pilot", is_active_user=True
+    ).order_by(User.display_name).all()
     return render_template(
         "admin/dashboard.html",
         plans=plans,
         status_filter=status_filter,
         job_type_filter=job_type_filter,
         search=search,
+        available_pilots=available_pilots,
     )
 
 
@@ -50,11 +55,15 @@ def detail(plan_id):
     pois_json = json.dumps(
         [{"lat": p.lat, "lng": p.lng, "label": p.label} for p in fp.pois]
     )
+    available_pilots = User.query.filter_by(
+        role="pilot", is_active_user=True
+    ).order_by(User.display_name).all()
     return render_template(
         "admin/detail.html",
         fp=fp,
         waypoints_json=waypoints_json,
         pois_json=pois_json,
+        available_pilots=available_pilots,
     )
 
 

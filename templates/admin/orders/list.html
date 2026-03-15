@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Orders - {{ app_settings.business_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-clipboard2-check"></i> Orders</h2>
+    <span class="badge bg-secondary">{{ orders|length }} order{{ 's' if orders|length != 1 }}</span>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body py-2">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small mb-0">Status</label>
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    {% for s in ['pending_assignment','assigned','accepted','in_progress','flight_complete','delivered','closed','declined'] %}
+                    <option value="{{ s }}" {{ 'selected' if status_filter == s }}>
+                        {{ s|replace('_', ' ')|title }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small mb-0">Pilot</label>
+                <select name="pilot_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Pilots</option>
+                    {% for p in pilots %}
+                    <option value="{{ p.id }}" {{ 'selected' if pilot_filter == p.id|string }}>
+                        {{ p.display_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                {% if status_filter or pilot_filter %}
+                <a href="{{ url_for('orders.list_orders') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x"></i> Clear
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Flight Plan</th>
+                <th>Customer</th>
+                <th>Pilot</th>
+                <th>Status</th>
+                <th>Scheduled</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td><code>{{ order.flight_plan.reference }}</code></td>
+                <td>{{ order.flight_plan.customer_name }}</td>
+                <td>
+                    {% if order.pilot %}
+                    {{ order.pilot.display_name }}
+                    {% else %}
+                    <span class="text-muted">Unassigned</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge badge-{{ order.status }}">
+                        {{ order.status|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td>{{ order.scheduled_date.strftime('%d %b %Y') if order.scheduled_date else '-' }}</td>
+                <td>{{ order.created_at.strftime('%d %b %Y') }}</td>
+                <td>
+                    <a href="{{ url_for('orders.detail', order_id=order.id) }}"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> View
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">No orders found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

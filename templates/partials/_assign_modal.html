@@ -1,0 +1,48 @@
+<!-- Assign Pilot Modal -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="assignForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-check"></i> Assign Pilot</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Pilot</label>
+                        <select name="pilot_id" class="form-select" required>
+                            <option value="">Select Pilot...</option>
+                            {% for p in available_pilots %}
+                            <option value="{{ p.id }}">
+                                {{ p.display_name }}
+                                {% if p.flying_id %}({{ p.flying_id }}){% endif %}
+                                - {{ p.availability_status|replace('_', ' ')|title }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scheduled Date</label>
+                        <input type="date" name="scheduled_date" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scheduled Time</label>
+                        <input type="text" name="scheduled_time" class="form-control"
+                               placeholder="e.g. 9:00 AM">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assignment Notes</label>
+                        <textarea name="assignment_notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-person-check"></i> Assign
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

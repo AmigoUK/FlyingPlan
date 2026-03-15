@@ -115,6 +115,16 @@
     margin-bottom: 1rem;
 }
 
+/* Order status badges */
+.badge-pending_assignment { background-color: #6c757d; color: #fff; }
+.badge-assigned { background-color: #0d6efd; color: #fff; }
+.badge-accepted { background-color: #0dcaf0; color: #000; }
+.badge-in_progress { background-color: #ffc107; color: #000; }
+.badge-flight_complete { background-color: #6f42c1; color: #fff; }
+.badge-delivered { background-color: #198754; color: #fff; }
+.badge-closed { background-color: #212529; color: #fff; }
+.badge-declined { background-color: #dc3545; color: #fff; }
+
 /* Availability badges */
 .avail-available { background-color: #198754; color: #fff; }
 .avail-on_mission { background-color: #fd7e14; color: #fff; }
