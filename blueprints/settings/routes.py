@@ -1,8 +1,8 @@
 import re
 
 from flask import flash, jsonify, redirect, render_template, request, url_for
-from flask_login import login_required
 
+from blueprints.auth.decorators import role_required
 from blueprints.settings import settings_bp
 from extensions import db
 from models.app_settings import AppSettings
@@ -23,7 +23,7 @@ def _validate_color(color):
 # ── Settings Page ────────────────────────────────────────────────
 
 @settings_bp.route("/")
-@login_required
+@role_required("admin")
 def settings_page():
     settings = AppSettings.get()
     job_types = JobType.query.order_by(JobType.sort_order, JobType.id).all()
@@ -41,7 +41,7 @@ def settings_page():
 # ── Branding ─────────────────────────────────────────────────────
 
 @settings_bp.route("/branding", methods=["POST"])
-@login_required
+@role_required("admin")
 def update_branding():
     settings = AppSettings.get()
     settings.business_name = request.form.get("business_name", "FlyingPlan").strip()
@@ -61,7 +61,7 @@ def update_branding():
 # ── Form Visibility ──────────────────────────────────────────────
 
 @settings_bp.route("/form-visibility", methods=["POST"])
-@login_required
+@role_required("admin")
 def update_form_visibility():
     settings = AppSettings.get()
     settings.show_heard_about = "show_heard_about" in request.form
@@ -76,7 +76,7 @@ def update_form_visibility():
 # ── Job Types ────────────────────────────────────────────────────
 
 @settings_bp.route("/job-types/new", methods=["POST"])
-@login_required
+@role_required("admin")
 def create_job_type():
     value = request.form.get("value", "").strip()
     label = request.form.get("label", "").strip()
@@ -108,7 +108,7 @@ def create_job_type():
 
 
 @settings_bp.route("/job-types/<int:id>/edit", methods=["POST"])
-@login_required
+@role_required("admin")
 def edit_job_type(id):
     jt = db.get_or_404(JobType, id)
     label = request.form.get("label", "").strip()
@@ -133,7 +133,7 @@ def edit_job_type(id):
 
 
 @settings_bp.route("/job-types/<int:id>/toggle", methods=["POST"])
-@login_required
+@role_required("admin")
 def toggle_job_type(id):
     jt = db.get_or_404(JobType, id)
     jt.is_active = not jt.is_active
@@ -148,7 +148,7 @@ def toggle_job_type(id):
 
 
 @settings_bp.route("/job-types/<int:id>/delete", methods=["POST"])
-@login_required
+@role_required("admin")
 def delete_job_type(id):
     jt = db.get_or_404(JobType, id)
 
@@ -167,7 +167,7 @@ def delete_job_type(id):
 # ── Purpose Options ──────────────────────────────────────────────
 
 @settings_bp.route("/purposes/new", methods=["POST"])
-@login_required
+@role_required("admin")
 def create_purpose():
     value = request.form.get("value", "").strip()
     label = request.form.get("label", "").strip()
@@ -194,7 +194,7 @@ def create_purpose():
 
 
 @settings_bp.route("/purposes/<int:id>/edit", methods=["POST"])
-@login_required
+@role_required("admin")
 def edit_purpose(id):
     po = db.get_or_404(PurposeOption, id)
     label = request.form.get("label", "").strip()
@@ -214,7 +214,7 @@ def edit_purpose(id):
 
 
 @settings_bp.route("/purposes/<int:id>/toggle", methods=["POST"])
-@login_required
+@role_required("admin")
 def toggle_purpose(id):
     po = db.get_or_404(PurposeOption, id)
     po.is_active = not po.is_active
@@ -229,7 +229,7 @@ def toggle_purpose(id):
 
 
 @settings_bp.route("/purposes/<int:id>/delete", methods=["POST"])
-@login_required
+@role_required("admin")
 def delete_purpose(id):
     po = db.get_or_404(PurposeOption, id)
     label = po.label
@@ -242,7 +242,7 @@ def delete_purpose(id):
 # ── Heard About Options ──────────────────────────────────────────
 
 @settings_bp.route("/heard-about/new", methods=["POST"])
-@login_required
+@role_required("admin")
 def create_heard_about():
     value = request.form.get("value", "").strip()
     label = request.form.get("label", "").strip()
@@ -269,7 +269,7 @@ def create_heard_about():
 
 
 @settings_bp.route("/heard-about/<int:id>/edit", methods=["POST"])
-@login_required
+@role_required("admin")
 def edit_heard_about(id):
     ha = db.get_or_404(HeardAboutOption, id)
     label = request.form.get("label", "").strip()
@@ -289,7 +289,7 @@ def edit_heard_about(id):
 
 
 @settings_bp.route("/heard-about/<int:id>/toggle", methods=["POST"])
-@login_required
+@role_required("admin")
 def toggle_heard_about(id):
     ha = db.get_or_404(HeardAboutOption, id)
     ha.is_active = not ha.is_active
@@ -304,7 +304,7 @@ def toggle_heard_about(id):
 
 
 @settings_bp.route("/heard-about/<int:id>/delete", methods=["POST"])
-@login_required
+@role_required("admin")
 def delete_heard_about(id):
     ha = db.get_or_404(HeardAboutOption, id)
     label = ha.label

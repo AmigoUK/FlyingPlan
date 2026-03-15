@@ -13,6 +13,8 @@ LOCKOUT_SECONDS = 30
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
+        if current_user.role == "pilot":
+            return redirect(url_for("pilot.dashboard"))
         return redirect(url_for("admin.dashboard"))
 
     if request.method == "POST":
@@ -37,7 +39,11 @@ def login():
             login_user(user, remember=remember)
             _failed_attempts.pop(ip, None)
             next_page = request.args.get("next")
-            return redirect(next_page or url_for("admin.dashboard"))
+            if next_page:
+                return redirect(next_page)
+            if user.role == "pilot":
+                return redirect(url_for("pilot.dashboard"))
+            return redirect(url_for("admin.dashboard"))
 
         attempts.append(now)
         _failed_attempts[ip] = attempts

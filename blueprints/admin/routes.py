@@ -2,15 +2,15 @@ import json
 from flask import (
     render_template, redirect, url_for, flash, request, jsonify, send_file
 )
-from flask_login import login_required
 from extensions import db
 from blueprints.admin import admin_bp
+from blueprints.auth.decorators import role_required
 from models.flight_plan import FlightPlan
 from models.waypoint import Waypoint
 
 
 @admin_bp.route("/")
-@login_required
+@role_required("manager")
 def dashboard():
     status_filter = request.args.get("status", "")
     job_type_filter = request.args.get("job_type", "")
@@ -43,7 +43,7 @@ def dashboard():
 
 
 @admin_bp.route("/<int:plan_id>")
-@login_required
+@role_required("manager")
 def detail(plan_id):
     fp = db.get_or_404(FlightPlan, plan_id)
     waypoints_json = json.dumps([w.to_dict() for w in fp.waypoints])
@@ -59,7 +59,7 @@ def detail(plan_id):
 
 
 @admin_bp.route("/<int:plan_id>/waypoints", methods=["POST"])
-@login_required
+@role_required("manager")
 def save_waypoints(plan_id):
     fp = db.get_or_404(FlightPlan, plan_id)
     data = request.get_json()
@@ -94,7 +94,7 @@ def save_waypoints(plan_id):
 
 
 @admin_bp.route("/<int:plan_id>/status", methods=["POST"])
-@login_required
+@role_required("manager")
 def update_status(plan_id):
     fp = db.get_or_404(FlightPlan, plan_id)
     data = request.get_json()
@@ -107,7 +107,7 @@ def update_status(plan_id):
 
 
 @admin_bp.route("/<int:plan_id>/notes", methods=["POST"])
-@login_required
+@role_required("manager")
 def save_notes(plan_id):
     fp = db.get_or_404(FlightPlan, plan_id)
     data = request.get_json()
@@ -117,7 +117,7 @@ def save_notes(plan_id):
 
 
 @admin_bp.route("/<int:plan_id>/export-kmz")
-@login_required
+@role_required("manager")
 def export_kmz(plan_id):
     fp = db.get_or_404(FlightPlan, plan_id)
     if not fp.waypoints:

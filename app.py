@@ -98,9 +98,11 @@ def create_app(config_class=None):
 
 
 def _run_migrations():
-    """Add new columns to flight_plans if missing (CRM ALTER TABLE pattern)."""
+    """Add new columns to tables if missing (CRM ALTER TABLE pattern)."""
     from sqlalchemy import inspect, text
     inspector = inspect(db.engine)
+
+    # Flight plans table
     existing = {col["name"] for col in inspector.get_columns("flight_plans")}
 
     new_columns = [
@@ -122,6 +124,28 @@ def _run_migrations():
             db.session.execute(
                 text(f"ALTER TABLE flight_plans ADD COLUMN {col_name} {col_type}")
             )
+
+    # Users table
+    user_cols = {col["name"] for col in inspector.get_columns("users")}
+    user_new_columns = [
+        ("role", "VARCHAR(20) NOT NULL DEFAULT 'admin'"),
+        ("email", "VARCHAR(200)"),
+        ("phone", "VARCHAR(50)"),
+        ("flying_id", "VARCHAR(100)"),
+        ("operator_id", "VARCHAR(100)"),
+        ("insurance_provider", "VARCHAR(200)"),
+        ("insurance_policy_no", "VARCHAR(100)"),
+        ("insurance_expiry", "DATE"),
+        ("availability_status", "VARCHAR(20) DEFAULT 'available'"),
+        ("pilot_bio", "TEXT"),
+    ]
+
+    for col_name, col_type in user_new_columns:
+        if col_name not in user_cols:
+            db.session.execute(
+                text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
+            )
+
     db.session.commit()
 
 
