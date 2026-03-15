@@ -2,6 +2,26 @@
 <div class="form-step active" data-step="1">
     <h4 class="mb-3"><i class="bi bi-person"></i> Your Details</h4>
 
+    {% if app_settings.show_customer_type_toggle %}
+    <div class="mb-3">
+        <label class="form-label">Customer Type</label>
+        <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="customer_type" id="ct-private"
+                   value="private" checked autocomplete="off">
+            <label class="btn btn-outline-primary" for="ct-private">
+                <i class="bi bi-person"></i> Private
+            </label>
+            <input type="radio" class="btn-check" name="customer_type" id="ct-business"
+                   value="business" autocomplete="off">
+            <label class="btn btn-outline-primary" for="ct-business">
+                <i class="bi bi-building"></i> Business
+            </label>
+        </div>
+    </div>
+    {% else %}
+    <input type="hidden" name="customer_type" value="private">
+    {% endif %}
+
     <div class="row g-3">
         <div class="col-md-6">
             <label for="customer_name" class="form-label">Full Name <span class="text-danger">*</span></label>
@@ -18,21 +38,49 @@
             <input type="tel" class="form-control" id="customer_phone" name="customer_phone">
         </div>
         <div class="col-md-6">
-            <label for="customer_company" class="form-label">Company</label>
+            <label for="customer_company" class="form-label">
+                Company <span id="company-required-star" class="text-danger" style="display: none;">*</span>
+            </label>
             <input type="text" class="form-control" id="customer_company" name="customer_company">
+            <div class="invalid-feedback">Company name is required for business customers.</div>
         </div>
+    </div>
+
+    <!-- Business-only fields -->
+    <div id="business-fields" style="display: none;">
+        <div class="row g-3 mt-1">
+            <div class="col-md-6">
+                <label for="business_abn" class="form-label">ABN / Registration</label>
+                <input type="text" class="form-control" id="business_abn" name="business_abn">
+            </div>
+            <div class="col-md-6">
+                <label for="billing_contact" class="form-label">Billing Contact</label>
+                <input type="text" class="form-control" id="billing_contact" name="billing_contact">
+            </div>
+            <div class="col-md-6">
+                <label for="billing_email" class="form-label">Billing Email</label>
+                <input type="email" class="form-control" id="billing_email" name="billing_email">
+            </div>
+            <div class="col-md-6">
+                <label for="purchase_order" class="form-label">Purchase Order #</label>
+                <input type="text" class="form-control" id="purchase_order" name="purchase_order">
+            </div>
+        </div>
+    </div>
+
+    {% if app_settings.show_heard_about %}
+    <div class="row g-3 mt-1">
         <div class="col-12">
             <label for="heard_about" class="form-label">How did you hear about us?</label>
             <select class="form-select" id="heard_about" name="heard_about">
                 <option value="">-- Select --</option>
-                <option value="google">Google Search</option>
-                <option value="social_media">Social Media</option>
-                <option value="referral">Referral</option>
-                <option value="website">Website</option>
-                <option value="other">Other</option>
+                {% for ha in active_heard_about %}
+                <option value="{{ ha.value }}">{{ ha.label }}</option>
+                {% endfor %}
             </select>
         </div>
     </div>
+    {% endif %}
 
     <div class="d-flex justify-content-end mt-4">
         <button type="button" class="btn btn-primary btn-next">

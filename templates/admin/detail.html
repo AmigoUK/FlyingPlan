@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ fp.reference }} - FlyingPlan{% endblock %}
+{% block title %}{{ fp.reference }} - {{ app_settings.business_name }}{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -35,13 +35,32 @@
         <div class="card mb-3">
             <div class="card-header"><i class="bi bi-person"></i> Customer</div>
             <div class="card-body">
+                {% if fp.customer_type == 'business' %}
+                <span class="badge bg-info mb-2">Business</span>
+                {% else %}
+                <span class="badge bg-secondary mb-2">Private</span>
+                {% endif %}
                 <p class="mb-1"><strong>{{ fp.customer_name }}</strong></p>
                 <p class="mb-1"><a href="mailto:{{ fp.customer_email }}">{{ fp.customer_email }}</a></p>
                 {% if fp.customer_phone %}
                 <p class="mb-1"><a href="tel:{{ fp.customer_phone }}">{{ fp.customer_phone }}</a></p>
                 {% endif %}
                 {% if fp.customer_company %}
-                <p class="mb-0 text-muted">{{ fp.customer_company }}</p>
+                <p class="mb-1 text-muted">{{ fp.customer_company }}</p>
+                {% endif %}
+                {% if fp.customer_type == 'business' %}
+                    {% if fp.business_abn %}
+                    <p class="mb-1"><strong>ABN:</strong> {{ fp.business_abn }}</p>
+                    {% endif %}
+                    {% if fp.billing_contact %}
+                    <p class="mb-1"><strong>Billing Contact:</strong> {{ fp.billing_contact }}</p>
+                    {% endif %}
+                    {% if fp.billing_email %}
+                    <p class="mb-1"><strong>Billing Email:</strong> {{ fp.billing_email }}</p>
+                    {% endif %}
+                    {% if fp.purchase_order %}
+                    <p class="mb-0"><strong>PO #:</strong> {{ fp.purchase_order }}</p>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -80,7 +99,27 @@
                 <p class="mb-1"><strong>No-Fly Notes:</strong> {{ fp.no_fly_notes }}</p>
                 {% endif %}
                 {% if fp.privacy_notes %}
-                <p class="mb-0"><strong>Privacy:</strong> {{ fp.privacy_notes }}</p>
+                <p class="mb-1"><strong>Privacy:</strong> {{ fp.privacy_notes }}</p>
+                {% endif %}
+                {% if fp.footage_purpose %}
+                <hr class="my-2">
+                <p class="mb-1"><strong>Purpose:</strong> {{ fp.footage_purpose|replace('_', ' ')|title }}
+                    {% if fp.footage_purpose == 'other' and fp.footage_purpose_other %}
+                     &mdash; {{ fp.footage_purpose_other }}
+                    {% endif %}
+                </p>
+                {% endif %}
+                {% if fp.output_format %}
+                <p class="mb-1"><strong>Output Format:</strong> {{ fp.output_format|replace('_', ' ')|title }}</p>
+                {% endif %}
+                {% if fp.video_duration %}
+                <p class="mb-1"><strong>Video Duration:</strong> {{ fp.video_duration }}</p>
+                {% endif %}
+                {% if fp.shot_types %}
+                <p class="mb-1"><strong>Shot Types:</strong> {{ fp.shot_types|replace('[', '')|replace(']', '')|replace('"', '')|replace('_', ' ') }}</p>
+                {% endif %}
+                {% if fp.delivery_timeline %}
+                <p class="mb-0"><strong>Delivery Timeline:</strong> {{ fp.delivery_timeline|replace('_', ' ')|title }}</p>
                 {% endif %}
             </div>
         </div>

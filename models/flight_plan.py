@@ -40,6 +40,21 @@ class FlightPlan(db.Model):
     no_fly_notes = db.Column(db.Text)
     privacy_notes = db.Column(db.Text)
 
+    # Customer type & business fields
+    customer_type = db.Column(db.String(10), default="private")
+    business_abn = db.Column(db.String(50))
+    billing_contact = db.Column(db.String(200))
+    billing_email = db.Column(db.String(200))
+    purchase_order = db.Column(db.String(100))
+
+    # Footage purpose & output
+    footage_purpose = db.Column(db.String(50))
+    footage_purpose_other = db.Column(db.String(300))
+    output_format = db.Column(db.String(30))
+    video_duration = db.Column(db.String(100))
+    shot_types = db.Column(db.Text)  # JSON array
+    delivery_timeline = db.Column(db.String(50))
+
     # Admin
     admin_notes = db.Column(db.Text)
     consent_given = db.Column(db.Boolean, nullable=False, default=False)

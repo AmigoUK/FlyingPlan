@@ -10,6 +10,46 @@
     let currentStep = 1;
     const STORAGE_KEY = "flyingplan_form_data";
 
+    // ── Business toggle ────────────────────────────────────────
+    var businessFields = document.getElementById("business-fields");
+    var companyInput = document.getElementById("customer_company");
+    var companyStar = document.getElementById("company-required-star");
+    var ctPrivate = document.getElementById("ct-private");
+    var ctBusiness = document.getElementById("ct-business");
+
+    function updateBusinessToggle() {
+        var isBusiness = ctBusiness && ctBusiness.checked;
+        if (businessFields) businessFields.style.display = isBusiness ? "block" : "none";
+        if (companyStar) companyStar.style.display = isBusiness ? "inline" : "none";
+    }
+
+    if (ctPrivate) ctPrivate.addEventListener("change", updateBusinessToggle);
+    if (ctBusiness) ctBusiness.addEventListener("change", updateBusinessToggle);
+
+    // ── Purpose "other" toggle ─────────────────────────────────
+    var purposeSelect = document.getElementById("footage_purpose");
+    var purposeOtherGroup = document.getElementById("purpose-other-group");
+
+    function updatePurposeOther() {
+        if (purposeSelect && purposeOtherGroup) {
+            purposeOtherGroup.style.display =
+                purposeSelect.value === "other" ? "block" : "none";
+        }
+    }
+
+    if (purposeSelect) purposeSelect.addEventListener("change", updatePurposeOther);
+
+    // ── Shot types collection ──────────────────────────────────
+    function collectShotTypes() {
+        var checks = document.querySelectorAll(".shot-type-check");
+        var selected = [];
+        checks.forEach(function (cb) {
+            if (cb.checked) selected.push(cb.value);
+        });
+        var hidden = document.getElementById("shot_types_json");
+        if (hidden) hidden.value = JSON.stringify(selected);
+    }
+
     // Step validation rules
     const validations = {
         1: function () {
@@ -27,6 +67,17 @@
                 valid = false;
             } else {
                 email.classList.remove("is-invalid");
+            }
+            // Company required when business is selected
+            if (ctBusiness && ctBusiness.checked && companyInput) {
+                if (!companyInput.value.trim()) {
+                    companyInput.classList.add("is-invalid");
+                    valid = false;
+                } else {
+                    companyInput.classList.remove("is-invalid");
+                }
+            } else if (companyInput) {
+                companyInput.classList.remove("is-invalid");
             }
             return valid;
         },
@@ -58,7 +109,9 @@
             return true;
         },
         4: function () {
-            return true; // All fields have defaults
+            // Collect shot types before advancing
+            collectShotTypes();
+            return true;
         },
         5: function () {
             const consent = document.getElementById("consent_given");
@@ -95,6 +148,7 @@
 
         // Populate review when entering step 5
         if (step === 5) {
+            collectShotTypes();
             populateReview();
         }
 
@@ -119,6 +173,7 @@
 
     // Submit validation
     form.addEventListener("submit", function (e) {
+        collectShotTypes();
         if (!validations[5]()) {
             e.preventDefault();
         } else {
@@ -143,12 +198,24 @@
         _setText("rev-phone", _val("customer_phone") || "-");
         _setText("rev-company", _val("customer_company") || "-");
 
+        // Customer type
+        var isBusiness = ctBusiness && ctBusiness.checked;
+        _setText("rev-customer-type", isBusiness ? "Business" : "Private");
+        var revBiz = document.getElementById("rev-business-fields");
+        if (revBiz) revBiz.style.display = isBusiness ? "block" : "none";
+        if (isBusiness) {
+            _setText("rev-abn", _val("business_abn") || "-");
+            _setText("rev-billing-contact", _val("billing_contact") || "-");
+            _setText("rev-billing-email", _val("billing_email") || "-");
+            _setText("rev-po", _val("purchase_order") || "-");
+        }
+
         var jobType = _val("job_type");
-        _setText("rev-job-type", jobType ? jobType.replace(/_/g, " ") : "-");
+        _setText("rev-job-type", jobType ? _selText("job_type") : "-");
         _setText("rev-urgency", _val("urgency") || "Normal");
         _setText("rev-description", _val("job_description") || "-");
         _setText("rev-dates", _val("preferred_dates") || "Flexible");
-        _setText("rev-time", _val("time_window") || "Flexible");
+        _setText("rev-time", _selText("time_window") || "Flexible");
 
         _setText("rev-address", _val("location_address") || "-");
         var lat = _val("location_lat");
@@ -161,8 +228,39 @@
         _setText("rev-camera", _selText("camera_angle") || "Pilot Decides");
         _setText("rev-resolution", _val("video_resolution") || "4K");
 
+        // New footage/output fields
+        _showRevRow("rev-purpose-row", "rev-purpose", _selText("footage_purpose"));
+        _showRevRow("rev-output-row", "rev-output-format", _selText("output_format"));
+        _showRevRow("rev-duration-row", "rev-video-duration", _val("video_duration"));
+        _showRevRow("rev-timeline-row", "rev-delivery-timeline", _selText("delivery_timeline"));
+
+        // Shot types
+        var shotJson = _val("shot_types_json");
+        var shotArr = [];
+        try { shotArr = JSON.parse(shotJson); } catch (e) { /* ignore */ }
+        var shotRow = document.getElementById("rev-shots-row");
+        if (shotRow) {
+            if (shotArr.length > 0) {
+                _setText("rev-shot-types", shotArr.map(function (s) { return s.replace(/_/g, " "); }).join(", "));
+                shotRow.style.display = "block";
+            } else {
+                shotRow.style.display = "none";
+            }
+        }
+
         // Mini review map
         initReviewMap(lat, lng);
+    }
+
+    function _showRevRow(rowId, spanId, text) {
+        var row = document.getElementById(rowId);
+        if (!row) return;
+        if (text && text !== "-- Select --") {
+            _setText(spanId, text);
+            row.style.display = "block";
+        } else {
+            row.style.display = "none";
+        }
     }
 
     function initReviewMap(lat, lng) {
@@ -209,11 +307,20 @@
             if (el.name && el.type !== "file" && el.type !== "hidden" && el.name !== "csrf_token") {
                 if (el.type === "checkbox") {
                     data[el.name] = el.checked;
+                } else if (el.type === "radio") {
+                    if (el.checked) data[el.name] = el.value;
                 } else {
                     data[el.name] = el.value;
                 }
             }
         });
+        // Also save shot type checkboxes
+        var shotChecks = document.querySelectorAll(".shot-type-check");
+        var shotData = {};
+        shotChecks.forEach(function (cb) {
+            shotData[cb.id] = cb.checked;
+        });
+        data._shots = shotData;
         data._step = currentStep;
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
@@ -224,17 +331,32 @@
         try {
             var data = JSON.parse(raw);
             Object.keys(data).forEach(function (key) {
-                if (key === "_step") return;
+                if (key === "_step" || key === "_shots") return;
                 var el = form.querySelector('[name="' + key + '"]');
                 if (!el) return;
                 if (el.type === "checkbox") {
                     el.checked = data[key];
+                } else if (el.type === "radio") {
+                    // For radio buttons, find the right one by value
+                    var radios = form.querySelectorAll('[name="' + key + '"]');
+                    radios.forEach(function (r) {
+                        r.checked = (r.value === data[key]);
+                    });
                 } else {
                     el.value = data[key];
                 }
             });
-            // Trigger altitude toggle
+            // Restore shot checkboxes
+            if (data._shots) {
+                Object.keys(data._shots).forEach(function (cbId) {
+                    var cb = document.getElementById(cbId);
+                    if (cb) cb.checked = data._shots[cbId];
+                });
+            }
+            // Trigger conditional UI updates
             if (altPreset) altPreset.dispatchEvent(new Event("change"));
+            updateBusinessToggle();
+            updatePurposeOther();
             // Go to saved step
             if (data._step && data._step > 1) {
                 goToStep(data._step);

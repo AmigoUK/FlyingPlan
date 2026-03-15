@@ -5,8 +5,19 @@
     const mapEl = document.getElementById("customer-map");
     if (!mapEl) return;
 
-    // Default to Sydney, Australia
-    const map = L.map("customer-map").setView([-33.87, 151.21], 13);
+    // Default to Birmingham, UK — overridden by geolocation if available
+    const FALLBACK = [52.4862, -1.8904]; // Birmingham, UK
+    const map = L.map("customer-map").setView(FALLBACK, 13);
+
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+            },
+            function () { /* denied/error — keep Birmingham */ },
+            { timeout: 5000 }
+        );
+    }
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,

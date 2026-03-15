@@ -3,3 +3,7 @@ from models.flight_plan import FlightPlan
 from models.poi import POI
 from models.waypoint import Waypoint
 from models.upload import Upload
+from models.app_settings import AppSettings
+from models.job_type import JobType
+from models.purpose_option import PurposeOption
+from models.heard_about_option import HeardAboutOption

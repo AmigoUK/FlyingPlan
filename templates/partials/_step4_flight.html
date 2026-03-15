@@ -53,6 +53,79 @@
         </div>
     </div>
 
+    <!-- Footage Purpose & Output section -->
+    {% if app_settings.show_purpose_fields %}
+    <hr class="my-4">
+    <h5 class="mb-3"><i class="bi bi-bullseye"></i> Footage Purpose & Output</h5>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label for="footage_purpose" class="form-label">What is the footage for?</label>
+            <select class="form-select" id="footage_purpose" name="footage_purpose">
+                <option value="">-- Select --</option>
+                {% for po in active_purposes %}
+                <option value="{{ po.value }}">{{ po.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6" id="purpose-other-group" style="display: none;">
+            <label for="footage_purpose_other" class="form-label">Please specify</label>
+            <input type="text" class="form-control" id="footage_purpose_other" name="footage_purpose_other"
+                   placeholder="Describe the purpose...">
+        </div>
+        {% if app_settings.show_output_format %}
+        <div class="col-md-6">
+            <label for="output_format" class="form-label">Output Format</label>
+            <select class="form-select" id="output_format" name="output_format">
+                <option value="">-- Select --</option>
+                <option value="raw">Raw Footage</option>
+                <option value="edited_video">Edited Video</option>
+                <option value="photos_only">Photos Only</option>
+                <option value="photos_video">Photos + Video</option>
+                <option value="livestream">Live Stream</option>
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-md-6">
+            <label for="video_duration" class="form-label">Video Duration Expectation</label>
+            <input type="text" class="form-control" id="video_duration" name="video_duration"
+                   placeholder='e.g. "2-3 minutes", "full event"'>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Specific Shots Needed</label>
+            <div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input shot-type-check" type="checkbox" value="overview" id="shot-overview">
+                    <label class="form-check-label" for="shot-overview">Overview / Wide</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input shot-type-check" type="checkbox" value="close_up" id="shot-closeup">
+                    <label class="form-check-label" for="shot-closeup">Close-up Detail</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input shot-type-check" type="checkbox" value="orbit" id="shot-orbit">
+                    <label class="form-check-label" for="shot-orbit">Orbiting</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input shot-type-check" type="checkbox" value="tracking" id="shot-tracking">
+                    <label class="form-check-label" for="shot-tracking">Tracking / Follow</label>
+                </div>
+            </div>
+            <input type="hidden" id="shot_types_json" name="shot_types_json" value="[]">
+        </div>
+        <div class="col-md-6">
+            <label for="delivery_timeline" class="form-label">Delivery Timeline</label>
+            <select class="form-select" id="delivery_timeline" name="delivery_timeline">
+                <option value="">-- Select --</option>
+                <option value="asap">ASAP</option>
+                <option value="1_week">1 Week</option>
+                <option value="2_weeks">2 Weeks</option>
+                <option value="1_month">1 Month</option>
+                <option value="flexible">Flexible</option>
+            </select>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="d-flex justify-content-between mt-4">
         <button type="button" class="btn btn-outline-secondary btn-prev">
             <i class="bi bi-arrow-left"></i> Back

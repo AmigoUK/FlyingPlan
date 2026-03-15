@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - FlyingPlan{% endblock %}
+{% block title %}Dashboard - {{ app_settings.business_name }}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -26,9 +26,9 @@
                 <label class="form-label small mb-0">Job Type</label>
                 <select name="job_type" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">All Types</option>
-                    {% for jt in ['aerial_photo', 'inspection', 'survey'] %}
-                    <option value="{{ jt }}" {{ 'selected' if job_type_filter == jt }}>
-                        {{ jt|replace('_', ' ')|title }}
+                    {% for jt in active_job_types %}
+                    <option value="{{ jt.value }}" {{ 'selected' if job_type_filter == jt.value }}>
+                        {{ jt.label }}
                     </option>
                     {% endfor %}
                 </select>

@@ -18,6 +18,18 @@ def _allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def _get_valid_job_types():
+    """Get valid job type values from DB, falling back to FlightPlan.JOB_TYPES."""
+    try:
+        from models.job_type import JobType
+        active = JobType.query.filter_by(is_active=True).all()
+        if active:
+            return [jt.value for jt in active]
+    except Exception:
+        pass
+    return FlightPlan.JOB_TYPES
+
+
 @public_bp.route("/")
 def form():
     return render_template("public/form.html")
@@ -39,7 +51,8 @@ def submit():
         errors.append("Customer name is required.")
     if not customer_email:
         errors.append("Customer email is required.")
-    if not job_type or job_type not in FlightPlan.JOB_TYPES:
+    valid_types = _get_valid_job_types()
+    if not job_type or job_type not in valid_types:
         errors.append("Valid job type is required.")
     if not job_description:
         errors.append("Job description is required.")
@@ -76,7 +89,28 @@ def submit():
         no_fly_notes=request.form.get("no_fly_notes", "").strip(),
         privacy_notes=request.form.get("privacy_notes", "").strip(),
         consent_given=True,
+        # New fields
+        customer_type=request.form.get("customer_type", "private").strip(),
+        business_abn=request.form.get("business_abn", "").strip(),
+        billing_contact=request.form.get("billing_contact", "").strip(),
+        billing_email=request.form.get("billing_email", "").strip(),
+        purchase_order=request.form.get("purchase_order", "").strip(),
+        footage_purpose=request.form.get("footage_purpose", "").strip(),
+        footage_purpose_other=request.form.get("footage_purpose_other", "").strip(),
+        output_format=request.form.get("output_format", "").strip(),
+        video_duration=request.form.get("video_duration", "").strip(),
+        delivery_timeline=request.form.get("delivery_timeline", "").strip(),
     )
+
+    # Shot types from JSON
+    shot_types_raw = request.form.get("shot_types_json", "").strip()
+    if shot_types_raw:
+        try:
+            shot_list = json.loads(shot_types_raw)
+            if isinstance(shot_list, list):
+                fp.shot_types = json.dumps(shot_list)
+        except (json.JSONDecodeError, TypeError):
+            pass
 
     # Altitude custom
     if fp.altitude_preset == "custom":

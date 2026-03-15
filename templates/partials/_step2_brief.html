@@ -7,9 +7,17 @@
             <label for="job_type" class="form-label">Job Type <span class="text-danger">*</span></label>
             <select class="form-select" id="job_type" name="job_type" required>
                 <option value="">-- Select --</option>
-                <option value="aerial_photo">Aerial Photography</option>
-                <option value="inspection">Inspection</option>
-                <option value="survey">Survey / Mapping</option>
+                {% set categories = {'technical': 'Technical', 'creative': 'Creative & Events', 'other': 'Other'} %}
+                {% for cat_key, cat_label in categories.items() %}
+                    {% set cat_types = active_job_types|selectattr('category', 'equalto', cat_key)|list %}
+                    {% if cat_types %}
+                    <optgroup label="{{ cat_label }}">
+                        {% for jt in cat_types %}
+                        <option value="{{ jt.value }}">{{ jt.label }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endif %}
+                {% endfor %}
             </select>
             <div class="invalid-feedback">Please select a job type.</div>
         </div>
