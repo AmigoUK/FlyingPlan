@@ -295,6 +295,32 @@ def add_equipment(pilot_id):
     if not equip.drone_model:
         flash("Drone model is required.", "danger")
         return redirect(url_for("pilots.detail", pilot_id=pilot.id))
+
+    # Regulatory fields
+    cm = request.form.get("class_mark", "").strip()
+    equip.class_mark = cm if cm in PilotEquipment.CLASS_MARKS else None
+    try:
+        equip.mtom_grams = int(request.form.get("mtom_grams") or 0) or None
+    except (ValueError, TypeError):
+        equip.mtom_grams = None
+    equip.has_camera = bool(request.form.get("has_camera"))
+    gl = request.form.get("green_light_type", "none").strip()
+    equip.green_light_type = gl if gl in PilotEquipment.GREEN_LIGHT_TYPES else 'none'
+    try:
+        equip.green_light_weight_grams = int(request.form.get("green_light_weight_grams") or 0) or None
+    except (ValueError, TypeError):
+        equip.green_light_weight_grams = None
+    equip.has_low_speed_mode = bool(request.form.get("has_low_speed_mode"))
+    equip.remote_id_capable = bool(request.form.get("remote_id_capable"))
+    try:
+        equip.max_speed_ms = float(request.form.get("max_speed_ms") or 0) or None
+    except (ValueError, TypeError):
+        equip.max_speed_ms = None
+    try:
+        equip.max_dimension_m = float(request.form.get("max_dimension_m") or 0) or None
+    except (ValueError, TypeError):
+        equip.max_dimension_m = None
+
     db.session.add(equip)
     db.session.commit()
     flash("Equipment added.", "success")

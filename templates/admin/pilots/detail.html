@@ -431,6 +431,35 @@
                                 <input type="text" name="registration_id" class="form-control form-control-sm"
                                        placeholder="Registration ID">
                             </div>
+                            <div class="col-md-3">
+                                <select name="class_mark" class="form-select form-select-sm">
+                                    <option value="">Class Mark</option>
+                                    <option value="C0">C0</option><option value="C1">C1</option>
+                                    <option value="C2">C2</option><option value="C3">C3</option>
+                                    <option value="C4">C4</option><option value="legacy">Legacy</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" name="mtom_grams" class="form-control form-control-sm"
+                                       placeholder="MTOM (g)" min="0">
+                            </div>
+                            <div class="col-md-3">
+                                <select name="green_light_type" class="form-select form-select-sm">
+                                    <option value="none">No Light</option>
+                                    <option value="built_in">Built-in</option>
+                                    <option value="external">External</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-1">
+                                    <input type="checkbox" name="has_camera" class="form-check-input" value="1" checked>
+                                    <label class="form-check-label small">Camera</label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" name="remote_id_capable" class="form-check-input" value="1">
+                                    <label class="form-check-label small">Remote ID</label>
+                                </div>
+                            </div>
                             <div class="col-md-8">
                                 <input type="text" name="notes" class="form-control form-control-sm"
                                        placeholder="Notes">
@@ -446,14 +475,19 @@
             </div>
             <div class="table-responsive">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Drone</th><th>Serial</th><th>Reg ID</th><th>Notes</th><th></th></tr></thead>
+                    <thead><tr><th>Drone</th><th>Class</th><th>MTOM</th><th>Serial</th><th>Reg ID</th><th></th></tr></thead>
                     <tbody>
                         {% for eq in pilot.equipment %}
                         <tr>
                             <td>{{ eq.drone_model }}</td>
+                            <td>
+                                {% if eq.class_mark %}
+                                <span class="badge bg-info">{{ eq.class_mark }}</span>
+                                {% else %}-{% endif %}
+                            </td>
+                            <td>{{ eq.mtom_display }}</td>
                             <td>{{ eq.serial_number or '-' }}</td>
                             <td>{{ eq.registration_id or '-' }}</td>
-                            <td>{{ eq.notes or '-' }}</td>
                             <td>
                                 <form method="POST" action="{{ url_for('pilots.delete_equipment', pilot_id=pilot.id, equip_id=eq.id) }}" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -462,7 +496,7 @@
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="5" class="text-muted text-center small">No equipment.</td></tr>
+                        <tr><td colspan="6" class="text-muted text-center small">No equipment.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

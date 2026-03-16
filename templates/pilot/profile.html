@@ -367,12 +367,73 @@
                                 <input type="text" name="registration_id" class="form-control form-control-sm"
                                        placeholder="Registration ID">
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-3">
+                                <label class="form-label small">Class Mark</label>
+                                <select name="class_mark" class="form-select form-select-sm">
+                                    <option value="">Not set</option>
+                                    <option value="C0">C0 (&lt;250g)</option>
+                                    <option value="C1">C1 (&lt;900g)</option>
+                                    <option value="C2">C2 (&lt;4kg)</option>
+                                    <option value="C3">C3 (&lt;25kg)</option>
+                                    <option value="C4">C4 (&lt;25kg)</option>
+                                    <option value="legacy">Legacy</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">MTOM (grams)</label>
+                                <input type="number" name="mtom_grams" class="form-control form-control-sm"
+                                       placeholder="e.g. 249" min="0" max="50000">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Green Light</label>
+                                <select name="green_light_type" class="form-select form-select-sm" id="greenLightType">
+                                    <option value="none">None</option>
+                                    <option value="built_in">Built-in</option>
+                                    <option value="external">External</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3" id="greenLightWeightGroup" style="display: none;">
+                                <label class="form-label small">Light Weight (g)</label>
+                                <input type="number" name="green_light_weight_grams" class="form-control form-control-sm"
+                                       placeholder="e.g. 20" min="0">
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-3">
+                                    <input type="checkbox" name="has_camera" class="form-check-input" id="hasCamera" value="1" checked>
+                                    <label class="form-check-label small" for="hasCamera">Has Camera</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-3">
+                                    <input type="checkbox" name="has_low_speed_mode" class="form-check-input" id="lowSpeed" value="1">
+                                    <label class="form-check-label small" for="lowSpeed">Low Speed Mode</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-3">
+                                    <input type="checkbox" name="remote_id_capable" class="form-check-input" id="remoteId" value="1">
+                                    <label class="form-check-label small" for="remoteId">Remote ID</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
                                 <input type="text" name="notes" class="form-control form-control-sm"
                                        placeholder="Notes">
                             </div>
-                            <div class="col-md-4">
-                                <button type="submit" class="btn btn-sm btn-success w-100">Add</button>
+                            <details class="col-12">
+                                <summary class="small text-muted" style="cursor:pointer;">SORA Details (optional)</summary>
+                                <div class="row g-2 mt-1">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Max Speed (m/s)</label>
+                                        <input type="number" name="max_speed_ms" class="form-control form-control-sm" step="0.1" min="0">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Max Dimension (m)</label>
+                                        <input type="number" name="max_dimension_m" class="form-control form-control-sm" step="0.01" min="0">
+                                    </div>
+                                </div>
+                            </details>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-success">Add</button>
                             </div>
                         </div>
                     </form>
@@ -380,11 +441,19 @@
             </div>
             <div class="table-responsive">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Drone</th><th>Serial</th><th>Reg ID</th><th></th></tr></thead>
+                    <thead><tr><th>Drone</th><th>Class</th><th>MTOM</th><th>Serial</th><th>Reg ID</th><th></th></tr></thead>
                     <tbody>
                         {% for eq in current_user.equipment %}
                         <tr>
                             <td>{{ eq.drone_model }}</td>
+                            <td>
+                                {% if eq.class_mark %}
+                                <span class="badge bg-info">{{ eq.class_mark }}</span>
+                                {% else %}
+                                <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ eq.mtom_display }}</td>
                             <td>{{ eq.serial_number or '-' }}</td>
                             <td>{{ eq.registration_id or '-' }}</td>
                             <td>
@@ -395,7 +464,7 @@
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="4" class="text-muted text-center small">No equipment.</td></tr>
+                        <tr><td colspan="6" class="text-muted text-center small">No equipment.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -472,4 +541,18 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var gl = document.getElementById('greenLightType');
+    var wg = document.getElementById('greenLightWeightGroup');
+    if (gl && wg) {
+        gl.addEventListener('change', function() {
+            wg.style.display = this.value === 'external' ? '' : 'none';
+        });
+    }
+})();
+</script>
 {% endblock %}
