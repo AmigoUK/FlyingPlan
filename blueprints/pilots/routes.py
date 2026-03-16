@@ -126,11 +126,20 @@ def edit_pilot(pilot_id):
     pilot.insurance_policy_no = request.form.get("insurance_policy_no", "").strip() or None
     pilot.pilot_bio = request.form.get("pilot_bio", "").strip() or None
 
+    # Structured cert fields
+    pilot.a2_cofc_number = request.form.get("a2_cofc_number", "").strip() or None
+    gvc_level = request.form.get("gvc_level", "").strip()
+    pilot.gvc_level = gvc_level if gvc_level in ('GVC', 'RPC_L1', 'RPC_L2', 'RPC_L3', 'RPC_L4') else None
+    pilot.gvc_cert_number = request.form.get("gvc_cert_number", "").strip() or None
+    oa_type = request.form.get("oa_type", "").strip()
+    pilot.oa_type = oa_type if oa_type in ('PDRA_01', 'FULL_SORA') else None
+    pilot.oa_reference = request.form.get("oa_reference", "").strip() or None
+
     # Date fields
     for date_field in [
         "insurance_expiry", "flying_id_expiry", "operator_id_expiry",
         "a2_cofc_expiry", "gvc_mr_expiry", "gvc_fw_expiry",
-        "practical_competency_date", "article16_agreed_date",
+        "practical_competency_date", "article16_agreed_date", "oa_expiry",
     ]:
         val = request.form.get(date_field, "").strip()
         if val:

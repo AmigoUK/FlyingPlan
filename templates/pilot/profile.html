@@ -105,20 +105,76 @@
                 <div class="card-header"><i class="bi bi-mortarboard"></i> UK Qualifications</div>
                 <div class="card-body">
                     <div class="row g-2">
-                        <div class="col-4"><label class="form-label small">A2 CofC</label></div>
-                        <div class="col-8">
+                        <div class="col-12"><h6 class="small text-muted mb-1">A2 Certificate of Competency</h6></div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Cert Number</label>
+                            <input type="text" name="a2_cofc_number" class="form-control form-control-sm"
+                                   placeholder="e.g. A2-XX-2024-001" value="{{ current_user.a2_cofc_number or '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Expiry Date</label>
                             <input type="date" name="a2_cofc_expiry" class="form-control form-control-sm"
                                    value="{{ current_user.a2_cofc_expiry.strftime('%Y-%m-%d') if current_user.a2_cofc_expiry else '' }}">
                         </div>
-                        <div class="col-4"><label class="form-label small">GVC Multi-Rotor</label></div>
-                        <div class="col-8">
+                        <div class="col-md-4 d-flex align-items-end">
+                            {% if current_user.has_a2_cofc %}
+                            <span class="badge bg-success">VALID</span>
+                            {% elif current_user.a2_cofc_expiry %}
+                            <span class="badge bg-danger">EXPIRED</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12 mt-2"><h6 class="small text-muted mb-1">GVC / RPC</h6></div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Level</label>
+                            <select name="gvc_level" class="form-select form-select-sm">
+                                <option value="">None</option>
+                                <option value="GVC" {{ 'selected' if current_user.gvc_level == 'GVC' }}>GVC</option>
+                                <option value="RPC_L1" {{ 'selected' if current_user.gvc_level == 'RPC_L1' }}>RPC Level 1</option>
+                                <option value="RPC_L2" {{ 'selected' if current_user.gvc_level == 'RPC_L2' }}>RPC Level 2</option>
+                                <option value="RPC_L3" {{ 'selected' if current_user.gvc_level == 'RPC_L3' }}>RPC Level 3</option>
+                                <option value="RPC_L4" {{ 'selected' if current_user.gvc_level == 'RPC_L4' }}>RPC Level 4</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Cert Number</label>
+                            <input type="text" name="gvc_cert_number" class="form-control form-control-sm"
+                                   value="{{ current_user.gvc_cert_number or '' }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            {% if current_user.has_gvc %}
+                            <span class="badge bg-success">VALID</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">GVC MR Expiry</label>
                             <input type="date" name="gvc_mr_expiry" class="form-control form-control-sm"
                                    value="{{ current_user.gvc_mr_expiry.strftime('%Y-%m-%d') if current_user.gvc_mr_expiry else '' }}">
                         </div>
-                        <div class="col-4"><label class="form-label small">GVC Fixed Wing</label></div>
-                        <div class="col-8">
+                        <div class="col-md-6">
+                            <label class="form-label small">GVC FW Expiry</label>
                             <input type="date" name="gvc_fw_expiry" class="form-control form-control-sm"
                                    value="{{ current_user.gvc_fw_expiry.strftime('%Y-%m-%d') if current_user.gvc_fw_expiry else '' }}">
+                        </div>
+
+                        <div class="col-12 mt-2"><h6 class="small text-muted mb-1">Operational Authorisation</h6></div>
+                        <div class="col-md-4">
+                            <label class="form-label small">OA Type</label>
+                            <select name="oa_type" class="form-select form-select-sm">
+                                <option value="">None</option>
+                                <option value="PDRA_01" {{ 'selected' if current_user.oa_type == 'PDRA_01' }}>PDRA-01</option>
+                                <option value="FULL_SORA" {{ 'selected' if current_user.oa_type == 'FULL_SORA' }}>Full SORA</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Reference</label>
+                            <input type="text" name="oa_reference" class="form-control form-control-sm"
+                                   value="{{ current_user.oa_reference or '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">OA Expiry</label>
+                            <input type="date" name="oa_expiry" class="form-control form-control-sm"
+                                   value="{{ current_user.oa_expiry.strftime('%Y-%m-%d') if current_user.oa_expiry else '' }}">
                         </div>
                     </div>
                 </div>

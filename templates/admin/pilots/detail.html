@@ -77,11 +77,25 @@
                 <hr class="my-2">
                 <h6 class="small text-muted mb-1">UK Qualifications</h6>
                 <p class="mb-1"><strong>A2 CofC:</strong>
-                    {{ pilot.a2_cofc_expiry.strftime('%d %b %Y') if pilot.a2_cofc_expiry else '-' }}</p>
-                <p class="mb-1"><strong>GVC Multi-Rotor:</strong>
+                    {% if pilot.has_a2_cofc %}<span class="badge bg-success">VALID</span>{% elif pilot.a2_cofc_expiry %}<span class="badge bg-danger">EXPIRED</span>{% endif %}
+                    {{ pilot.a2_cofc_expiry.strftime('%d %b %Y') if pilot.a2_cofc_expiry else '-' }}
+                    {% if pilot.a2_cofc_number %}<small class="text-muted">({{ pilot.a2_cofc_number }})</small>{% endif %}
+                </p>
+                <p class="mb-1"><strong>GVC Level:</strong> {{ pilot.gvc_level or '-' }}
+                    {% if pilot.has_gvc %}<span class="badge bg-success">VALID</span>{% endif %}
+                    {% if pilot.gvc_cert_number %}<small class="text-muted">({{ pilot.gvc_cert_number }})</small>{% endif %}
+                </p>
+                <p class="mb-1"><strong>GVC MR:</strong>
                     {{ pilot.gvc_mr_expiry.strftime('%d %b %Y') if pilot.gvc_mr_expiry else '-' }}</p>
-                <p class="mb-1"><strong>GVC Fixed Wing:</strong>
+                <p class="mb-1"><strong>GVC FW:</strong>
                     {{ pilot.gvc_fw_expiry.strftime('%d %b %Y') if pilot.gvc_fw_expiry else '-' }}</p>
+                {% if pilot.oa_type %}
+                <p class="mb-1"><strong>OA:</strong> {{ pilot.oa_type|replace('_', '-') }}
+                    {% if pilot.has_operational_authorisation %}<span class="badge bg-success">VALID</span>{% elif pilot.oa_expiry %}<span class="badge bg-danger">EXPIRED</span>{% endif %}
+                    {% if pilot.oa_reference %}<small class="text-muted">({{ pilot.oa_reference }})</small>{% endif %}
+                    {% if pilot.oa_expiry %}<small class="text-muted">exp. {{ pilot.oa_expiry.strftime('%d %b %Y') }}</small>{% endif %}
+                </p>
+                {% endif %}
 
                 {% if pilot.practical_competency_date or pilot.mentor_examiner %}
                 <hr class="my-2">
@@ -175,20 +189,57 @@
                             </div>
 
                             <div class="col-12"><hr class="my-1"><h6 class="small text-muted">UK Qualifications</h6></div>
-                            <div class="col-4"><label class="form-label small">A2 CofC Expiry</label></div>
-                            <div class="col-8">
+                            <div class="col-md-4">
+                                <label class="form-label small">A2 CofC Number</label>
+                                <input type="text" name="a2_cofc_number" class="form-control form-control-sm"
+                                       value="{{ pilot.a2_cofc_number or '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">A2 CofC Expiry</label>
                                 <input type="date" name="a2_cofc_expiry" class="form-control form-control-sm"
                                        value="{{ pilot.a2_cofc_expiry.strftime('%Y-%m-%d') if pilot.a2_cofc_expiry else '' }}">
                             </div>
-                            <div class="col-4"><label class="form-label small">GVC MR Expiry</label></div>
-                            <div class="col-8">
+                            <div class="col-md-4">
+                                <label class="form-label small">GVC Level</label>
+                                <select name="gvc_level" class="form-select form-select-sm">
+                                    <option value="">None</option>
+                                    <option value="GVC" {{ 'selected' if pilot.gvc_level == 'GVC' }}>GVC</option>
+                                    <option value="RPC_L1" {{ 'selected' if pilot.gvc_level == 'RPC_L1' }}>RPC L1</option>
+                                    <option value="RPC_L2" {{ 'selected' if pilot.gvc_level == 'RPC_L2' }}>RPC L2</option>
+                                    <option value="RPC_L3" {{ 'selected' if pilot.gvc_level == 'RPC_L3' }}>RPC L3</option>
+                                    <option value="RPC_L4" {{ 'selected' if pilot.gvc_level == 'RPC_L4' }}>RPC L4</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">GVC Cert Number</label>
+                                <input type="text" name="gvc_cert_number" class="form-control form-control-sm"
+                                       value="{{ pilot.gvc_cert_number or '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">GVC MR Expiry</label>
                                 <input type="date" name="gvc_mr_expiry" class="form-control form-control-sm"
                                        value="{{ pilot.gvc_mr_expiry.strftime('%Y-%m-%d') if pilot.gvc_mr_expiry else '' }}">
                             </div>
-                            <div class="col-4"><label class="form-label small">GVC FW Expiry</label></div>
-                            <div class="col-8">
+                            <div class="col-md-4">
+                                <label class="form-label small">GVC FW Expiry</label>
                                 <input type="date" name="gvc_fw_expiry" class="form-control form-control-sm"
                                        value="{{ pilot.gvc_fw_expiry.strftime('%Y-%m-%d') if pilot.gvc_fw_expiry else '' }}">
+                            </div>
+                            <div class="col-12"><hr class="my-1"><h6 class="small text-muted">Operational Authorisation</h6></div>
+                            <div class="col-md-4">
+                                <select name="oa_type" class="form-select form-select-sm">
+                                    <option value="">None</option>
+                                    <option value="PDRA_01" {{ 'selected' if pilot.oa_type == 'PDRA_01' }}>PDRA-01</option>
+                                    <option value="FULL_SORA" {{ 'selected' if pilot.oa_type == 'FULL_SORA' }}>Full SORA</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="oa_reference" class="form-control form-control-sm"
+                                       placeholder="OA Reference" value="{{ pilot.oa_reference or '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="date" name="oa_expiry" class="form-control form-control-sm"
+                                       value="{{ pilot.oa_expiry.strftime('%Y-%m-%d') if pilot.oa_expiry else '' }}">
                             </div>
 
                             <div class="col-12"><hr class="my-1"><h6 class="small text-muted">Competency</h6></div>
