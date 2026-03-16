@@ -171,9 +171,90 @@ def _run_migrations():
     # Orders table
     if inspector.has_table("orders"):
         order_cols = {col["name"] for col in inspector.get_columns("orders")}
-        if "risk_assessment_completed" not in order_cols:
+        order_new_columns = [
+            ("risk_assessment_completed", "BOOLEAN NOT NULL DEFAULT 0"),
+            ("equipment_id", "INTEGER REFERENCES pilot_equipment(id)"),
+            ("time_of_day", "VARCHAR(20)"),
+            ("proximity_to_people", "VARCHAR(30)"),
+            ("environment_type", "VARCHAR(30)"),
+            ("proximity_to_buildings", "VARCHAR(20)"),
+            ("airspace_type", "VARCHAR(20)"),
+            ("vlos_type", "VARCHAR(20)"),
+            ("speed_mode", "VARCHAR(20)"),
+            ("operational_category", "VARCHAR(30)"),
+            ("category_determined_at", "DATETIME"),
+            ("category_blockers", "TEXT"),
+        ]
+        for col_name, col_type in order_new_columns:
+            if col_name not in order_cols:
+                db.session.execute(
+                    text(f"ALTER TABLE orders ADD COLUMN {col_name} {col_type}")
+                )
+
+    # Pilot equipment table
+    if inspector.has_table("pilot_equipment"):
+        equip_cols = {col["name"] for col in inspector.get_columns("pilot_equipment")}
+        equip_new_columns = [
+            ("class_mark", "VARCHAR(20)"),
+            ("mtom_grams", "INTEGER"),
+            ("has_camera", "BOOLEAN DEFAULT 1"),
+            ("green_light_type", "VARCHAR(20) DEFAULT 'none'"),
+            ("green_light_weight_grams", "INTEGER"),
+            ("has_low_speed_mode", "BOOLEAN DEFAULT 0"),
+            ("remote_id_capable", "BOOLEAN DEFAULT 0"),
+            ("max_speed_ms", "FLOAT"),
+            ("max_dimension_m", "FLOAT"),
+        ]
+        for col_name, col_type in equip_new_columns:
+            if col_name not in equip_cols:
+                db.session.execute(
+                    text(f"ALTER TABLE pilot_equipment ADD COLUMN {col_name} {col_type}")
+                )
+
+    # Risk assessments table
+    if inspector.has_table("risk_assessments"):
+        ra_cols = {col["name"] for col in inspector.get_columns("risk_assessments")}
+        ra_new_columns = [
+            ("operational_category", "VARCHAR(30)"),
+            ("category_version", "INTEGER DEFAULT 2"),
+            ("night_green_light_fitted", "BOOLEAN DEFAULT 0"),
+            ("night_green_light_on", "BOOLEAN DEFAULT 0"),
+            ("night_vlos_maintainable", "BOOLEAN DEFAULT 0"),
+            ("night_orientation_visible", "BOOLEAN DEFAULT 0"),
+            ("a2_distance_confirmed", "BOOLEAN DEFAULT 0"),
+            ("a2_low_speed_active", "BOOLEAN DEFAULT 0"),
+            ("a2_segregation_assessed", "BOOLEAN DEFAULT 0"),
+            ("a3_150m_from_areas", "BOOLEAN DEFAULT 0"),
+            ("a3_50m_from_people", "BOOLEAN DEFAULT 0"),
+            ("a3_50m_from_buildings", "BOOLEAN DEFAULT 0"),
+            ("specific_ops_manual_reviewed", "BOOLEAN DEFAULT 0"),
+            ("specific_insurance_confirmed", "BOOLEAN DEFAULT 0"),
+            ("specific_oa_valid", "BOOLEAN DEFAULT 0"),
+        ]
+        for col_name, col_type in ra_new_columns:
+            if col_name not in ra_cols:
+                db.session.execute(
+                    text(f"ALTER TABLE risk_assessments ADD COLUMN {col_name} {col_type}")
+                )
+        # Set category_version = 1 for existing rows (legacy assessments)
+        if "category_version" not in ra_cols:
             db.session.execute(
-                text("ALTER TABLE orders ADD COLUMN risk_assessment_completed BOOLEAN NOT NULL DEFAULT 0")
+                text("UPDATE risk_assessments SET category_version = 1 WHERE category_version IS NULL OR category_version = 2")
+            )
+
+    # Users table — new cert fields
+    user_cert_columns = [
+        ("a2_cofc_number", "VARCHAR(100)"),
+        ("gvc_level", "VARCHAR(20)"),
+        ("gvc_cert_number", "VARCHAR(100)"),
+        ("oa_type", "VARCHAR(30)"),
+        ("oa_reference", "VARCHAR(100)"),
+        ("oa_expiry", "DATE"),
+    ]
+    for col_name, col_type in user_cert_columns:
+        if col_name not in user_cols:
+            db.session.execute(
+                text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
             )
 
     db.session.commit()

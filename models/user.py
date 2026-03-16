@@ -36,8 +36,16 @@ class User(UserMixin, db.Model):
 
     # UK Drone Qualifications
     a2_cofc_expiry = db.Column(db.Date)
+    a2_cofc_number = db.Column(db.String(100))
     gvc_mr_expiry = db.Column(db.Date)
     gvc_fw_expiry = db.Column(db.Date)
+    gvc_level = db.Column(db.String(20))     # None,'GVC','RPC_L1','RPC_L2','RPC_L3','RPC_L4'
+    gvc_cert_number = db.Column(db.String(100))
+
+    # Operational Authorisation
+    oa_type = db.Column(db.String(30))       # None,'PDRA_01','FULL_SORA'
+    oa_reference = db.Column(db.String(100))
+    oa_expiry = db.Column(db.Date)
 
     # Certificate of Competency
     practical_competency_date = db.Column(db.Date)
@@ -92,3 +100,28 @@ class User(UserMixin, db.Model):
     def operator_id_valid(self):
         from datetime import date
         return bool(self.operator_id and self.operator_id_expiry and self.operator_id_expiry >= date.today())
+
+    GVC_LEVELS = [None, 'GVC', 'RPC_L1', 'RPC_L2', 'RPC_L3', 'RPC_L4']
+    OA_TYPES = [None, 'PDRA_01', 'FULL_SORA']
+
+    @property
+    def has_a2_cofc(self):
+        from datetime import date
+        return bool(self.a2_cofc_expiry and self.a2_cofc_expiry >= date.today())
+
+    @property
+    def has_gvc(self):
+        from datetime import date
+        if not self.gvc_level:
+            return False
+        # Check MR or FW expiry
+        if self.gvc_mr_expiry and self.gvc_mr_expiry >= date.today():
+            return True
+        if self.gvc_fw_expiry and self.gvc_fw_expiry >= date.today():
+            return True
+        return False
+
+    @property
+    def has_operational_authorisation(self):
+        from datetime import date
+        return bool(self.oa_type and self.oa_expiry and self.oa_expiry >= date.today())

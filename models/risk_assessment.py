@@ -63,6 +63,31 @@ class RiskAssessment(db.Model):
     emergency_contacts_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     emergency_contingency_plan = db.Column(db.Boolean, default=False, nullable=False)
 
+    # ── Category Tracking ────────────────────────────────────────
+    operational_category = db.Column(db.String(30))  # category at time of assessment
+    category_version = db.Column(db.Integer, default=2)  # 1=legacy, 2=category-aware
+
+    # ── Night Flying Checks (shown when time_of_day == night/twilight) ──
+    night_green_light_fitted = db.Column(db.Boolean, default=False)
+    night_green_light_on = db.Column(db.Boolean, default=False)
+    night_vlos_maintainable = db.Column(db.Boolean, default=False)
+    night_orientation_visible = db.Column(db.Boolean, default=False)
+
+    # ── A2-specific checks (shown when category == open_a2) ─────
+    a2_distance_confirmed = db.Column(db.Boolean, default=False)    # 30m normal / 5m low-speed / 50m legacy
+    a2_low_speed_active = db.Column(db.Boolean, default=False)      # if using C2 low-speed reduction
+    a2_segregation_assessed = db.Column(db.Boolean, default=False)  # area segregation evaluation
+
+    # ── A3-specific checks (shown when category == open_a3) ─────
+    a3_150m_from_areas = db.Column(db.Boolean, default=False)
+    a3_50m_from_people = db.Column(db.Boolean, default=False)
+    a3_50m_from_buildings = db.Column(db.Boolean, default=False)
+
+    # ── Specific category checks (shown for PDRA-01 or SORA) ───
+    specific_ops_manual_reviewed = db.Column(db.Boolean, default=False)
+    specific_insurance_confirmed = db.Column(db.Boolean, default=False)
+    specific_oa_valid = db.Column(db.Boolean, default=False)
+
     # ── Overall Decision ──────────────────────────────────────────
     risk_level = db.Column(db.String(20), nullable=False)
     decision = db.Column(db.String(30), nullable=False)
@@ -106,5 +131,38 @@ class RiskAssessment(db.Model):
         "emergency_contingency_plan",
     ]
 
+    # Category-specific check fields mapping
+    NIGHT_CHECK_FIELDS = [
+        "night_green_light_fitted", "night_green_light_on",
+        "night_vlos_maintainable", "night_orientation_visible",
+    ]
+
+    A2_CHECK_FIELDS = [
+        "a2_distance_confirmed", "a2_low_speed_active", "a2_segregation_assessed",
+    ]
+
+    A3_CHECK_FIELDS = [
+        "a3_150m_from_areas", "a3_50m_from_people", "a3_50m_from_buildings",
+    ]
+
+    SPECIFIC_CHECK_FIELDS = [
+        "specific_ops_manual_reviewed", "specific_insurance_confirmed", "specific_oa_valid",
+    ]
+
+    CATEGORY_CHECKS = {
+        'open_a1': [],  # base checks only
+        'open_a2': A2_CHECK_FIELDS,
+        'open_a3': A3_CHECK_FIELDS,
+        'specific_pdra01': SPECIFIC_CHECK_FIELDS,
+        'specific_sora': SPECIFIC_CHECK_FIELDS,
+    }
+
     def all_checks_passed(self):
         return all(getattr(self, f) for f in self.CHECK_FIELDS)
+
+    def get_required_checks(self):
+        """Get all required check fields for this assessment's category."""
+        checks = list(self.CHECK_FIELDS)
+        if self.operational_category:
+            checks.extend(self.CATEGORY_CHECKS.get(self.operational_category, []))
+        return checks

@@ -41,9 +41,35 @@ class Order(db.Model):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+    # Equipment selection (pilot picks which drone for this flight)
+    equipment_id = db.Column(db.Integer, db.ForeignKey("pilot_equipment.id"), nullable=True)
+
+    # Flight parameters (pilot fills pre-flight)
+    time_of_day = db.Column(db.String(20))       # 'day','night','twilight'
+    proximity_to_people = db.Column(db.String(30))  # 'over_uninvolved','near_under_50m','50m_plus','over_crowds','controlled_area'
+    environment_type = db.Column(db.String(30))   # 'open_countryside','suburban','urban','industrial','congested'
+    proximity_to_buildings = db.Column(db.String(20))  # 'over_150m','50_to_150m','under_50m'
+    airspace_type = db.Column(db.String(20))      # 'uncontrolled','frz','controlled','restricted','danger'
+    vlos_type = db.Column(db.String(20))          # 'vlos','extended_vlos','bvlos'
+    speed_mode = db.Column(db.String(20))         # 'normal','low_speed','sport'
+
+    # Category determination result (cached after engine runs)
+    operational_category = db.Column(db.String(30))  # 'open_a1','open_a2','open_a3','specific_pdra01','specific_sora','certified'
+    category_determined_at = db.Column(db.DateTime)
+    category_blockers = db.Column(db.Text)  # JSON array of blocker strings
+
+    TIMES_OF_DAY = ['day', 'night', 'twilight']
+    PROXIMITY_TO_PEOPLE = ['over_uninvolved', 'near_under_50m', '50m_plus', 'over_crowds', 'controlled_area']
+    ENVIRONMENT_TYPES = ['open_countryside', 'suburban', 'urban', 'industrial', 'congested']
+    PROXIMITY_TO_BUILDINGS = ['over_150m', '50_to_150m', 'under_50m']
+    AIRSPACE_TYPES = ['uncontrolled', 'frz', 'controlled', 'restricted', 'danger']
+    VLOS_TYPES = ['vlos', 'extended_vlos', 'bvlos']
+    SPEED_MODES = ['normal', 'low_speed', 'sport']
+
     flight_plan = db.relationship(
         "FlightPlan", backref=db.backref("order", uselist=False)
     )
+    equipment = db.relationship("PilotEquipment", foreign_keys=[equipment_id])
     pilot = db.relationship(
         "User", foreign_keys=[pilot_id],
         backref=db.backref("pilot_orders", lazy=True),
