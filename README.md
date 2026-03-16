@@ -1,550 +1,351 @@
 # FlyingPlan
 
-Drone flight management system for requesting, planning, and executing drone missions. Covers the full workflow from customer submission through admin planning to pilot execution and delivery, with built-in CAA regulatory compliance.
+**Drone flight management system** -- from customer request to mission delivery.
 
-Built with Flask, SQLite, Bootstrap 5, and Leaflet.js.
+FlyingPlan handles the entire drone job workflow: your customers submit flight requests, you plan the mission, assign a pilot, and the pilot carries out the flight with full CAA-compliant safety checks. Everything is tracked, documented, and exportable.
 
 ---
 
 ## Table of Contents
 
-- [Features](#features)
-- [Architecture](#architecture)
-- [Information Flow](#information-flow)
-- [User Roles & Access Control](#user-roles--access-control)
-- [Customer Portal](#customer-portal)
-- [Admin Dashboard](#admin-dashboard)
-- [Order Management](#order-management)
-- [Pilot Management](#pilot-management)
-- [Pilot Portal](#pilot-portal)
-- [Pre-Flight Risk Assessment](#pre-flight-risk-assessment)
-- [Settings & Configuration](#settings--configuration)
-- [KMZ Mission Export](#kmz-mission-export)
-- [Screenshots](#screenshots)
+- [How It Works -- The Complete Workflow](#how-it-works----the-complete-workflow)
+  - [Step 1: Customer Submits a Flight Request](#step-1-customer-submits-a-flight-request)
+  - [Step 2: Admin Reviews the Request](#step-2-admin-reviews-the-request)
+  - [Step 3: Admin Plans the Flight Route](#step-3-admin-plans-the-flight-route)
+  - [Step 4: Admin Creates an Order and Assigns a Pilot](#step-4-admin-creates-an-order-and-assigns-a-pilot)
+  - [Step 5: Pilot Accepts the Job](#step-5-pilot-accepts-the-job)
+  - [Step 6: Pilot Completes the Pre-Flight Risk Assessment](#step-6-pilot-completes-the-pre-flight-risk-assessment)
+  - [Step 7: Pilot Flies the Mission](#step-7-pilot-flies-the-mission)
+  - [Step 8: Review, Delivery, and Closure](#step-8-review-delivery-and-closure)
+- [Reports and Exports](#reports-and-exports)
+- [Managing Your Pilots](#managing-your-pilots)
+- [Settings and Branding](#settings-and-branding)
+- [Order Status Reference](#order-status-reference)
+- [Who Can Do What -- User Roles](#who-can-do-what----user-roles)
 - [Installation](#installation)
 - [Running Tests](#running-tests)
-- [Demo Data Seeder](#demo-data-seeder)
-- [Default Credentials](#default-credentials)
-- [Project Structure](#project-structure)
+- [Demo Data](#demo-data)
+- [Default Login Credentials](#default-login-credentials)
 - [Tech Stack](#tech-stack)
 - [Licence](#licence)
 
 ---
 
-## Features
+## How It Works -- The Complete Workflow
 
-- **Customer flight request form** — 5-step wizard with map-based location selection, area polygon drawing, and POI markers
-- **Admin flight plan dashboard** — review submissions, edit waypoints on an interactive map, manage statuses
-- **DJI KMZ export** — generate mission files compatible with DJI Mini 4 Pro
-- **Order management** — create orders from flight plans, assign to pilots, track through lifecycle
-- **Pilot management** — manage pilot profiles, certifications, equipment, and credential documents
-- **Pilot portal** — dedicated dashboard for pilots to accept/decline orders, upload deliverables, manage profile
-- **Pre-flight risk assessment** — mandatory 28-check CAA-compliant safety checklist with GPS capture before every flight
-- **Role-based access** — three-tier RBAC (Pilot / Manager / Admin) with ownership enforcement
-- **Configurable settings** — customisable branding, job types, purpose options, form visibility toggles
-- **Activity logging** — full audit trail on every order status change
-- **75 automated tests** — comprehensive coverage across all features
+Below is the full journey of a drone job, from the moment your customer fills in the request form to the final delivery. Each step includes screenshots so you can see exactly what happens on screen.
+
+> **Tip:** Click any screenshot thumbnail to see the full-size image.
 
 ---
 
-## Architecture
+### Step 1: Customer Submits a Flight Request
 
-```
-                         ┌─────────────────────┐
-                         │   Customer Browser   │
-                         └──────────┬──────────┘
-                                    │ POST /submit
-                         ┌──────────▼──────────┐
-                         │   Public Blueprint   │
-                         │   (Flight Request)   │
-                         └──────────┬──────────┘
-                                    │ FlightPlan created
-                    ┌───────────────┼───────────────┐
-                    │               │               │
-         ┌──────────▼──┐  ┌────────▼────────┐  ┌───▼──────────┐
-         │    Admin     │  │     Orders      │  │   Settings   │
-         │  Dashboard   │  │   Management    │  │   (Admin)    │
-         │ /admin       │  │ /admin/orders   │  │ /admin/      │
-         │              │  │                 │  │  settings    │
-         └──────┬───────┘  └───────┬─────────┘  └──────────────┘
-                │                  │
-                │ Edit waypoints   │ Assign pilot
-                │ Export KMZ       │
-                │                  │
-         ┌──────▼──────────────────▼─────────┐
-         │            SQLite DB              │
-         │  flight_plans · orders · users    │
-         │  risk_assessments · waypoints     │
-         │  order_activities · deliverables  │
-         └──────────────────┬────────────────┘
-                            │
-                   ┌────────▼────────┐
-                   │  Pilot Portal   │
-                   │  /pilot         │
-                   │                 │
-                   │ Accept order    │
-                   │ Risk assessment │
-                   │ Start flight    │
-                   │ Upload files    │
-                   │ Mark delivered  │
-                   └─────────────────┘
-```
+Your customer visits your website and fills in a **5-step form** to describe what they need:
 
-### Blueprint Map
+1. **Their Details** -- name, email, phone, company
+2. **Job Brief** -- what type of drone work (e.g. aerial photography, roof inspection, land survey), description, preferred dates, urgency
+3. **Location** -- they search for an address and drop a pin on the map. They can draw a polygon to mark the exact flight area and add points of interest (POIs)
+4. **Flight Preferences** -- altitude, camera angle, video resolution, photo mode, any no-fly zone notes or privacy concerns
+5. **Review and Submit** -- they check everything, tick the consent box, and optionally attach files (photos, PDFs, documents)
 
-| Blueprint | URL Prefix | Role Required | Purpose |
-|-----------|-----------|---------------|---------|
-| `auth` | `/` | — | Login / Logout |
-| `public` | `/` | — | Customer flight request form |
-| `admin` | `/admin` | Manager+ | Flight plan dashboard & detail |
-| `settings` | `/admin/settings` | Admin | App configuration |
-| `pilots` | `/admin/pilots` | Manager+ | Pilot CRUD & credential management |
-| `orders` | `/admin/orders` | Manager+ | Order lifecycle management |
-| `pilot` | `/pilot` | Pilot | Pilot self-service portal |
+After submitting, the customer receives a unique reference number (e.g. `FP-20260316-1006`) and sees a confirmation page.
+
+<p>
+<a href="screenshots/customer-form-1.png"><img src="screenshots/customer-form-1.png" width="400" alt="Customer form - Step 1: Your Details"></a>
+<a href="screenshots/customer-form-2.png"><img src="screenshots/customer-form-2.png" width="400" alt="Customer form - Step 2: Job Brief"></a>
+</p>
+<p>
+<a href="screenshots/customer-form-3.png"><img src="screenshots/customer-form-3.png" width="400" alt="Customer form - Step 3: Location with map"></a>
+<a href="screenshots/customer-form-4.png"><img src="screenshots/customer-form-4.png" width="400" alt="Customer form - Step 4: Flight Preferences"></a>
+</p>
+<p>
+<a href="screenshots/customer-form-5.png"><img src="screenshots/customer-form-5.png" width="400" alt="Customer form - Step 5: Review and Submit"></a>
+<a href="screenshots/customer-form-submited.png"><img src="screenshots/customer-form-submited.png" width="400" alt="Confirmation page with reference number"></a>
+</p>
+
+*The 5-step customer form wizard. Customers fill in their details, describe the job, pick a location on the map, set flight preferences, and submit. They get a unique reference number on the confirmation page.*
 
 ---
 
-## Information Flow
+### Step 2: Admin Reviews the Request
 
-### End-to-End Workflow
+When you log in as an Admin or Manager, you see the **Admin Dashboard** -- a list of all submitted flight requests. You can filter by status (New, In Review, Route Planned, etc.) and search by customer name, email, or reference number.
 
-```
-Customer submits         Admin reviews &          Admin creates order
-flight request    ──►    plans waypoints    ──►   & assigns pilot
-     │                        │                        │
-     │                        │                        │
-     ▼                        ▼                        ▼
-┌─────────┐           ┌─────────────┐           ┌──────────┐
-│FlightPlan│           │  Waypoints  │           │  Order   │
-│ created  │           │  saved +    │           │ status:  │
-│ status:  │           │  KMZ export │           │ assigned │
-│ "new"    │           │  available  │           │          │
-└─────────┘           └─────────────┘           └────┬─────┘
-                                                     │
-                              ┌───────────────────────┘
-                              ▼
-                    Pilot accepts order
-                    (status: "accepted")
-                              │
-                              ▼
-                    Pilot completes 28-check
-                    risk assessment on-site
-                    (GPS location captured)
-                              │
-                     ┌────────┴────────┐
-                     │                 │
-                  Proceed            Abort
-                     │                 │
-                     ▼                 ▼
-              Gate opens          Gate stays closed
-              (can fly)           (cannot fly)
-                     │
-                     ▼
-              Pilot starts flight
-              (status: "in_progress")
-                     │
-                     ▼
-              Pilot completes flight
-              uploads deliverables
-              (status: "flight_complete")
-                     │
-                     ▼
-              Pilot marks delivered
-              (status: "delivered")
-                     │
-                     ▼
-              Admin closes order
-              (status: "closed")
-```
+Click on any flight plan to see the full details of what the customer requested.
 
-### Order Status Lifecycle
+<p>
+<a href="screenshots/dashboard-admin.png"><img src="screenshots/dashboard-admin.png" width="600" alt="Admin Dashboard showing flight plan list"></a>
+</p>
 
-```
-pending_assignment ──► assigned ──► accepted ──► in_progress ──► flight_complete ──► delivered ──► closed
-                          │                          ▲
-                          │                          │
-                          ▼               risk_assessment_completed
-                       declined                  = True
-```
-
-The `accepted → in_progress` transition is **gated** — the pilot must first complete the pre-flight risk assessment. If the pilot selects "Abort", the assessment is recorded but the gate stays closed and the flight cannot proceed.
-
-### Flight Plan Status Lifecycle
-
-```
-new ──► in_review ──► route_planned ──► completed
-                                    ──► cancelled
-```
+*The admin dashboard lists all customer submissions. Each row shows the reference number, customer name, job type, status, and creation date.*
 
 ---
 
-## User Roles & Access Control
+### Step 3: Admin Plans the Flight Route
 
-FlyingPlan uses a rank-based RBAC system. Each role inherits all permissions of lower roles.
+From the flight plan detail page, you can plan the drone's exact route using an **interactive map**:
 
-| Role | Rank | Access |
-|------|------|--------|
-| **Pilot** | 0 | Own orders only, personal profile, risk assessments |
-| **Manager** | 1 | All flight plans, all orders, assign pilots, all pilot profiles |
-| **Admin** | 2 | Everything + user management, app settings, branding |
+- **Click on the map** to add waypoints (the points the drone will fly to)
+- **Set parameters** for each waypoint: altitude, speed, heading (direction), gimbal (camera) pitch
+- **Add Points of Interest (POIs)** -- the drone can be told to face these while flying
+- **Export a KMZ file** -- this generates a mission file you can load directly into the DJI Fly app on a DJI Mini 4 Pro
 
-**Ownership enforcement:** Pilots can only view/modify orders assigned to them. Attempting to access another pilot's order returns HTTP 403.
+<p>
+<a href="screenshots/task-waypoints.png"><img src="screenshots/task-waypoints.png" width="400" alt="Flight plan with waypoints on the map"></a>
+<a href="screenshots/task-waypoints-edits.png"><img src="screenshots/task-waypoints-edits.png" width="400" alt="Editing waypoint parameters"></a>
+</p>
+<p>
+<a href="screenshots/poi-label.png"><img src="screenshots/poi-label.png" width="400" alt="Points of Interest on the map"></a>
+</p>
 
-**Rate limiting:** Login is limited to 5 failed attempts per 30 seconds per IP address.
-
----
-
-## Customer Portal
-
-The public-facing form at `/` allows customers to submit drone flight requests without authentication.
-
-### 5-Step Form Wizard
-
-1. **Your Details** — name, email, phone, company, how they heard about you
-2. **Job Brief** — job type (from admin-configured list), description, preferred dates, time window, urgency, special requirements
-3. **Location** — address search, interactive map pin, optional area polygon for multi-point missions, POI markers
-4. **Flight Preferences** — altitude (preset or custom), camera angle, video resolution, photo mode, no-fly zones, privacy notes
-5. **Review & Submit** — consent checkbox, optional file attachments (PNG/JPG/PDF/DOC, 32 MB max)
-
-On submission, a unique reference is generated (`FP-YYYYMMDD-####`) and the customer sees a confirmation page.
-
-> **Screenshot placeholder:**
-> ![Customer Form - Step 1: Your Details](screenshots/customer-form-step1.png)
-> *The first step of the flight request wizard collecting customer contact information and company details.*
-
-> **Screenshot placeholder:**
-> ![Customer Form - Step 3: Location](screenshots/customer-form-step3.png)
-> *Interactive Leaflet map where customers drop a pin for the flight location, draw area polygons, and add points of interest.*
-
-> **Screenshot placeholder:**
-> ![Confirmation Page](screenshots/confirmation-page.png)
-> *Confirmation page shown after successful submission with the unique flight plan reference number.*
+*Left: the interactive map showing the planned flight route with numbered waypoints. Right: editing individual waypoint parameters (altitude, speed, heading). Bottom: Points of Interest (POIs) marked on the map with labels.*
 
 ---
 
-## Admin Dashboard
+### Step 4: Admin Creates an Order and Assigns a Pilot
 
-Managers and admins access the flight plan dashboard at `/admin`.
+Once the route is planned, you create an **Order** from the flight plan. This is where you:
 
-### Flight Plan List
+- **Choose a pilot** from your team
+- **Set a scheduled date and time** for the flight
+- **Add any notes** for the pilot (special instructions, access codes, customer contact, etc.)
 
-- Filterable by **status** (new, in review, route planned, completed, cancelled)
-- Filterable by **job type** (aerial photography, inspection, survey, etc.)
-- Searchable by customer name, email, reference, or company
-- Each row shows reference, customer, job type, status badge, creation date
-- Quick-action button to create an order from any flight plan
+The pilot immediately sees the new job in their dashboard.
 
-> **Screenshot placeholder:**
-> ![Admin Dashboard](screenshots/admin-dashboard.png)
-> *Flight plan dashboard with status filters, search bar, and the list of customer submissions.*
+<p>
+<a href="screenshots/assign-pilot.png"><img src="screenshots/assign-pilot.png" width="400" alt="Create order button on flight plan"></a>
+<a href="screenshots/assign-pilot-form.png"><img src="screenshots/assign-pilot-form.png" width="400" alt="Pilot assignment form"></a>
+</p>
+<p>
+<a href="screenshots/assigning-pilot-admin-view.png"><img src="screenshots/assigning-pilot-admin-view.png" width="600" alt="Admin view after assigning pilot"></a>
+</p>
 
-### Flight Plan Detail
-
-- Full customer submission details
-- Interactive Leaflet map for editing waypoints (click to add, drag to reorder)
-- Waypoint panel with altitude, speed, heading, gimbal pitch controls
-- DJI KMZ export button (generates mission file for DJI Mini 4 Pro)
-- Status selector and admin notes
-- Order creation modal with pilot assignment
-
-> **Screenshot placeholder:**
-> ![Flight Plan Detail - Map & Waypoints](screenshots/admin-detail-map.png)
-> *Admin flight plan detail page showing the interactive map with waypoints and the waypoint editing panel.*
-
-> **Screenshot placeholder:**
-> ![Flight Plan Detail - KMZ Export](screenshots/admin-detail-kmz.png)
-> *KMZ export button and waypoint list — generates DJI-compatible mission files for the Mini 4 Pro.*
+*Top left: the option to create an order from a flight plan. Top right: the pilot assignment form where you pick a pilot and set the schedule. Bottom: the admin view showing the order with the assigned pilot.*
 
 ---
 
-## Order Management
+### Step 5: Pilot Accepts the Job
 
-Orders are created from flight plans and track the full pilot assignment lifecycle.
+The pilot logs in and sees their **Pilot Dashboard** with all assigned jobs. They can:
 
-### Creating an Order
+- **View the job details** -- customer info, job brief, flight preferences, location map
+- **Accept** the order (they're happy to do it)
+- **Decline** the order (with a reason -- the admin can then reassign to another pilot)
 
-From the flight plan detail page, admins can:
-1. Click "Create Order"
-2. Optionally assign a pilot immediately
-3. Set scheduled date/time
-4. Add assignment notes
+<p>
+<a href="screenshots/pilot-dashboard.png"><img src="screenshots/pilot-dashboard.png" width="400" alt="Pilot dashboard showing assigned orders"></a>
+<a href="screenshots/pilot-view-my-orders.png"><img src="screenshots/pilot-view-my-orders.png" width="400" alt="Pilot viewing their orders list"></a>
+</p>
+<p>
+<a href="screenshots/accept-job-order-by-pilot.png"><img src="screenshots/accept-job-order-by-pilot.png" width="400" alt="Pilot accepting a job order"></a>
+<a href="screenshots/order-accepted.png"><img src="screenshots/order-accepted.png" width="400" alt="Order accepted confirmation"></a>
+</p>
 
-### Order Detail (Admin View)
-
-- Flight plan summary with link to full plan
-- Pilot assignment card with reassignment form
-- Scheduled date/time display
-- **Risk assessment summary card** (after pilot completes assessment) showing risk level, decision, GPS coordinates, weather data, and battery level
-- Deliverables table with download links
-- Activity log showing all status changes with timestamps and who made them
-- Admin notes
-
-> **Screenshot placeholder:**
-> ![Order Detail - Admin View](screenshots/admin-order-detail.png)
-> *Admin order detail showing pilot assignment, risk assessment summary, deliverables, and the full activity log.*
-
-### Order List
-
-- Filterable by status and pilot
-- Shows reference, customer, pilot name, status badge, scheduled date
-
-> **Screenshot placeholder:**
-> ![Order List](screenshots/admin-order-list.png)
-> *Order management list with status and pilot filters.*
+*Top: the pilot's dashboard and orders list. Bottom left: the pilot reviewing and accepting a job. Bottom right: the order is now marked as accepted.*
 
 ---
 
-## Pilot Management
+### Step 6: Pilot Completes the Pre-Flight Risk Assessment
 
-Admins manage pilot profiles, certifications, equipment, and documents at `/admin/pilots`.
+**This is a mandatory safety step required by UK CAA regulations.** Before the pilot can start flying, they must complete a **28-point pre-flight risk assessment** on-site. This is not optional -- the system will not let the pilot proceed without it.
 
-### Pilot Profile (Admin View)
+The assessment covers **7 sections**:
 
-- Contact information, regulatory IDs (Flying ID, Operator ID)
-- Insurance details (provider, policy number, expiry)
-- Availability status (available / on mission / unavailable)
-- **Certifications** — name, issuing body, cert number, issue/expiry dates
-- **Equipment** — drone model, serial number, registration ID, notes
-- **Documents** — uploaded credential files (certificates, insurance, licences) with expiry tracking
+| Section | What It Checks |
+|---------|---------------|
+| **Site Assessment** | Ground hazards, obstacles, safe distance from people and buildings |
+| **Airspace Check** | Flight restriction zones, restricted airspace, NOTAMs, max altitude |
+| **Weather Assessment** | Wind speed and direction, visibility, precipitation, temperature |
+| **Equipment Check** | Drone condition, battery level, propellers, GPS lock, remote control, Remote ID |
+| **Pilot Fitness (IMSAFE)** | Illness, medication, stress, alcohol, fatigue, nutrition |
+| **Permissions & Compliance** | Flyer ID, Operator ID, insurance, authorisations |
+| **Emergency Procedures** | Emergency landing site, contacts, contingency plan |
 
-> **Screenshot placeholder:**
-> ![Pilot Management - List](screenshots/admin-pilots-list.png)
-> *Pilot list showing all registered pilots with their availability status and active/inactive badges.*
+The pilot also sets **flight parameters** (altitude, speed) and selects a **risk level** (Low / Medium / High) and a **decision**:
 
-> **Screenshot placeholder:**
-> ![Pilot Management - Profile](screenshots/admin-pilot-detail.png)
-> *Pilot detail page with certifications, equipment list, and uploaded credential documents.*
+- **Proceed** -- all clear, the flight can go ahead
+- **Proceed with Mitigations** -- some concerns noted, but manageable (pilot writes mitigation notes)
+- **Abort** -- conditions are unsafe, the flight cannot happen (the system blocks the pilot from starting)
 
----
+The pilot's **GPS location is automatically captured** by the browser, proving the assessment was done on-site.
 
-## Pilot Portal
+<p>
+<a href="screenshots/flight-parameters.png"><img src="screenshots/flight-parameters.png" width="400" alt="Setting flight parameters"></a>
+<a href="screenshots/risk-assesment-form.png"><img src="screenshots/risk-assesment-form.png" width="400" alt="Risk assessment form with checklist"></a>
+</p>
+<p>
+<a href="screenshots/after-set-flight-paramiters-risk-assesment.png"><img src="screenshots/after-set-flight-paramiters-risk-assesment.png" width="600" alt="After completing flight parameters and risk assessment"></a>
+</p>
 
-Pilots access their dedicated portal at `/pilot` after logging in. The navigation automatically switches to the pilot-specific navbar.
-
-### Pilot Dashboard
-
-- Lists all orders assigned to the logged-in pilot
-- Orders grouped by status: pending action, active, completed, declined
-- Quick access to each order's detail page
-
-> **Screenshot placeholder:**
-> ![Pilot Dashboard](screenshots/pilot-dashboard.png)
-> *Pilot dashboard showing assigned orders organised by status.*
-
-### Order Detail (Pilot View)
-
-- Customer and job brief information
-- Flight preferences (altitude, camera, resolution, special requirements)
-- Location map (Leaflet with marker)
-- **Accept / Decline** buttons (for assigned orders)
-- **Risk Assessment CTA** — prominent card showing whether assessment is required, complete, or locked
-- **Status progression** buttons — gated: "In Progress" is disabled until risk assessment is complete
-- Pilot notes section
-- Deliverable upload (video, photos, PDFs, ZIPs up to 32 MB each)
-- Activity log
-
-> **Screenshot placeholder:**
-> ![Pilot Order Detail - Accept/Decline](screenshots/pilot-order-accept.png)
-> *Pilot order detail showing the accept/decline action card for a newly assigned order.*
-
-> **Screenshot placeholder:**
-> ![Pilot Order Detail - Risk Assessment Required](screenshots/pilot-order-ra-required.png)
-> *Order detail showing the risk assessment warning card and the locked "In Progress" button.*
-
-> **Screenshot placeholder:**
-> ![Pilot Order Detail - Assessment Complete](screenshots/pilot-order-ra-complete.png)
-> *Order detail after risk assessment completion — the "In Progress" button is now enabled.*
-
-### Pilot Profile
-
-- Self-service profile editing (display name, contact info, regulatory IDs, insurance)
-- Password change
-- Manage own certifications, equipment, and credential documents
-
-> **Screenshot placeholder:**
-> ![Pilot Profile](screenshots/pilot-profile.png)
-> *Pilot self-service profile page with certifications, equipment, and document management.*
+*Top left: setting flight parameters before the mission. Top right: the 28-point risk assessment checklist. Bottom: the completed assessment with flight parameters set -- the pilot can now proceed to fly.*
 
 ---
 
-## Pre-Flight Risk Assessment
+### Step 7: Pilot Flies the Mission
 
-**CAA Compliance:** UK CAA regulations (CAP 722, ANO 2016, UK Regulation EU 2019/947, Drone Code 2025/2026) require a documented pre-flight risk assessment completed **on-site** before every flight. Records must be retained for 2+ years and be available for CAA inspection.
+Once the risk assessment is passed, the pilot:
 
-### How It Works
+1. **Starts the flight** -- the order status changes to "In Progress"
+2. **Loads the KMZ mission file** into their DJI Fly app (if using automated waypoints)
+3. **Flies the mission** and captures footage/photos
+4. **Uploads deliverables** -- videos, photos, PDFs, ZIP files (up to 32 MB each)
+5. **Marks the flight as complete**
 
-1. Pilot accepts an order (status becomes `accepted`)
-2. Pilot navigates to the flight location
-3. Pilot opens the risk assessment form from the order detail page
-4. Pilot works through **7 sections with 28 mandatory checks**
-5. Pilot selects a risk level and decision
-6. Pilot signs the declaration
-7. GPS location is automatically captured via the browser's Geolocation API
-8. If decision is **Proceed** or **Proceed with Mitigations** → gate opens, pilot can start flight
-9. If decision is **Abort** → assessment is recorded but gate stays closed
+<p>
+<a href="screenshots/order-details.png"><img src="screenshots/order-details.png" width="400" alt="Order details showing flight in progress"></a>
+<a href="screenshots/pilot-order-dv.png"><img src="screenshots/pilot-order-dv.png" width="400" alt="Pilot order detail view"></a>
+</p>
 
-### The 7 Sections
-
-| # | Section | Checks | Data Inputs |
-|---|---------|--------|-------------|
-| 1 | **Site Assessment** | 4 | — |
-| 2 | **Airspace Check** | 4 | Planned altitude (m) |
-| 3 | **Weather Assessment** | 1 | Wind speed, direction, visibility, precipitation, temperature |
-| 4 | **Equipment Check** | 6 | Battery level (%) |
-| 5 | **IMSAFE Pilot Fitness** | 6 | — |
-| 6 | **Permissions & Compliance** | 4 | — |
-| 7 | **Emergency Procedures** | 3 | — |
-| | **Total** | **28** | |
-
-**Section details:**
-
-1. **Site Assessment** — Ground hazards assessed, obstacles mapped, 50m separation from uninvolved persons, 150m from residential/commercial/industrial areas
-2. **Airspace Check** — FRZ checked, restricted airspace checked, NOTAMs reviewed (UTC), max altitude confirmed (120m Open Category), planned altitude input
-3. **Weather Assessment** — Conditions acceptable for flight, plus wind speed (km/h), wind direction, visibility (km), precipitation, temperature (C)
-4. **Equipment Check** — Drone airworthiness, battery adequate (% input), propellers OK, GPS/GNSS lock, remote control functional, Remote ID active (required from Jan 2026)
-5. **IMSAFE Pilot Fitness** — standard CAA aviation checklist: **I**llness free, no impairing **M**edication, manageable **S**tress, no **A**lcohol (8+ hrs), adequately rested (**F**atigue), properly nourished (**E**ating)
-6. **Permissions & Compliance** — Flyer ID valid, Operator ID displayed, insurance valid, authorizations obtained
-7. **Emergency Procedures** — Landing site identified, emergency contacts confirmed, contingency plan reviewed
-
-### Decision Options
-
-| Decision | Effect |
-|----------|--------|
-| **Proceed** | Gate opens — pilot can advance to "In Progress" |
-| **Proceed with Mitigations** | Gate opens — mitigation notes required and recorded |
-| **Abort** | Gate stays closed — flight cannot proceed, assessment retained for records |
-
-### UI Features
-
-- **Accordion layout** — each section expands/collapses independently
-- **Live progress bar** — shows checked count out of 28 with colour change at 100%
-- **Section badges** — each accordion header shows completion count (e.g., 3/4)
-- **Sticky decision panel** — risk level, decision, mitigation notes, and submit button stay visible while scrolling
-- **Submit button disabled** until all 28 checks confirmed + risk level + decision + declaration
-- **Read-only view** — after completion, the form shows all checks with green tick marks and the decision summary
-
-> **Screenshot placeholder:**
-> ![Risk Assessment Form - Accordion](screenshots/risk-assessment-form.png)
-> *The 7-section accordion form with the Site Assessment section expanded, showing the 4 mandatory checks.*
-
-> **Screenshot placeholder:**
-> ![Risk Assessment Form - Decision Panel](screenshots/risk-assessment-decision.png)
-> *The sticky decision panel showing the progress bar, risk level selector, decision dropdown, and pilot declaration.*
-
-> **Screenshot placeholder:**
-> ![Risk Assessment - Read-Only View](screenshots/risk-assessment-readonly.png)
-> *Read-only view of a completed risk assessment showing all green checks and the decision summary card.*
-
-> **Screenshot placeholder:**
-> ![Risk Assessment - Admin Summary](screenshots/risk-assessment-admin.png)
-> *Risk assessment summary card on the admin order detail page showing risk level, decision, GPS coordinates, and weather data.*
+*Left: order details during an active flight. Right: the pilot's view of the order with upload and status controls.*
 
 ---
 
-## Settings & Configuration
+### Step 8: Review, Delivery, and Closure
 
-Admins configure the application at `/admin/settings`.
+After the flight:
 
-### Branding
+1. **Pilot marks "Flight Complete"** and uploads all deliverables
+2. **Pilot marks "Delivered"** when all files are uploaded
+3. **Admin reviews** the deliverables and the risk assessment report
+4. **Admin closes the order** -- the job is done
 
-- Business name (displayed in navbar and page titles)
-- Logo URL
-- Primary colour (CSS variable `--fp-primary`)
-- Contact email
-- Tagline
+Every status change is automatically logged in the **Activity Log**, creating a full audit trail of who did what and when.
 
-### Form Visibility Toggles
+<p>
+<a href="screenshots/pilot-dashboard-to-review.png"><img src="screenshots/pilot-dashboard-to-review.png" width="400" alt="Pilot dashboard showing orders ready for review"></a>
+<a href="screenshots/order-done-for-review-admin-view.png"><img src="screenshots/order-done-for-review-admin-view.png" width="400" alt="Admin view of completed order ready for review"></a>
+</p>
 
-Control which sections appear on the customer form:
-- Show "How did you hear about us?" field
-- Show private/business customer toggle
-- Show footage purpose fields
-- Show output format field
-
-### Lookup Table Management
-
-Admins can create, edit, toggle, and delete:
-- **Job Types** — categories like Aerial Photography, Inspection, Survey (with Bootstrap icon and category)
-- **Purpose Options** — footage usage options (Marketing, Insurance, Progress Report, etc.)
-- **Heard-About Options** — referral source tracking (Google Search, Social Media, Referral, etc.)
-
-Deleting a lookup option is blocked if it's currently in use by any flight plan.
-
-> **Screenshot placeholder:**
-> ![Settings - Branding](screenshots/settings-branding.png)
-> *Admin settings page showing branding configuration and form visibility toggles.*
-
-> **Screenshot placeholder:**
-> ![Settings - Job Types](screenshots/settings-job-types.png)
-> *Job type management with inline toggle, edit, and delete controls.*
+*Left: the pilot's dashboard showing completed flights waiting for admin review. Right: the admin's view of a completed order with deliverables and the full activity log.*
 
 ---
 
-## KMZ Mission Export
+## Reports and Exports
 
-FlyingPlan generates DJI-compatible KMZ mission files for the DJI Mini 4 Pro.
+FlyingPlan generates professional reports and mission files:
 
-### How It Works
+### PDF Flight Reports
 
-1. Admin opens a flight plan detail page
-2. Edits waypoints on the interactive map (click to add points, set altitude/speed/heading per waypoint)
-3. Clicks "Export KMZ"
-4. System generates a ZIP file containing:
-   - `wpmz/template.kml` — UI display template for DJI Fly app
-   - `wpmz/waylines.wpml` — executable flight instructions
+A detailed PDF report is generated for each order, containing:
+- Customer and job details
+- Flight plan summary with a static map
+- Risk assessment results (including GPS coordinates and weather data)
+- Full activity log
 
-### Waypoint Parameters
+<p>
+<a href="screenshots/flying-plan-report.png"><img src="screenshots/flying-plan-report.png" width="400" alt="Flight plan report page 1"></a>
+<a href="screenshots/flying-plan-report2.png"><img src="screenshots/flying-plan-report2.png" width="400" alt="Flight plan report page 2"></a>
+</p>
+<p>
+<a href="screenshots/FlyingPlanReportPDF1.png"><img src="screenshots/FlyingPlanReportPDF1.png" width="250" alt="PDF report page 1"></a>
+<a href="screenshots/FlyingPlanReportPDF2.png"><img src="screenshots/FlyingPlanReportPDF2.png" width="250" alt="PDF report page 2"></a>
+<a href="screenshots/FlyingPlanReportPDF3.png"><img src="screenshots/FlyingPlanReportPDF3.png" width="250" alt="PDF report page 3"></a>
+</p>
 
-Each waypoint supports:
-- Latitude/longitude (WGS84)
-- Altitude (metres, relative to start point)
-- Speed (m/s)
-- Heading (degrees, 0-360)
-- Gimbal pitch (degrees)
-- Turn mode (e.g., `toPointAndStopWithDiscontinuityCurvature`)
-- Hover time (seconds)
-- Camera action (takePhoto, video, etc.)
-- POI reference
+*Top: flight plan report in the app. Bottom: exported PDF report pages showing order details, risk assessment, and activity log.*
+
+### KMZ Mission Files (DJI Compatible)
+
+FlyingPlan exports **KMZ mission files** that you can load directly into the **DJI Fly app** on a DJI Mini 4 Pro. You can also import them into **Google Earth Pro** to visualise the flight path before the mission.
+
+<p>
+<a href="screenshots/FP-20260316-1006-google-kmz.png"><img src="screenshots/FP-20260316-1006-google-kmz.png" width="400" alt="KMZ file opened in Google Earth Pro"></a>
+<a href="screenshots/google-pro-with-imported-kmz.png"><img src="screenshots/google-pro-with-imported-kmz.png" width="400" alt="Google Earth Pro showing imported KMZ mission"></a>
+</p>
+
+*KMZ mission files imported into Google Earth Pro, showing the planned flight route and waypoints on satellite imagery.*
 
 ---
 
-## Screenshots
+## Managing Your Pilots
 
-Below is a guide to the key screens in FlyingPlan. Add screenshots to a `screenshots/` directory.
+As an admin, you manage your pilot team from the **Pilot Management** section:
 
-| # | Filename | Description |
-|---|----------|-------------|
-| 1 | `customer-form-step1.png` | Customer form wizard — Step 1: Your Details (name, email, phone, company) |
-| 2 | `customer-form-step3.png` | Customer form wizard — Step 3: Location with Leaflet map, pin, polygon drawing |
-| 3 | `confirmation-page.png` | Submission confirmation with unique reference number |
-| 4 | `admin-dashboard.png` | Admin flight plan dashboard with status filters and search |
-| 5 | `admin-detail-map.png` | Flight plan detail with interactive waypoint map and editing panel |
-| 6 | `admin-detail-kmz.png` | KMZ export section showing waypoint list and download button |
-| 7 | `admin-order-list.png` | Order list with status and pilot filters |
-| 8 | `admin-order-detail.png` | Admin order detail — pilot assignment, risk assessment summary, deliverables, activity log |
-| 9 | `admin-pilots-list.png` | Pilot management list with availability and active status |
-| 10 | `admin-pilot-detail.png` | Pilot profile — certifications, equipment, uploaded documents |
-| 11 | `pilot-dashboard.png` | Pilot dashboard showing assigned orders by status |
-| 12 | `pilot-order-accept.png` | Pilot order detail — accept/decline action card |
-| 13 | `pilot-order-ra-required.png` | Pilot order detail — risk assessment required warning, locked In Progress button |
-| 14 | `pilot-order-ra-complete.png` | Pilot order detail — assessment complete, In Progress button enabled |
-| 15 | `pilot-profile.png` | Pilot self-service profile with certifications and equipment |
-| 16 | `risk-assessment-form.png` | Risk assessment accordion form with Site Assessment section expanded |
-| 17 | `risk-assessment-decision.png` | Risk assessment sticky decision panel — progress bar, risk level, declaration |
-| 18 | `risk-assessment-readonly.png` | Completed risk assessment read-only view with green check marks |
-| 19 | `risk-assessment-admin.png` | Risk assessment summary card on admin order detail page |
-| 20 | `settings-branding.png` | Admin settings — branding and form visibility toggles |
-| 21 | `settings-job-types.png` | Admin settings — job type management with toggle/edit/delete |
-| 22 | `login-page.png` | Login page with username/password and remember-me checkbox |
+- **View all pilots** with their availability status (Available / On Mission / Unavailable)
+- **Create pilot profiles** with contact details, regulatory IDs (Flyer ID, Operator ID), and insurance information
+- **Track certifications** -- licence name, issuing body, certificate number, issue and expiry dates
+- **Register equipment** -- drone models, serial numbers, registration IDs
+- **Upload documents** -- certificates, insurance policies, licences (with expiry date tracking)
+
+Pilots can also **manage their own profile** from the Pilot Portal, including updating their details, adding certifications, and uploading documents.
+
+<p>
+<a href="screenshots/admin-pilot-lv.png"><img src="screenshots/admin-pilot-lv.png" width="400" alt="Admin pilot list view"></a>
+<a href="screenshots/admin-pilot-dv.png"><img src="screenshots/admin-pilot-dv.png" width="400" alt="Admin pilot detail view"></a>
+</p>
+<p>
+<a href="screenshots/pilot-my-profile-view.png"><img src="screenshots/pilot-my-profile-view.png" width="600" alt="Pilot self-service profile page"></a>
+</p>
+
+*Top left: the pilot list showing all team members and their status. Top right: a pilot's profile with certifications, equipment, and documents. Bottom: the pilot's own profile page where they can update their details.*
+
+---
+
+## Settings and Branding
+
+Admins can customise the system from the **Settings** page:
+
+- **Branding** -- your business name, logo, primary colour, tagline, and contact email
+- **Form Visibility** -- toggle which sections appear on the customer request form (e.g. hide the "How did you hear about us?" field if you don't need it)
+- **Job Types** -- create and manage the types of drone work you offer (Aerial Photography, Roof Inspection, Land Survey, etc.)
+- **Purpose Options** -- what the footage will be used for (Marketing, Insurance Claim, Progress Report, etc.)
+- **Referral Sources** -- how customers found you (Google, Social Media, Referral, etc.)
+
+<p>
+<a href="screenshots/settings-panel.png"><img src="screenshots/settings-panel.png" width="600" alt="Admin settings panel"></a>
+</p>
+
+*The settings panel where you configure branding, form options, and job types.*
+
+---
+
+## Order Status Reference
+
+Every order moves through these statuses. The system enforces the correct order -- you can't skip steps.
+
+| Status | What It Means | Who Changes It |
+|--------|--------------|----------------|
+| **Pending Assignment** | Order created, no pilot assigned yet | Admin |
+| **Assigned** | Pilot has been assigned, waiting for them to respond | Admin |
+| **Accepted** | Pilot has accepted the job | Pilot |
+| **In Progress** | Pilot is on-site and flying (requires completed risk assessment) | Pilot |
+| **Flight Complete** | Pilot has finished flying and uploaded deliverables | Pilot |
+| **Delivered** | All files have been handed over | Pilot |
+| **Closed** | Job is done, admin has signed off | Admin |
+| **Declined** | Pilot declined the job (admin can reassign to another pilot) | Pilot |
+
+**Important:** The transition from "Accepted" to "In Progress" is **blocked** until the pilot completes the 28-point pre-flight risk assessment. If the pilot selects "Abort" in the assessment, the flight cannot proceed at all.
+
+<p>
+<a href="screenshots/admin-orders-lv.png"><img src="screenshots/admin-orders-lv.png" width="400" alt="Admin orders list view"></a>
+<a href="screenshots/admin-order-dv-rejected.png"><img src="screenshots/admin-order-dv-rejected.png" width="400" alt="Admin order detail - rejected/declined"></a>
+</p>
+
+*Left: the order list filtered by status. Right: an order that was declined by a pilot, showing the decline reason and option to reassign.*
+
+---
+
+## Who Can Do What -- User Roles
+
+FlyingPlan has three roles. Each higher role can do everything the lower roles can do, plus more.
+
+| Role | What They Can Do |
+|------|-----------------|
+| **Pilot** | See their own assigned orders, accept/decline jobs, complete risk assessments, fly missions, upload deliverables, manage their own profile |
+| **Manager** | Everything a Pilot can do, plus: see all flight plans and orders, plan routes, create orders, assign pilots, export KMZ files, view all pilot profiles |
+| **Admin** | Everything a Manager can do, plus: create and edit pilot accounts, manage app settings and branding, configure job types and form options |
+
+**Security:** Pilots can only see orders assigned to them. They cannot access other pilots' orders or any admin functions.
 
 ---
 
 ## Installation
 
-### Prerequisites
+### What You Need
 
-- Python 3.10+
-- pip
+- Python 3.10 or newer
+- pip (Python package manager)
 
 ### Setup
 
@@ -553,25 +354,18 @@ Below is a guide to the key screens in FlyingPlan. Add screenshots to a `screens
 git clone https://github.com/AmigoUK/FlyingPlan.git
 cd FlyingPlan
 
-# Create virtual environment
+# Create a virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the application
+# Start the application
 python3 app.py
 ```
 
-The app starts on `http://localhost:5002`. The database and default users are created automatically on first run.
-
-### Environment Variables (Optional)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SECRET_KEY` | (set in config) | Flask session secret |
-| `DATABASE_URL` | `sqlite:///flyingplan.db` | Database connection string |
+Open your browser and go to `http://localhost:5002`. The database and default users are created automatically on the first run.
 
 ---
 
@@ -581,177 +375,40 @@ The app starts on `http://localhost:5002`. The database and default users are cr
 # Run all 75 tests
 python3 -m pytest tests/ -v
 
-# Run specific test file
+# Run a specific test file
 python3 -m pytest tests/test_risk_assessment.py -v
-
-# Run with coverage (if pytest-cov installed)
-python3 -m pytest tests/ --cov=. --cov-report=term-missing
 ```
-
-### Test Files
-
-| File | Tests | Coverage |
-|------|-------|----------|
-| `test_public.py` | 5 | Customer form submission, validation, confirmation |
-| `test_admin.py` | 8 | Dashboard, detail, waypoints, status, notes, filters |
-| `test_models.py` | 6 | User password, seeding, flight plan relationships, cascade delete |
-| `test_kmz.py` | 5 | KMZ structure, KML/WPML validity, coordinate format, export route |
-| `test_orders.py` | 10 | Order CRUD, pilot assignment, status transitions, activity log |
-| `test_pilot.py` | 15 | Dashboard, accept/decline, status, ownership, profile, certs, equipment |
-| `test_risk_assessment.py` | 12 | Form loading, validation, gate enforcement, abort flow, activity log |
-| `test_roles.py` | 14 | Role hierarchy, route protection, login redirects, seeded roles |
 
 ---
 
-## Demo Data Seeder
+## Demo Data
 
-FlyingPlan includes a CLI command to populate the database with a rich, realistic demo dataset for testing all features.
+FlyingPlan includes a command to fill the system with realistic sample data for testing:
 
 ```bash
 flask seed-demo
 ```
 
-This **wipes all existing data** and creates:
-
-| Data | Count | Details |
-|------|-------|---------|
-| Users | 6 | 1 admin + 5 pilots with certifications, equipment, memberships |
-| Flight Plans | 15 | Realistic UK locations with diverse job types |
-| Orders | 15 | All 8 statuses represented (pending, assigned, accepted, in progress, etc.) |
-| Risk Assessments | 8 | Proceed, proceed with mitigations, and abort (weather rejection) |
-| Waypoints | 47 | 4-8 per applicable order with realistic coordinates |
-| POIs | 10 | Points of interest for inspection/survey jobs |
-| Activity Logs | 72 | Full audit trails including a declined-then-reassigned scenario |
-
-### Demo Pilot Profiles
-
-| Username | Name | Status | Equipment |
-|----------|------|--------|-----------|
-| `jmitchell` | James Mitchell | Available | DJI Mavic 3 Enterprise, DJI Mini 4 Pro |
-| `schen` | Sarah Chen | Available | DJI Air 3 |
-| `dokonkwo` | David Okonkwo | On Mission | DJI Inspire 3 |
-| `ewhitfield` | Emma Whitfield | Unavailable | Autel EVO II Pro V3 |
-| `rcooper` | Ryan Cooper | Available | DJI Mini 4 Pro |
-
-### Key Test Scenarios
-
-- **Orders 1-2:** Unassigned, awaiting pilot — one urgent
-- **Order 7:** In-progress bridge inspection with live risk assessment (proceed with mitigations)
-- **Order 8:** Construction monitoring at Canary Wharf — wind mitigation active
-- **Order 13:** Emma declined due to severe weather (abort risk assessment with 45 km/h wind, 2km visibility), reassigned to James who accepted — rich activity log trail
-- **Order 14:** Declined for Heathrow restricted airspace — no reassignment
+**Warning:** This wipes all existing data and creates:
+- 6 users (1 admin + 5 pilots)
+- 15 flight plans with realistic UK locations
+- 15 orders in various statuses
+- 8 risk assessments (including an abort scenario)
+- 47 waypoints and 10 points of interest
+- 72 activity log entries
 
 ---
 
-## Default Credentials
+## Default Login Credentials
 
-| Username | Password | Role | Purpose |
-|----------|----------|------|---------|
-| `admin` | `admin123` | Admin | Full system access (initial setup) |
-| `pilot1` | `pilot123` | Pilot | Default demo pilot (created on first run) |
+| Username | Password | Role |
+|----------|----------|------|
+| `admin` | `admin123` | Admin |
+| `pilot1` | `pilot123` | Pilot |
 
-After running `flask seed-demo`, all demo users share password **`demo123`** (admin: `admin`, pilots: `jmitchell`, `schen`, `dokonkwo`, `ewhitfield`, `rcooper`).
+After running `flask seed-demo`, all demo users use password **`demo123`**.
 
-> **Change these immediately in production.**
-
----
-
-## Project Structure
-
-```
-FlyingPlan/
-├── app.py                          # Flask app factory, migrations, seeding
-├── seed_demo.py                    # Comprehensive demo data seeder (flask seed-demo)
-├── config.py                       # Configuration (DB, uploads, secrets)
-├── extensions.py                   # SQLAlchemy, LoginManager, CSRF init
-├── requirements.txt                # Python dependencies
-│
-├── blueprints/
-│   ├── auth/                       # Login / logout
-│   │   ├── routes.py
-│   │   └── decorators.py           # @role_required decorator
-│   ├── public/                     # Customer flight request form
-│   │   └── routes.py
-│   ├── admin/                      # Flight plan dashboard & detail
-│   │   └── routes.py
-│   ├── orders/                     # Order CRUD & assignment
-│   │   └── routes.py
-│   ├── pilots/                     # Pilot management (admin side)
-│   │   └── routes.py
-│   ├── pilot/                      # Pilot self-service portal
-│   │   └── routes.py
-│   └── settings/                   # App settings & lookup tables
-│       └── routes.py
-│
-├── models/
-│   ├── flight_plan.py              # Core flight request entity
-│   ├── user.py                     # Users with role-based access
-│   ├── order.py                    # Pilot assignment & status tracking
-│   ├── order_activity.py           # Audit log for orders
-│   ├── order_deliverable.py        # Pilot-uploaded files
-│   ├── risk_assessment.py          # 28-check pre-flight safety form
-│   ├── waypoint.py                 # DJI flight path points
-│   ├── poi.py                      # Points of interest
-│   ├── pilot_certification.py      # Pilot licences
-│   ├── pilot_equipment.py          # Pilot drone inventory
-│   ├── pilot_document.py           # Uploaded credential files
-│   ├── upload.py                   # Customer file attachments
-│   ├── app_settings.py             # Singleton app configuration
-│   ├── job_type.py                 # Configurable job categories
-│   ├── purpose_option.py           # Footage purpose options
-│   └── heard_about_option.py       # Marketing source tracking
-│
-├── services/
-│   └── kmz_generator.py            # DJI Mini 4 Pro KMZ file builder
-│
-├── templates/
-│   ├── base.html                   # Base layout with Bootstrap 5
-│   ├── public/                     # Customer-facing pages
-│   │   ├── form.html               # 5-step wizard
-│   │   └── confirmation.html
-│   ├── admin/                      # Admin pages
-│   │   ├── login.html
-│   │   ├── dashboard.html
-│   │   ├── detail.html             # Flight plan with map
-│   │   ├── settings.html
-│   │   ├── pilots/                 # Pilot management views
-│   │   │   ├── list.html
-│   │   │   ├── detail.html
-│   │   │   └── form.html
-│   │   └── orders/                 # Order management views
-│   │       ├── list.html
-│   │       └── detail.html
-│   ├── pilot/                      # Pilot portal views
-│   │   ├── dashboard.html
-│   │   ├── profile.html
-│   │   ├── order_detail.html
-│   │   └── risk_assessment.html    # 7-section accordion form
-│   └── partials/                   # Shared components
-│       ├── _navbar.html            # Admin/manager navbar
-│       ├── _pilot_navbar.html      # Pilot navbar
-│       ├── _assign_modal.html      # Order assignment modal
-│       └── _step[1-5]_*.html       # Form wizard step partials
-│
-├── static/
-│   └── css/
-│       └── style.css               # Custom styles, status badges
-│
-├── tests/                          # 75 automated tests
-│   ├── test_public.py
-│   ├── test_admin.py
-│   ├── test_models.py
-│   ├── test_kmz.py
-│   ├── test_orders.py
-│   ├── test_pilot.py
-│   ├── test_risk_assessment.py
-│   └── test_roles.py
-│
-└── instance/
-    ├── flyingplan.db               # SQLite database (auto-created)
-    └── uploads/                    # File storage
-        ├── orders/<id>/            # Pilot deliverables
-        └── pilots/<id>/            # Pilot credential documents
-```
+> **Change these immediately if you deploy to a live server.**
 
 ---
 
@@ -760,13 +417,12 @@ FlyingPlan/
 | Component | Technology |
 |-----------|-----------|
 | Backend | Flask 3.1, Python 3.12 |
-| Database | SQLite (SQLAlchemy ORM) |
-| Auth | Flask-Login, PBKDF2:SHA256 |
-| CSRF | Flask-WTF |
-| Frontend | Bootstrap 5.3, Bootstrap Icons |
-| Maps | Leaflet.js 1.9, Leaflet.Draw |
+| Database | SQLite (via SQLAlchemy) |
+| Authentication | Flask-Login |
+| Frontend | Bootstrap 5.3 |
+| Maps | Leaflet.js |
 | Mission Export | Custom KMZ generator (DJI Mini 4 Pro) |
-| Tests | pytest |
+| Tests | pytest (75 tests) |
 
 ---
 
