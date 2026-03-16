@@ -123,7 +123,13 @@ def _create_users():
             availability_status="available",
             pilot_bio="Senior pilot with 6 years commercial experience. Specialises in construction progress monitoring and agricultural surveys.",
             a2_cofc_expiry=_date_future(days=400),
+            a2_cofc_number="A2-JM-2023-441",
             gvc_mr_expiry=_date_future(days=350),
+            gvc_level="GVC",
+            gvc_cert_number="GVC-JM-2022-098",
+            oa_type="PDRA_01",
+            oa_reference="OA-PDRA01-JM-2025",
+            oa_expiry=_date_future(days=300),
             practical_competency_date=_date_ago(days=900),
             mentor_examiner="Capt. Robert Haynes",
             article16_agreed=True,
@@ -149,7 +155,10 @@ def _create_users():
             availability_status="available",
             pilot_bio="Mid-level pilot specialising in real estate and architectural photography. GVC certified.",
             a2_cofc_expiry=_date_future(days=300),
+            a2_cofc_number="A2-SC-2024-112",
             gvc_mr_expiry=_date_future(days=250),
+            gvc_level="GVC",
+            gvc_cert_number="GVC-SC-2024-055",
             practical_competency_date=_date_ago(days=500),
             mentor_examiner="Dr. Lisa Tran",
             article16_agreed=True,
@@ -175,8 +184,14 @@ def _create_users():
             availability_status="on_mission",
             pilot_bio="Experienced inspection and survey pilot. Currently operating on-site at Bristol.",
             a2_cofc_expiry=_date_future(days=500),
+            a2_cofc_number="A2-DO-2023-330",
             gvc_mr_expiry=_date_future(days=400),
             gvc_fw_expiry=_date_future(days=380),
+            gvc_level="GVC",
+            gvc_cert_number="GVC-DO-2023-210",
+            oa_type="FULL_SORA",
+            oa_reference="OA-SORA-DO-2025",
+            oa_expiry=_date_future(days=350),
             practical_competency_date=_date_ago(days=700),
             mentor_examiner="Capt. Robert Haynes",
             article16_agreed=True,
@@ -202,6 +217,7 @@ def _create_users():
             availability_status="unavailable",
             pilot_bio="On personal leave until end of month. Experienced in event and celebration coverage.",
             a2_cofc_expiry=_date_future(days=200),
+            a2_cofc_number="A2-EW-2024-201",
             practical_competency_date=_date_ago(days=400),
             mentor_examiner="Dr. Lisa Tran",
             article16_agreed=True,
@@ -227,6 +243,7 @@ def _create_users():
             availability_status="available",
             pilot_bio="Newest team member. Keen photographer with A2 CofC. Eager to build experience.",
             a2_cofc_expiry=_date_future(days=350),
+            a2_cofc_number="A2-RC-2025-088",
             practical_competency_date=_date_ago(days=90),
             mentor_examiner="James Mitchell",
             address_line1="7 Harbour View",
@@ -262,19 +279,22 @@ def _create_users():
             cert_number=num, issue_date=issued, expiry_date=expiry,
         ))
 
-    # --- Equipment ---
+    # --- Equipment (with regulatory fields) ---
     equip = [
-        ("jmitchell", "DJI Mavic 3 Enterprise", "3E4F5G6H7J", "DMAV3-JM-001"),
-        ("jmitchell", "DJI Mini 4 Pro", "MN4P-8K9L0M", "DMINI4-JM-002"),
-        ("schen", "DJI Air 3", "AIR3-QR2S3T", "DAIR3-SC-001"),
-        ("dokonkwo", "DJI Inspire 3", "INS3-UV4W5X", "DINS3-DO-001"),
-        ("ewhitfield", "Autel EVO II Pro V3", "EVOII-YZ6A7B", "AEVO2-EW-001"),
-        ("rcooper", "DJI Mini 4 Pro", "MN4P-CD8E9F", "DMINI4-RC-001"),
+        # (username, model, serial, reg, class_mark, mtom_grams, has_camera, green_light, low_speed, remote_id)
+        ("jmitchell", "DJI Mavic 3 Enterprise", "3E4F5G6H7J", "DMAV3-JM-001", "C2", 920, True, "built_in", False, True),
+        ("jmitchell", "DJI Mini 4 Pro", "MN4P-8K9L0M", "DMINI4-JM-002", "C0", 249, True, "none", False, True),
+        ("schen", "DJI Air 3", "AIR3-QR2S3T", "DAIR3-SC-001", "C1", 720, True, "built_in", False, True),
+        ("dokonkwo", "DJI Inspire 3", "INS3-UV4W5X", "DINS3-DO-001", "C2", 3995, True, "built_in", True, True),
+        ("ewhitfield", "Autel EVO II Pro V3", "EVOII-YZ6A7B", "AEVO2-EW-001", "legacy", 1175, True, "none", False, False),
+        ("rcooper", "DJI Mini 4 Pro", "MN4P-CD8E9F", "DMINI4-RC-001", "C0", 249, True, "none", False, True),
     ]
-    for uname, model, serial, reg in equip:
+    for uname, model, serial, reg, cm, mtom, cam, gl, ls, rid in equip:
         db.session.add(PilotEquipment(
             user_id=users[uname].id, drone_model=model,
             serial_number=serial, registration_id=reg, is_active=True,
+            class_mark=cm, mtom_grams=mtom, has_camera=cam,
+            green_light_type=gl, has_low_speed_mode=ls, remote_id_capable=rid,
         ))
 
     # --- Memberships ---
@@ -375,6 +395,7 @@ ORDER_SPECS = [
         job_description="Bi-annual structural inspection of bridge supports and suspension cables. Close-range imagery required for engineering assessment.",
         footage_purpose="progress_report", heard_about="referral",
         scheduled_date=_date_ago(days=0).date() if isinstance(_date_ago(days=0), datetime) else _date_ago(days=0),
+        fp_environment="urban", fp_category="open_a2",
     ),
     # 8 — in_progress, construction, London Canary Wharf (gets waypoints + risk)
     dict(
@@ -386,6 +407,7 @@ ORDER_SPECS = [
         job_description="Weekly construction progress monitoring of 42-storey residential tower. Requires full facade capture and comparison with BIM model.",
         footage_purpose="progress_report", heard_about="google",
         scheduled_date=_date_ago(days=0).date() if isinstance(_date_ago(days=0), datetime) else _date_ago(days=0),
+        fp_environment="urban", fp_category="open_a2",
     ),
     # 9 — flight_complete, survey, Cornwall coastal cliffs (gets waypoints + risk)
     dict(
@@ -533,6 +555,18 @@ def _create_orders(users):
             order.completion_notes = "Flight completed successfully. All planned waypoints covered."
         if spec["status"] == "delivered":
             order.pilot_notes = "Excellent conditions. All footage captured as briefed."
+
+        # Flight parameters for in-progress and completed orders
+        if spec["status"] in ("in_progress", "flight_complete", "delivered", "closed"):
+            order.time_of_day = "day"
+            order.proximity_to_people = "50m_plus"
+            order.environment_type = spec.get("fp_environment", "open_countryside")
+            order.proximity_to_buildings = "over_150m"
+            order.airspace_type = "uncontrolled"
+            order.vlos_type = "vlos"
+            order.speed_mode = "normal"
+            order.operational_category = spec.get("fp_category", "open_a1")
+            order.category_determined_at = base + timedelta(hours=5)
 
         db.session.add(order)
         db.session.flush()
@@ -721,6 +755,8 @@ def _create_risk_assessments(order_results, users):
             equip_battery_level=rc["equip_battery_level"],
             airspace_planned_altitude=rc["airspace_planned_altitude"],
             created_at=order.started_at or order.accepted_at or order.assigned_at or order.created_at,
+            operational_category=order.operational_category,
+            category_version=2 if order.operational_category else 1,
             **checks,
         )
         db.session.add(ra)
