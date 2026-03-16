@@ -8,7 +8,7 @@ class OrderActivity(db.Model):
     ACTIONS = [
         "created", "assigned", "accepted", "declined",
         "status_changed", "note_added", "deliverable_uploaded",
-        "risk_assessment_completed",
+        "risk_assessment_completed", "waypoints_updated",
     ]
 
     id = db.Column(db.Integer, primary_key=True)

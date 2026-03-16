@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flying Event Report - {{ fp.reference }}</title>
+<style>
+    @page {
+        size: A4;
+        margin: 20mm 15mm 20mm 15mm;
+        @bottom-center {
+            content: "Page " counter(page) " of " counter(pages);
+            font-size: 9px;
+            color: #666;
+        }
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 11px;
+        line-height: 1.4;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
+    h1 { font-size: 20px; margin: 0 0 5px 0; color: #1a1a2e; }
+    h2 {
+        font-size: 14px;
+        color: #1a1a2e;
+        border-bottom: 2px solid #0d6efd;
+        padding-bottom: 4px;
+        margin: 18px 0 8px 0;
+    }
+    h3 { font-size: 12px; color: #444; margin: 10px 0 4px 0; }
+    .header {
+        border-bottom: 3px solid #0d6efd;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    .header-sub { color: #666; font-size: 12px; margin: 2px 0; }
+    /* Info tables replace CSS grid for WeasyPrint compatibility */
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 4px 0;
+    }
+    .info-table td {
+        padding: 2px 4px;
+        border: none;
+        vertical-align: top;
+        font-size: 11px;
+    }
+    .info-table .info-label {
+        font-weight: 600;
+        color: #555;
+        width: 130px;
+        white-space: nowrap;
+    }
+    .info-table .info-value { color: #333; }
+    table.data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0;
+        font-size: 10px;
+        page-break-inside: avoid;
+    }
+    table.data-table th {
+        background: #f0f4ff;
+        color: #333;
+        font-weight: 600;
+        text-align: left;
+        padding: 5px 6px;
+        border: 1px solid #ddd;
+    }
+    table.data-table td {
+        padding: 4px 6px;
+        border: 1px solid #ddd;
+    }
+    table.data-table tr:nth-child(even) td { background: #fafafa; }
+    .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #fff;
+    }
+    .badge-low { background: #198754; }
+    .badge-medium { background: #ffc107; color: #333; }
+    .badge-high { background: #dc3545; }
+    .badge-proceed { background: #198754; }
+    .badge-proceed_with_mitigations { background: #ffc107; color: #333; }
+    .badge-abort { background: #dc3545; }
+    .badge-status { background: #0d6efd; }
+    .check-category {
+        margin: 6px 0;
+    }
+    .check-category-title {
+        font-weight: 600;
+        font-size: 11px;
+        color: #1a1a2e;
+        margin-bottom: 2px;
+    }
+    .check-item {
+        display: inline-block;
+        margin-right: 12px;
+        font-size: 10px;
+    }
+    .check-pass { color: #198754; }
+    .section-box {
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 8px 0;
+    }
+    .weather-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 4px;
+    }
+    .weather-table td {
+        padding: 1px 6px;
+        border: none;
+        font-size: 10px;
+        width: 33%;
+    }
+    .map-container {
+        margin: 8px 0;
+        text-align: center;
+        page-break-inside: avoid;
+    }
+    .map-container img {
+        width: 100%;
+        max-width: 100%;
+    }
+    .page-break { page-break-before: always; }
+    .empty-note { color: #888; font-style: italic; font-size: 10px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <h1>{{ app_settings.business_name if app_settings else 'FlyingPlan' }}</h1>
+    <p class="header-sub">Flying Event Report</p>
+    <p class="header-sub">Reference: <strong>{{ fp.reference }}</strong> | Generated: {{ now().strftime('%d %B %Y %H:%M UTC') if now is defined else '' }}</p>
+</div>
+
+<!-- Order Summary -->
+<h2>Order Summary</h2>
+<table class="info-table">
+    <tr>
+        <td class="info-label">Order ID:</td>
+        <td class="info-value">#{{ order.id }}</td>
+        <td class="info-label">Status:</td>
+        <td class="info-value"><span class="badge badge-status">{{ order.status|replace('_', ' ')|title }}</span></td>
+    </tr>
+    <tr>
+        <td class="info-label">Customer:</td>
+        <td class="info-value">{{ fp.customer_name }}</td>
+        <td class="info-label">Contact:</td>
+        <td class="info-value">{{ fp.customer_email }}{% if fp.customer_phone %} / {{ fp.customer_phone }}{% endif %}</td>
+    </tr>
+    <tr>
+        {% if fp.customer_company %}
+        <td class="info-label">Company:</td>
+        <td class="info-value">{{ fp.customer_company }}</td>
+        {% else %}
+        <td></td><td></td>
+        {% endif %}
+        <td class="info-label">Job Type:</td>
+        <td class="info-value">{{ fp.job_type|replace('_', ' ')|title }}</td>
+    </tr>
+    {% if order.scheduled_date %}
+    <tr>
+        <td class="info-label">Scheduled:</td>
+        <td class="info-value">{{ order.scheduled_date.strftime('%d %b %Y') }}{% if order.scheduled_time %} at {{ order.scheduled_time }}{% endif %}</td>
+        {% if fp.location_address %}
+        <td class="info-label">Location:</td>
+        <td class="info-value">{{ fp.location_address }}</td>
+        {% else %}
+        <td></td><td></td>
+        {% endif %}
+    </tr>
+    {% elif fp.location_address %}
+    <tr>
+        <td class="info-label">Location:</td>
+        <td class="info-value" colspan="3">{{ fp.location_address }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+<!-- Flight Plan -->
+<h2>Flight Plan</h2>
+<table class="info-table">
+    <tr>
+        <td class="info-label">Reference:</td>
+        <td class="info-value">{{ fp.reference }}</td>
+        <td class="info-label">Altitude:</td>
+        <td class="info-value">
+            {% if fp.altitude_preset == 'custom' %}
+            Custom ({{ fp.altitude_custom_m }}m)
+            {% else %}
+            {{ fp.altitude_preset|title if fp.altitude_preset else 'Not set' }}
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td class="info-label">Camera Angle:</td>
+        <td class="info-value">{{ fp.camera_angle|replace('_', ' ')|title if fp.camera_angle else 'Pilot Decides' }}</td>
+        <td class="info-label">Resolution:</td>
+        <td class="info-value">{{ fp.video_resolution or '4K' }}</td>
+    </tr>
+    {% if fp.job_description %}
+    <tr>
+        <td class="info-label">Description:</td>
+        <td class="info-value" colspan="3">{{ fp.job_description }}</td>
+    </tr>
+    {% endif %}
+    {% if fp.special_requirements %}
+    <tr>
+        <td class="info-label">Special Reqs:</td>
+        <td class="info-value" colspan="3">{{ fp.special_requirements }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+<!-- Flight Route Map -->
+{% if map_data_uri %}
+<h2>Flight Route Map</h2>
+<div class="map-container">
+    <img src="{{ map_data_uri }}" alt="Flight route map" />
+</div>
+{% endif %}
+
+<!-- Waypoints -->
+<h2>Waypoints{% if waypoints %} ({{ waypoints|length }}){% endif %}</h2>
+{% if waypoints %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Alt (m)</th>
+            <th>Speed (m/s)</th>
+            <th>Heading</th>
+            <th>Gimbal</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for wp in waypoints %}
+        <tr>
+            <td>{{ wp.index }}</td>
+            <td>{{ "%.6f"|format(wp.lat) }}</td>
+            <td>{{ "%.6f"|format(wp.lng) }}</td>
+            <td>{{ wp.altitude_m }}</td>
+            <td>{{ wp.speed_ms }}</td>
+            <td>{{ "%.1f"|format(wp.heading_deg) if wp.heading_deg is not none else 'Auto' }}</td>
+            <td>{{ wp.gimbal_pitch_deg }}&deg;</td>
+            <td>{{ wp.action_type or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-note">No waypoints recorded for this flight plan.</p>
+{% endif %}
+
+<!-- Risk Assessment -->
+{% if ra %}
+<h2>Pre-Flight Risk Assessment</h2>
+<div class="section-box">
+    <table class="info-table">
+        <tr>
+            <td class="info-label">Risk Level:</td>
+            <td class="info-value"><span class="badge badge-{{ ra.risk_level }}">{{ ra.risk_level|title }}</span></td>
+            <td class="info-label">Decision:</td>
+            <td class="info-value"><span class="badge badge-{{ ra.decision }}">{{ ra.decision|replace('_', ' ')|title }}</span></td>
+        </tr>
+        <tr>
+            <td class="info-label">Pilot:</td>
+            <td class="info-value">{{ ra.pilot.display_name }}</td>
+            <td class="info-label">Completed:</td>
+            <td class="info-value">{{ ra.created_at.strftime('%d %b %Y %H:%M UTC') }}</td>
+        </tr>
+        {% if ra.gps_latitude and ra.gps_longitude %}
+        <tr>
+            <td class="info-label">GPS Location:</td>
+            <td class="info-value" colspan="3">{{ "%.6f"|format(ra.gps_latitude) }}, {{ "%.6f"|format(ra.gps_longitude) }}</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <!-- Safety Checks by Category -->
+    <h3>Safety Checks (28/28 Confirmed)</h3>
+
+    <div class="check-category">
+        <div class="check-category-title">1. Site Assessment</div>
+        <span class="check-item check-pass">&#10003; Ground hazards assessed</span>
+        <span class="check-item check-pass">&#10003; Obstacles mapped</span>
+        <span class="check-item check-pass">&#10003; 50m separation confirmed</span>
+        <span class="check-item check-pass">&#10003; 150m residential check</span>
+    </div>
+
+    <div class="check-category">
+        <div class="check-category-title">2. Airspace Check</div>
+        <span class="check-item check-pass">&#10003; FRZ checked</span>
+        <span class="check-item check-pass">&#10003; Restricted areas checked</span>
+        <span class="check-item check-pass">&#10003; NOTAMs reviewed</span>
+        <span class="check-item check-pass">&#10003; Max altitude confirmed</span>
+        {% if ra.airspace_planned_altitude is not none %}
+        <br><span style="font-size:10px;">Planned altitude: {{ ra.airspace_planned_altitude }}m</span>
+        {% endif %}
+    </div>
+
+    <div class="check-category">
+        <div class="check-category-title">3. Weather Assessment</div>
+        <span class="check-item check-pass">&#10003; Weather acceptable</span>
+        {% if ra.weather_wind_speed is not none or ra.weather_visibility is not none or ra.weather_temperature is not none %}
+        <table class="weather-table" style="margin-top:4px;">
+            <tr>
+                {% if ra.weather_wind_speed is not none %}
+                <td><strong>Wind:</strong> {{ ra.weather_wind_speed }} km/h {{ ra.weather_wind_direction or '' }}</td>
+                {% endif %}
+                {% if ra.weather_visibility is not none %}
+                <td><strong>Visibility:</strong> {{ ra.weather_visibility }} km</td>
+                {% endif %}
+                {% if ra.weather_temperature is not none %}
+                <td><strong>Temp:</strong> {{ ra.weather_temperature }}&deg;C</td>
+                {% endif %}
+            </tr>
+            {% if ra.weather_precipitation %}
+            <tr>
+                <td colspan="3"><strong>Precip:</strong> {{ ra.weather_precipitation }}</td>
+            </tr>
+            {% endif %}
+        </table>
+        {% endif %}
+    </div>
+
+    <div class="check-category">
+        <div class="check-category-title">4. Equipment Check</div>
+        <span class="check-item check-pass">&#10003; Condition OK</span>
+        <span class="check-item check-pass">&#10003; Battery adequate</span>
+        <span class="check-item check-pass">&#10003; Propellers OK</span>
+        <span class="check-item check-pass">&#10003; GPS lock</span>
+        <span class="check-item check-pass">&#10003; Remote OK</span>
+        <span class="check-item check-pass">&#10003; Remote ID active</span>
+        {% if ra.equip_battery_level is not none %}
+        <br><span style="font-size:10px;">Battery level: {{ ra.equip_battery_level }}%</span>
+        {% endif %}
+    </div>
+
+    <div class="check-category">
+        <div class="check-category-title">5. IMSAFE Pilot Fitness</div>
+        <span class="check-item check-pass">&#10003; No illness</span>
+        <span class="check-item check-pass">&#10003; No medication</span>
+        <span class="check-item check-pass">&#10003; No stress</span>
+        <span class="check-item check-pass">&#10003; No alcohol</span>
+        <span class="check-item check-pass">&#10003; No fatigue</span>
+        <span class="check-item check-pass">&#10003; Eating OK</span>
+    </div>
+
+    <div class="check-category">
+        <div class="check-category-title">6. Permissions &amp; Compliance</div>
+        <span class="check-item check-pass">&#10003; Flyer ID valid</span>
+        <span class="check-item check-pass">&#10003; Operator ID displayed</span>
+        <span class="check-item check-pass">&#10003; Insurance valid</span>
+        <span class="check-item check-pass">&#10003; Authorisations checked</span>
+    </div>
+
+    <div class="check-category">
+        <div class="check-category-title">7. Emergency Procedures</div>
+        <span class="check-item check-pass">&#10003; Emergency landing site</span>
+        <span class="check-item check-pass">&#10003; Emergency contacts confirmed</span>
+        <span class="check-item check-pass">&#10003; Contingency plan</span>
+    </div>
+
+    {% if ra.mitigation_notes %}
+    <h3>Mitigations</h3>
+    <p>{{ ra.mitigation_notes }}</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Pilot Info -->
+{% if order.pilot %}
+<h2>Pilot Information</h2>
+<table class="info-table">
+    <tr>
+        <td class="info-label">Name:</td>
+        <td class="info-value">{{ order.pilot.display_name }}</td>
+        {% if order.pilot.flying_id %}
+        <td class="info-label">Flyer ID:</td>
+        <td class="info-value">{{ order.pilot.flying_id }}</td>
+        {% else %}
+        <td></td><td></td>
+        {% endif %}
+    </tr>
+    {% if order.pilot.operator_id or order.pilot.insurance_provider %}
+    <tr>
+        {% if order.pilot.operator_id %}
+        <td class="info-label">Operator ID:</td>
+        <td class="info-value">{{ order.pilot.operator_id }}</td>
+        {% else %}
+        <td></td><td></td>
+        {% endif %}
+        {% if order.pilot.insurance_provider %}
+        <td class="info-label">Insurance:</td>
+        <td class="info-value">{{ order.pilot.insurance_provider }}{% if order.pilot.insurance_policy_no %} ({{ order.pilot.insurance_policy_no }}){% endif %}</td>
+        {% else %}
+        <td></td><td></td>
+        {% endif %}
+    </tr>
+    {% endif %}
+</table>
+{% endif %}
+
+<!-- Activity Log -->
+<h2>Activity Log</h2>
+{% if activities %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Date/Time</th>
+            <th>Action</th>
+            <th>By</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for act in activities %}
+        <tr>
+            <td>{{ act.created_at.strftime('%d %b %Y %H:%M') }}</td>
+            <td>{{ act.action|replace('_', ' ')|title }}</td>
+            <td>{{ act.user.display_name if act.user else '-' }}</td>
+            <td>
+                {% if act.old_value and act.new_value %}
+                {{ act.old_value|replace('_', ' ')|title }} &rarr; {{ act.new_value|replace('_', ' ')|title }}
+                {% elif act.new_value %}
+                {{ act.new_value }}
+                {% endif %}
+                {% if act.details %}{{ act.details }}{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty-note">No activity recorded.</p>
+{% endif %}
+
+<!-- Admin Notes (conditional) -->
+{% if include_admin_notes and order.assignment_notes %}
+<h2>Admin Notes</h2>
+<div class="section-box">
+    <p>{{ order.assignment_notes }}</p>
+</div>
+{% endif %}
+
+</body>
+</html>

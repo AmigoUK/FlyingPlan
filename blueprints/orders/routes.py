@@ -1,9 +1,10 @@
+import json
 import os
 import uuid
 from datetime import datetime, timezone
 
 from flask import (
-    current_app, flash, jsonify, redirect, render_template, request,
+    abort, current_app, flash, jsonify, redirect, render_template, request,
     send_file, url_for,
 )
 from flask_login import current_user
@@ -54,7 +55,7 @@ def list_orders():
         query = query.filter(Order.pilot_id == int(pilot_filter))
 
     orders = query.order_by(Order.created_at.desc()).all()
-    pilots = User.query.filter_by(role="pilot").order_by(User.display_name).all()
+    pilots = User.query.filter_by(role="pilot", is_active_user=True).order_by(User.display_name).all()
     return render_template(
         "admin/orders/list.html",
         orders=orders,
@@ -119,8 +120,17 @@ def detail(order_id):
     pilots = User.query.filter_by(role="pilot", is_active_user=True).order_by(
         User.display_name
     ).all()
+    fp = order.flight_plan
+    pois_json = json.dumps(
+        [{"lat": p.lat, "lng": p.lng, "label": p.label} for p in fp.pois]
+    )
+    waypoints_json = json.dumps([w.to_dict() for w in fp.waypoints])
     return render_template(
-        "admin/orders/detail.html", order=order, pilots=pilots
+        "admin/orders/detail.html",
+        order=order,
+        pilots=pilots,
+        pois_json=pois_json,
+        waypoints_json=waypoints_json,
     )
 
 
@@ -167,6 +177,18 @@ def assign_pilot(order_id):
 
 # ── Admin Status Override ───────────────────────────────────────
 
+ADMIN_VALID_TRANSITIONS = {
+    "pending_assignment": ["assigned", "cancelled", "closed"],
+    "assigned": ["accepted", "declined", "pending_assignment", "closed"],
+    "accepted": ["in_progress", "declined", "assigned", "closed"],
+    "in_progress": ["flight_complete", "closed"],
+    "flight_complete": ["delivered", "closed"],
+    "delivered": ["closed"],
+    "declined": ["assigned", "pending_assignment", "closed"],
+    "closed": [],
+}
+
+
 @orders_bp.route("/<int:order_id>/status", methods=["POST"])
 @role_required("manager")
 def update_status(order_id):
@@ -174,6 +196,15 @@ def update_status(order_id):
     new_status = request.form.get("status", "")
     if new_status not in Order.STATUSES:
         flash("Invalid status.", "danger")
+        return redirect(url_for("orders.detail", order_id=order.id))
+
+    allowed = ADMIN_VALID_TRANSITIONS.get(order.status, [])
+    if new_status not in allowed:
+        flash(
+            f"Cannot change status from {order.status.replace('_', ' ').title()} "
+            f"to {new_status.replace('_', ' ').title()}.",
+            "danger",
+        )
         return redirect(url_for("orders.detail", order_id=order.id))
 
     old_status = order.status
@@ -219,8 +250,28 @@ def download_deliverable(order_id, d_id):
     if deliv.order_id != order_id:
         flash("Invalid deliverable.", "danger")
         return redirect(url_for("orders.detail", order_id=order_id))
+    base_dir = _deliverable_dir(order_id)
+    filepath = os.path.realpath(os.path.join(base_dir, deliv.stored_filename))
+    if not filepath.startswith(os.path.realpath(base_dir)):
+        abort(403)
     return send_file(
-        os.path.join(_deliverable_dir(order_id), deliv.stored_filename),
+        filepath,
         as_attachment=True,
         download_name=deliv.original_filename,
+    )
+
+
+# ── PDF Report ─────────────────────────────────────────────────
+
+@orders_bp.route("/<int:order_id>/report-pdf")
+@role_required("manager")
+def report_pdf(order_id):
+    order = db.get_or_404(Order, order_id)
+    from services.pdf_report import generate_report_pdf
+    buf = generate_report_pdf(order, include_admin_notes=True)
+    return send_file(
+        buf,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"{order.flight_plan.reference}.pdf",
     )

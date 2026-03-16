@@ -84,6 +84,11 @@ class User(UserMixin, db.Model):
         return bool(self.flying_id and self.flying_id_expiry and self.flying_id_expiry >= date.today())
 
     @property
+    def drone_law_theory_valid(self):
+        from datetime import date
+        return bool(self.flying_id_expiry and self.flying_id_expiry >= date.today())
+
+    @property
     def operator_id_valid(self):
         from datetime import date
         return bool(self.operator_id and self.operator_id_expiry and self.operator_id_expiry >= date.today())

@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from flask import (
-    abort, current_app, flash, redirect, render_template, request,
+    abort, current_app, flash, jsonify, redirect, render_template, request,
     send_file, url_for,
 )
 from flask_login import current_user
@@ -22,6 +22,7 @@ from models.pilot_equipment import PilotEquipment
 from models.pilot_document import PilotDocument
 from models.pilot_membership import PilotMembership
 from models.user import User
+from models.waypoint import Waypoint
 
 
 def _log_activity(order, action, old_value=None, new_value=None, details=None):
@@ -617,4 +618,76 @@ def download_document(doc_id):
         filepath,
         as_attachment=True,
         download_name=doc.original_filename,
+    )
+
+
+# ── Save Waypoints ─────────────────────────────────────────────
+
+@pilot_bp.route("/orders/<int:order_id>/waypoints", methods=["POST"])
+@role_required("pilot")
+def save_waypoints(order_id):
+    order = _get_pilot_order(order_id)
+    if order.status not in ("accepted", "in_progress"):
+        return jsonify({"error": "Cannot edit waypoints in current status"}), 403
+
+    data = request.get_json()
+    if not data or not isinstance(data, list):
+        return jsonify({"error": "Invalid data"}), 400
+
+    fp = order.flight_plan
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for i, w in enumerate(data):
+        wp = Waypoint(
+            flight_plan_id=fp.id,
+            index=i,
+            lat=float(w["lat"]),
+            lng=float(w["lng"]),
+            altitude_m=float(w.get("altitude_m", 30.0)),
+            speed_ms=float(w.get("speed_ms", 5.0)),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=float(w.get("gimbal_pitch_deg", -90.0)),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            turn_damping_dist=float(w.get("turn_damping_dist", 0.0)),
+            hover_time_s=float(w.get("hover_time_s", 0.0)),
+            action_type=w.get("action_type") or None,
+            poi_lat=w.get("poi_lat"),
+            poi_lng=w.get("poi_lng"),
+        )
+        db.session.add(wp)
+
+    _log_activity(order, "waypoints_updated", new_value=str(len(data)))
+    db.session.commit()
+    return jsonify({"success": True, "count": len(data)})
+
+
+# ── Export KMZ ─────────────────────────────────────────────────
+
+@pilot_bp.route("/orders/<int:order_id>/export-kmz")
+@role_required("pilot")
+def export_kmz(order_id):
+    order = _get_pilot_order(order_id)
+    fp = order.flight_plan
+    from services.kmz_generator import generate_kmz
+    buf = generate_kmz(fp)
+    return send_file(
+        buf,
+        mimetype="application/vnd.google-earth.kmz",
+        as_attachment=True,
+        download_name=f"{fp.reference}.kmz",
+    )
+
+
+# ── PDF Report ─────────────────────────────────────────────────
+
+@pilot_bp.route("/orders/<int:order_id>/report-pdf")
+@role_required("pilot")
+def report_pdf(order_id):
+    order = _get_pilot_order(order_id)
+    from services.pdf_report import generate_report_pdf
+    buf = generate_report_pdf(order, include_admin_notes=False)
+    return send_file(
+        buf,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=f"{order.flight_plan.reference}.pdf",
     )

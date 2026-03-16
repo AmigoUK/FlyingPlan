@@ -198,10 +198,19 @@ def test_abort_keeps_gate_closed(app, pilot_client):
 
     with app.app_context():
         order = db.session.get(Order, order_id)
-        assert order.risk_assessment_completed is False
+        # Assessment is marked completed (abort is a valid completion)
+        assert order.risk_assessment_completed is True
         ra = RiskAssessment.query.filter_by(order_id=order_id).first()
         assert ra is not None
         assert ra.decision == "abort"
+
+    # But transitioning to in_progress should still be blocked
+    resp = pilot_client.post(
+        f"/pilot/orders/{order_id}/status",
+        data={"status": "in_progress"},
+        follow_redirects=True,
+    )
+    assert b"aborted in risk assessment" in resp.data
 
 
 # ── 7. Cannot start flight without assessment ────────────────────

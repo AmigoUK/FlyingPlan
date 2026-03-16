@@ -18,11 +18,8 @@ class Config:
     REMEMBER_COOKIE_HTTPONLY = True
 
     # Google OAuth
-    GOOGLE_CLIENT_ID = os.environ.get(
-        "GOOGLE_CLIENT_ID",
-        "250309393213-7acbm255arjda8kvhf6cvrqef98mhk03.apps.googleusercontent.com",
-    )
-    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "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")
+    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
     GOOGLE_CLIENT_SECRETS_FILE = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "instance", "client_secret.json"
     )

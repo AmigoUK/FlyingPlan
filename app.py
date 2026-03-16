@@ -195,7 +195,8 @@ def _seed_admin():
 def _seed_pilot():
     from models.user import User
 
-    if not User.query.filter_by(username="pilot1").first():
+    # Only create default pilot if no pilots exist at all
+    if not User.query.filter_by(role="pilot").first():
         pilot = User(
             username="pilot1",
             display_name="Demo Pilot",
@@ -237,6 +238,15 @@ def _seed_lookup_tables():
 
 
 app = create_app()
+
+
+@app.cli.command("seed-demo")
+def seed_demo_command():
+    """Wipe DB and load comprehensive demo data."""
+    from seed_demo import seed_demo_data
+    seed_demo_data()
+    print("Demo data seeded successfully.")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002, debug=True)

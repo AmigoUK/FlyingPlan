@@ -23,6 +23,7 @@ Built with Flask, SQLite, Bootstrap 5, and Leaflet.js.
 - [Screenshots](#screenshots)
 - [Installation](#installation)
 - [Running Tests](#running-tests)
+- [Demo Data Seeder](#demo-data-seeder)
 - [Default Credentials](#default-credentials)
 - [Project Structure](#project-structure)
 - [Tech Stack](#tech-stack)
@@ -602,12 +603,54 @@ python3 -m pytest tests/ --cov=. --cov-report=term-missing
 
 ---
 
+## Demo Data Seeder
+
+FlyingPlan includes a CLI command to populate the database with a rich, realistic demo dataset for testing all features.
+
+```bash
+flask seed-demo
+```
+
+This **wipes all existing data** and creates:
+
+| Data | Count | Details |
+|------|-------|---------|
+| Users | 6 | 1 admin + 5 pilots with certifications, equipment, memberships |
+| Flight Plans | 15 | Realistic UK locations with diverse job types |
+| Orders | 15 | All 8 statuses represented (pending, assigned, accepted, in progress, etc.) |
+| Risk Assessments | 8 | Proceed, proceed with mitigations, and abort (weather rejection) |
+| Waypoints | 47 | 4-8 per applicable order with realistic coordinates |
+| POIs | 10 | Points of interest for inspection/survey jobs |
+| Activity Logs | 72 | Full audit trails including a declined-then-reassigned scenario |
+
+### Demo Pilot Profiles
+
+| Username | Name | Status | Equipment |
+|----------|------|--------|-----------|
+| `jmitchell` | James Mitchell | Available | DJI Mavic 3 Enterprise, DJI Mini 4 Pro |
+| `schen` | Sarah Chen | Available | DJI Air 3 |
+| `dokonkwo` | David Okonkwo | On Mission | DJI Inspire 3 |
+| `ewhitfield` | Emma Whitfield | Unavailable | Autel EVO II Pro V3 |
+| `rcooper` | Ryan Cooper | Available | DJI Mini 4 Pro |
+
+### Key Test Scenarios
+
+- **Orders 1-2:** Unassigned, awaiting pilot — one urgent
+- **Order 7:** In-progress bridge inspection with live risk assessment (proceed with mitigations)
+- **Order 8:** Construction monitoring at Canary Wharf — wind mitigation active
+- **Order 13:** Emma declined due to severe weather (abort risk assessment with 45 km/h wind, 2km visibility), reassigned to James who accepted — rich activity log trail
+- **Order 14:** Declined for Heathrow restricted airspace — no reassignment
+
+---
+
 ## Default Credentials
 
 | Username | Password | Role | Purpose |
 |----------|----------|------|---------|
-| `admin` | `admin123` | Admin | Full system access |
-| `pilot1` | `pilot123` | Pilot | Demo pilot account |
+| `admin` | `admin123` | Admin | Full system access (initial setup) |
+| `pilot1` | `pilot123` | Pilot | Default demo pilot (created on first run) |
+
+After running `flask seed-demo`, all demo users share password **`demo123`** (admin: `admin`, pilots: `jmitchell`, `schen`, `dokonkwo`, `ewhitfield`, `rcooper`).
 
 > **Change these immediately in production.**
 
@@ -618,6 +661,7 @@ python3 -m pytest tests/ --cov=. --cov-report=term-missing
 ```
 FlyingPlan/
 ├── app.py                          # Flask app factory, migrations, seeding
+├── seed_demo.py                    # Comprehensive demo data seeder (flask seed-demo)
 ├── config.py                       # Configuration (DB, uploads, secrets)
 ├── extensions.py                   # SQLAlchemy, LoginManager, CSRF init
 ├── requirements.txt                # Python dependencies

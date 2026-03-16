@@ -16,6 +16,11 @@
             {{ order.status|replace('_', ' ')|title }}
         </span>
     </div>
+    <div>
+        <a href="{{ url_for('pilot.report_pdf', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Download Report
+        </a>
+    </div>
 </div>
 
 <div class="row g-4">
@@ -50,6 +55,17 @@
 
         {% if order.status == 'accepted' %}
         <!-- Risk Assessment CTA -->
+        {% if order.risk_assessment and order.risk_assessment.decision == 'abort' %}
+        <div class="card mb-3 border-danger">
+            <div class="card-body">
+                <h6><i class="bi bi-x-circle text-danger"></i> Flight Aborted</h6>
+                <p class="small mb-2 text-danger">Risk assessment completed with abort decision. This flight cannot proceed.</p>
+                <a href="{{ url_for('pilot.risk_assessment', order_id=order.id) }}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-eye"></i> View Assessment
+                </a>
+            </div>
+        </div>
+        {% else %}
         <div class="card mb-3 border-{{ 'success' if order.risk_assessment_completed else 'warning' }}">
             <div class="card-body">
                 {% if order.risk_assessment_completed %}
@@ -68,6 +84,7 @@
             </div>
         </div>
         {% endif %}
+        {% endif %}
 
         {% if order.status not in ['accepted', 'assigned', 'declined', 'closed'] and order.risk_assessment %}
         <div class="card mb-3">
@@ -85,8 +102,9 @@
             <div class="card-body">
                 <h6><i class="bi bi-arrow-right-circle"></i> Update Status</h6>
                 {% for next_status in allowed_next %}
-                {% if next_status == 'in_progress' and not order.risk_assessment_completed %}
-                <button class="btn btn-sm btn-outline-secondary me-1 mb-1" disabled title="Complete risk assessment first">
+                {% if next_status == 'in_progress' and (not order.risk_assessment_completed or (order.risk_assessment and order.risk_assessment.decision == 'abort')) %}
+                <button class="btn btn-sm btn-outline-secondary me-1 mb-1" disabled
+                        title="{{ 'Flight aborted in risk assessment' if order.risk_assessment and order.risk_assessment.decision == 'abort' else 'Complete risk assessment first' }}">
                     <i class="bi bi-lock"></i> In Progress
                 </button>
                 {% else %}
@@ -181,10 +199,40 @@
         <!-- Map -->
         {% if order.flight_plan.location_lat and order.flight_plan.location_lng %}
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-map"></i> Location</div>
-            <div class="card-body p-0">
-                <div id="pilot-map" style="height: 300px; border-radius: 0 0 8px 8px;"></div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-map"></i> Location</span>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ url_for('pilot.export_kmz', order_id=order.id) }}" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-download"></i> Export KMZ
+                    </a>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="toggle-satellite">
+                        <label class="form-check-label small" for="toggle-satellite">Satellite</label>
+                    </div>
+                </div>
             </div>
+            <div class="card-body p-0">
+                <input type="hidden" id="plan-lat" value="{{ order.flight_plan.location_lat }}">
+                <input type="hidden" id="plan-lng" value="{{ order.flight_plan.location_lng }}">
+                <input type="hidden" id="plan-polygon" value="{{ order.flight_plan.area_polygon or '' }}">
+                <input type="hidden" id="plan-pois" value='{{ pois_json }}'>
+                <input type="hidden" id="plan-waypoints" value='{{ waypoints_json }}'>
+                <input type="hidden" id="waypoints-save-url" value="{{ url_for('pilot.save_waypoints', order_id=order.id) }}">
+                <div id="pilot-map" style="height: 350px; border-radius: 0 0 8px 8px;"></div>
+            </div>
+            {% if order.status in ['accepted', 'in_progress'] %}
+            <div class="card-footer">
+                <div class="d-flex gap-2 mb-2">
+                    <button id="btn-save-waypoints" class="btn btn-sm btn-success">
+                        <i class="bi bi-save"></i> Save Waypoints
+                    </button>
+                    <button id="btn-clear-waypoints" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Clear All
+                    </button>
+                </div>
+                <div id="waypoint-list"></div>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 
@@ -285,17 +333,10 @@
 {% block scripts %}
 {% if order.flight_plan.location_lat and order.flight_plan.location_lng %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(function() {
-    var lat = {{ order.flight_plan.location_lat }};
-    var lng = {{ order.flight_plan.location_lng }};
-    var map = L.map('pilot-map').setView([lat, lng], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-    L.marker([lat, lng]).addTo(map);
-})();
-</script>
+{% if order.status in ['accepted', 'in_progress'] %}
+<script src="{{ url_for('static', filename='js/map-pilot-edit.js') }}"></script>
+{% else %}
+<script src="{{ url_for('static', filename='js/map-pilot.js') }}"></script>
+{% endif %}
 {% endif %}
 {% endblock %}
