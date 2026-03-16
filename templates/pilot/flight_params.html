@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}Flight Parameters - Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a href="{{ url_for('pilot.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Back to Order
+        </a>
+        <strong class="fs-5">Flight Parameters</strong>
+        <span class="badge bg-secondary ms-2">Order #{{ order.id }}</span>
+    </div>
+</div>
+
+<form method="POST" id="flightParamsForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <!-- Equipment Selection -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-drone"></i> Select Equipment</div>
+                <div class="card-body">
+                    <select name="equipment_id" id="equipmentSelect" class="form-select form-select-sm" required>
+                        <option value="">-- Select Drone --</option>
+                        {% for eq in current_user.equipment %}
+                        {% if eq.is_active %}
+                        <option value="{{ eq.id }}" {{ 'selected' if order.equipment_id == eq.id }}>
+                            {{ eq.drone_model }}
+                            {% if eq.class_mark %} ({{ eq.class_mark }}){% endif %}
+                            {% if eq.mtom_grams %} — {{ eq.mtom_display }}{% endif %}
+                        </option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% if not current_user.equipment %}
+                    <div class="alert alert-warning mt-2 mb-0 small">
+                        <i class="bi bi-exclamation-triangle"></i> No equipment registered.
+                        <a href="{{ url_for('pilot.profile') }}">Add equipment in your profile</a>.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Flight Parameters -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-sliders"></i> Flight Parameters</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Time of Day</label>
+                            <select name="time_of_day" class="form-select form-select-sm fp-field" required>
+                                <option value="">-- Select --</option>
+                                <option value="day" {{ 'selected' if order.time_of_day == 'day' }}>Day</option>
+                                <option value="twilight" {{ 'selected' if order.time_of_day == 'twilight' }}>Twilight</option>
+                                <option value="night" {{ 'selected' if order.time_of_day == 'night' }}>Night</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">VLOS Type</label>
+                            <select name="vlos_type" class="form-select form-select-sm fp-field" required>
+                                <option value="">-- Select --</option>
+                                <option value="vlos" {{ 'selected' if order.vlos_type == 'vlos' }}>VLOS</option>
+                                <option value="extended_vlos" {{ 'selected' if order.vlos_type == 'extended_vlos' }}>Extended VLOS</option>
+                                <option value="bvlos" {{ 'selected' if order.vlos_type == 'bvlos' }}>BVLOS</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Proximity to People</label>
+                            <select name="proximity_to_people" class="form-select form-select-sm fp-field" required>
+                                <option value="">-- Select --</option>
+                                <option value="50m_plus" {{ 'selected' if order.proximity_to_people == '50m_plus' }}>50m+ from people</option>
+                                <option value="near_under_50m" {{ 'selected' if order.proximity_to_people == 'near_under_50m' }}>Near people (&lt;50m)</option>
+                                <option value="over_uninvolved" {{ 'selected' if order.proximity_to_people == 'over_uninvolved' }}>Over uninvolved people</option>
+                                <option value="over_crowds" {{ 'selected' if order.proximity_to_people == 'over_crowds' }}>Over assemblies of people</option>
+                                <option value="controlled_area" {{ 'selected' if order.proximity_to_people == 'controlled_area' }}>Controlled/cordoned area</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Environment</label>
+                            <select name="environment_type" class="form-select form-select-sm fp-field" required>
+                                <option value="">-- Select --</option>
+                                <option value="open_countryside" {{ 'selected' if order.environment_type == 'open_countryside' }}>Open countryside</option>
+                                <option value="suburban" {{ 'selected' if order.environment_type == 'suburban' }}>Suburban</option>
+                                <option value="urban" {{ 'selected' if order.environment_type == 'urban' }}>Urban</option>
+                                <option value="industrial" {{ 'selected' if order.environment_type == 'industrial' }}>Industrial</option>
+                                <option value="congested" {{ 'selected' if order.environment_type == 'congested' }}>Congested area</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Proximity to Buildings</label>
+                            <select name="proximity_to_buildings" class="form-select form-select-sm fp-field" required>
+                                <option value="">-- Select --</option>
+                                <option value="over_150m" {{ 'selected' if order.proximity_to_buildings == 'over_150m' }}>150m+ from buildings</option>
+                                <option value="50_to_150m" {{ 'selected' if order.proximity_to_buildings == '50_to_150m' }}>50-150m from buildings</option>
+                                <option value="under_50m" {{ 'selected' if order.proximity_to_buildings == 'under_50m' }}>&lt;50m from buildings</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Airspace</label>
+                            <select name="airspace_type" class="form-select form-select-sm fp-field" required>
+                                <option value="">-- Select --</option>
+                                <option value="uncontrolled" {{ 'selected' if order.airspace_type == 'uncontrolled' }}>Uncontrolled (Class G)</option>
+                                <option value="frz" {{ 'selected' if order.airspace_type == 'frz' }}>Flight Restriction Zone</option>
+                                <option value="controlled" {{ 'selected' if order.airspace_type == 'controlled' }}>Controlled airspace</option>
+                                <option value="restricted" {{ 'selected' if order.airspace_type == 'restricted' }}>Restricted area</option>
+                                <option value="danger" {{ 'selected' if order.airspace_type == 'danger' }}>Danger area</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Speed Mode</label>
+                            <select name="speed_mode" class="form-select form-select-sm fp-field" required>
+                                <option value="">-- Select --</option>
+                                <option value="normal" {{ 'selected' if order.speed_mode == 'normal' }}>Normal</option>
+                                <option value="low_speed" {{ 'selected' if order.speed_mode == 'low_speed' }}>Low Speed (&le;3 m/s)</option>
+                                <option value="sport" {{ 'selected' if order.speed_mode == 'sport' }}>Sport</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary" id="checkCategoryBtn">
+                    <i class="bi bi-search"></i> Check Category
+                </button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="bi bi-check-circle"></i> Save &amp; Continue
+                </button>
+            </div>
+        </div>
+
+        <!-- Category Result Panel -->
+        <div class="col-lg-5">
+            <div class="card sticky-top" style="top: 1rem;" id="categoryResultCard">
+                <div class="card-header"><i class="bi bi-shield-check"></i> Category Determination</div>
+                <div class="card-body" id="categoryResult">
+                    <p class="text-muted small">Select equipment and fill in flight parameters, then click "Check Category" to preview the operational category.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var checkBtn = document.getElementById('checkCategoryBtn');
+    var resultDiv = document.getElementById('categoryResult');
+    var csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.textContent;
+    }
+
+    function createAlert(type, icon, text) {
+        var div = document.createElement('div');
+        div.className = 'alert alert-' + type + ' py-1 small mb-1';
+        var i = document.createElement('i');
+        i.className = 'bi bi-' + icon;
+        div.appendChild(i);
+        div.appendChild(document.createTextNode(' ' + text));
+        return div;
+    }
+
+    checkBtn.addEventListener('click', function() {
+        var data = {
+            equipment_id: document.getElementById('equipmentSelect').value,
+            time_of_day: document.querySelector('[name="time_of_day"]').value,
+            proximity_to_people: document.querySelector('[name="proximity_to_people"]').value,
+            environment_type: document.querySelector('[name="environment_type"]').value,
+            proximity_to_buildings: document.querySelector('[name="proximity_to_buildings"]').value,
+            airspace_type: document.querySelector('[name="airspace_type"]').value,
+            vlos_type: document.querySelector('[name="vlos_type"]').value,
+            speed_mode: document.querySelector('[name="speed_mode"]').value,
+        };
+
+        resultDiv.textContent = '';
+        var spinner = document.createElement('div');
+        spinner.className = 'text-center';
+        spinner.textContent = 'Checking...';
+        resultDiv.appendChild(spinner);
+
+        fetch('{{ url_for("pilot.category_check", order_id=order.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(data),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(result) {
+            resultDiv.textContent = '';
+
+            // Category badge
+            var catClass = 'secondary';
+            if (result.category.indexOf('open_') === 0) catClass = result.blockers.length ? 'warning' : 'success';
+            else if (result.category.indexOf('specific_') === 0) catClass = 'primary';
+            else if (result.category === 'certified') catClass = 'danger';
+
+            var catDisplay = result.category.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+            var h5 = document.createElement('h5');
+            var badge = document.createElement('span');
+            badge.className = 'badge bg-' + catClass;
+            badge.textContent = catDisplay;
+            h5.appendChild(badge);
+            resultDiv.appendChild(h5);
+
+            // Distances
+            var distRow = document.createElement('div');
+            distRow.className = 'row small mb-2';
+            var d1 = document.createElement('div');
+            d1.className = 'col-6';
+            d1.textContent = 'Min distance (people): ' + result.min_distance_people_m + 'm';
+            var d2 = document.createElement('div');
+            d2.className = 'col-6';
+            d2.textContent = 'Min distance (buildings): ' + result.min_distance_buildings_m + 'm';
+            distRow.appendChild(d1);
+            distRow.appendChild(d2);
+            resultDiv.appendChild(distRow);
+
+            if (result.is_legal_ra_required) {
+                resultDiv.appendChild(createAlert('info', 'info-circle', 'A documented risk assessment is legally required.'));
+            } else {
+                resultDiv.appendChild(createAlert('secondary', 'info-circle', 'Pre-flight checklist is good practice (not legally required for Open).'));
+            }
+
+            // Blockers
+            result.blockers.forEach(function(b) {
+                resultDiv.appendChild(createAlert('danger', 'x-circle', b));
+            });
+
+            // Warnings
+            result.warnings.forEach(function(w) {
+                resultDiv.appendChild(createAlert('warning', 'exclamation-triangle', w));
+            });
+
+            // Registration
+            if (result.registration_reqs) {
+                var regDiv = document.createElement('div');
+                regDiv.className = 'small mb-2';
+                var reqs = [];
+                if (result.registration_reqs.flyer_id) reqs.push('Flyer ID');
+                if (result.registration_reqs.operator_id) reqs.push('Operator ID');
+                if (result.registration_reqs.remote_id) reqs.push('Remote ID');
+                if (result.registration_reqs.insurance) reqs.push('Insurance');
+                regDiv.textContent = 'Registration: ' + (reqs.join(', ') || 'None required');
+                resultDiv.appendChild(regDiv);
+            }
+
+            // Legal notes
+            if (result.legal_notes.length) {
+                var details = document.createElement('details');
+                details.className = 'small';
+                var summary = document.createElement('summary');
+                summary.className = 'text-muted';
+                summary.style.cursor = 'pointer';
+                summary.textContent = 'Legal notes';
+                details.appendChild(summary);
+                var ul = document.createElement('ul');
+                ul.className = 'mt-1';
+                result.legal_notes.forEach(function(n) {
+                    var li = document.createElement('li');
+                    li.textContent = n;
+                    ul.appendChild(li);
+                });
+                details.appendChild(ul);
+                resultDiv.appendChild(details);
+            }
+        })
+        .catch(function(err) {
+            resultDiv.textContent = '';
+            resultDiv.appendChild(createAlert('danger', 'x-circle', 'Error checking category. Please try again.'));
+        });
+    });
+})();
+</script>
+{% endblock %}

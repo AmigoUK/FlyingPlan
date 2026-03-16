@@ -305,6 +305,148 @@ def delete_deliverable(order_id, d_id):
     return redirect(url_for("pilot.order_detail", order_id=order.id))
 
 
+# ── Flight Parameters + Category Check ─────────────────────────
+
+@pilot_bp.route("/orders/<int:order_id>/flight-params", methods=["GET", "POST"])
+@role_required("pilot")
+def flight_params(order_id):
+    order = _get_pilot_order(order_id)
+
+    if order.status != "accepted":
+        flash("Flight parameters can only be set for accepted orders.", "warning")
+        return redirect(url_for("pilot.order_detail", order_id=order.id))
+
+    if request.method == "POST":
+        from services.category_engine import DroneProfile, PilotProfile, FlightParams, determine_category
+
+        # Save equipment selection
+        equip_id = request.form.get("equipment_id", type=int)
+        equip = None
+        if equip_id:
+            equip = PilotEquipment.query.filter_by(id=equip_id, user_id=current_user.id).first()
+        order.equipment_id = equip.id if equip else None
+
+        # Save flight parameters
+        tod = request.form.get("time_of_day", "").strip()
+        order.time_of_day = tod if tod in Order.TIMES_OF_DAY else None
+        ptp = request.form.get("proximity_to_people", "").strip()
+        order.proximity_to_people = ptp if ptp in Order.PROXIMITY_TO_PEOPLE else None
+        env = request.form.get("environment_type", "").strip()
+        order.environment_type = env if env in Order.ENVIRONMENT_TYPES else None
+        ptb = request.form.get("proximity_to_buildings", "").strip()
+        order.proximity_to_buildings = ptb if ptb in Order.PROXIMITY_TO_BUILDINGS else None
+        air = request.form.get("airspace_type", "").strip()
+        order.airspace_type = air if air in Order.AIRSPACE_TYPES else None
+        vlos = request.form.get("vlos_type", "").strip()
+        order.vlos_type = vlos if vlos in Order.VLOS_TYPES else None
+        spd = request.form.get("speed_mode", "").strip()
+        order.speed_mode = spd if spd in Order.SPEED_MODES else None
+
+        # Validate required fields
+        if not all([order.time_of_day, order.proximity_to_people, order.environment_type,
+                     order.proximity_to_buildings, order.airspace_type, order.vlos_type, order.speed_mode]):
+            flash("All flight parameters are required.", "danger")
+            return render_template("pilot/flight_params.html", order=order)
+
+        # Run category engine
+        drone = DroneProfile(
+            class_mark=equip.class_mark or 'legacy' if equip else 'legacy',
+            mtom_grams=equip.mtom_grams or 0 if equip else 0,
+            has_camera=equip.has_camera if equip else True,
+            green_light_type=equip.green_light_type or 'none' if equip else 'none',
+            green_light_weight_grams=equip.green_light_weight_grams or 0 if equip else 0,
+            has_low_speed_mode=equip.has_low_speed_mode if equip else False,
+            remote_id_capable=equip.remote_id_capable if equip else False,
+        )
+        pilot_profile = PilotProfile(
+            has_flyer_id=current_user.flying_id_valid,
+            has_a2_cofc=current_user.has_a2_cofc,
+            gvc_level=current_user.gvc_level,
+            oa_type=current_user.oa_type,
+            has_insurance=bool(current_user.insurance_expiry),
+        )
+        flight = FlightParams(
+            time_of_day=order.time_of_day,
+            proximity_to_people=order.proximity_to_people,
+            environment_type=order.environment_type,
+            proximity_to_buildings=order.proximity_to_buildings,
+            airspace_type=order.airspace_type,
+            vlos_type=order.vlos_type,
+            speed_mode=order.speed_mode,
+        )
+
+        result = determine_category(drone, pilot_profile, flight)
+        order.operational_category = result.category
+        order.category_determined_at = datetime.now(timezone.utc)
+        order.category_blockers = json.dumps(result.blockers) if result.blockers else None
+
+        db.session.commit()
+
+        if result.blockers:
+            flash(f"Category determined: {result.category.replace('_', ' ').title()}. There are blockers that must be resolved.", "warning")
+        else:
+            flash(f"Category determined: {result.category.replace('_', ' ').title()}. You may proceed to the risk assessment.", "success")
+        return redirect(url_for("pilot.order_detail", order_id=order.id))
+
+    return render_template("pilot/flight_params.html", order=order)
+
+
+@pilot_bp.route("/orders/<int:order_id>/category-check", methods=["POST"])
+@role_required("pilot")
+def category_check(order_id):
+    """AJAX endpoint for live category preview."""
+    order = _get_pilot_order(order_id)
+    from services.category_engine import DroneProfile, PilotProfile, FlightParams, determine_category
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    equip_id = data.get("equipment_id")
+    equip = None
+    if equip_id:
+        equip = PilotEquipment.query.filter_by(id=int(equip_id), user_id=current_user.id).first()
+
+    drone = DroneProfile(
+        class_mark=equip.class_mark or 'legacy' if equip else 'legacy',
+        mtom_grams=equip.mtom_grams or 0 if equip else 0,
+        has_camera=equip.has_camera if equip else True,
+        green_light_type=equip.green_light_type or 'none' if equip else 'none',
+        green_light_weight_grams=equip.green_light_weight_grams or 0 if equip else 0,
+        has_low_speed_mode=equip.has_low_speed_mode if equip else False,
+        remote_id_capable=equip.remote_id_capable if equip else False,
+    )
+    pilot_profile = PilotProfile(
+        has_flyer_id=current_user.flying_id_valid,
+        has_a2_cofc=current_user.has_a2_cofc,
+        gvc_level=current_user.gvc_level,
+        oa_type=current_user.oa_type,
+        has_insurance=bool(current_user.insurance_expiry),
+    )
+    flight = FlightParams(
+        time_of_day=data.get("time_of_day", "day"),
+        proximity_to_people=data.get("proximity_to_people", "50m_plus"),
+        environment_type=data.get("environment_type", "open_countryside"),
+        proximity_to_buildings=data.get("proximity_to_buildings", "over_150m"),
+        airspace_type=data.get("airspace_type", "uncontrolled"),
+        vlos_type=data.get("vlos_type", "vlos"),
+        speed_mode=data.get("speed_mode", "normal"),
+    )
+
+    result = determine_category(drone, pilot_profile, flight)
+    return jsonify({
+        "category": result.category,
+        "blockers": result.blockers,
+        "warnings": result.warnings,
+        "min_distance_people_m": result.min_distance_people_m,
+        "min_distance_buildings_m": result.min_distance_buildings_m,
+        "can_overfly_people": result.can_overfly_people,
+        "is_legal_ra_required": result.is_legal_ra_required,
+        "legal_notes": result.legal_notes,
+        "registration_reqs": result.registration_reqs,
+    })
+
+
 # ── Risk Assessment ─────────────────────────────────────────────
 
 @pilot_bp.route("/orders/<int:order_id>/risk-assessment", methods=["GET", "POST"])

@@ -54,6 +54,45 @@
         {% endif %}
 
         {% if order.status == 'accepted' %}
+        <!-- Flight Parameters + Category -->
+        {% if not order.operational_category %}
+        <div class="card mb-3 border-info">
+            <div class="card-body">
+                <h6><i class="bi bi-sliders text-info"></i> Set Flight Parameters</h6>
+                <p class="small mb-2">Select your drone and set flight parameters to determine the operational category before proceeding.</p>
+                <a href="{{ url_for('pilot.flight_params', order_id=order.id) }}" class="btn btn-sm btn-info">
+                    <i class="bi bi-sliders"></i> Set Flight Parameters
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <!-- Category Determined -->
+        <div class="card mb-3 border-{{ 'danger' if order.category_blockers else 'success' }}">
+            <div class="card-body">
+                <h6>
+                    <i class="bi bi-shield-check"></i> Category:
+                    {% set cat_class = 'success' if order.operational_category.startswith('open_') else ('primary' if order.operational_category.startswith('specific_') else 'danger') %}
+                    <span class="badge bg-{{ cat_class }}">{{ order.operational_category|replace('_', ' ')|title }}</span>
+                </h6>
+                {% if order.equipment %}
+                <p class="small mb-1"><strong>Equipment:</strong> {{ order.equipment.drone_model }}
+                    {% if order.equipment.class_mark %}({{ order.equipment.class_mark }}){% endif %}
+                </p>
+                {% endif %}
+                {% if order.category_blockers %}
+                <div class="alert alert-danger py-1 small mb-2">
+                    <i class="bi bi-x-circle"></i> There are blockers preventing this flight. Resolve them or change parameters.
+                </div>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('pilot.flight_params', order_id=order.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> Edit Parameters
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Risk Assessment CTA -->
         {% if order.risk_assessment and order.risk_assessment.decision == 'abort' %}
         <div class="card mb-3 border-danger">
@@ -65,7 +104,7 @@
                 </a>
             </div>
         </div>
-        {% else %}
+        {% elif order.operational_category %}
         <div class="card mb-3 border-{{ 'success' if order.risk_assessment_completed else 'warning' }}">
             <div class="card-body">
                 {% if order.risk_assessment_completed %}
@@ -74,9 +113,15 @@
                 <a href="{{ url_for('pilot.risk_assessment', order_id=order.id) }}" class="btn btn-sm btn-outline-success">
                     <i class="bi bi-eye"></i> View Assessment
                 </a>
+                {% elif order.category_blockers %}
+                <h6><i class="bi bi-lock text-muted"></i> Pre-Flight Risk Assessment</h6>
+                <p class="small mb-2 text-muted">Resolve category blockers before starting the risk assessment.</p>
+                <button class="btn btn-sm btn-secondary" disabled>
+                    <i class="bi bi-lock"></i> Risk Assessment Locked
+                </button>
                 {% else %}
                 <h6><i class="bi bi-exclamation-triangle text-warning"></i> Pre-Flight Risk Assessment Required</h6>
-                <p class="small mb-2">You must complete the on-site risk assessment before starting this flight (CAA requirement).</p>
+                <p class="small mb-2">You must complete the on-site risk assessment before starting this flight.</p>
                 <a href="{{ url_for('pilot.risk_assessment', order_id=order.id) }}" class="btn btn-sm btn-warning">
                     <i class="bi bi-clipboard-check"></i> Complete Risk Assessment
                 </a>
