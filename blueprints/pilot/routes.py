@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 from datetime import datetime, timezone
@@ -19,6 +20,7 @@ from models.risk_assessment import RiskAssessment
 from models.pilot_certification import PilotCertification
 from models.pilot_equipment import PilotEquipment
 from models.pilot_document import PilotDocument
+from models.pilot_membership import PilotMembership
 from models.user import User
 
 
@@ -97,14 +99,34 @@ def profile():
         current_user.insurance_provider = request.form.get("insurance_provider", "").strip() or None
         current_user.insurance_policy_no = request.form.get("insurance_policy_no", "").strip() or None
         current_user.pilot_bio = request.form.get("pilot_bio", "").strip() or None
-        exp = request.form.get("insurance_expiry", "").strip()
-        if exp:
-            try:
-                current_user.insurance_expiry = datetime.strptime(exp, "%Y-%m-%d").date()
-            except ValueError:
-                pass
-        else:
-            current_user.insurance_expiry = None
+
+        # Date fields (insurance_expiry + new regulatory dates)
+        for date_field in [
+            "insurance_expiry", "flying_id_expiry", "operator_id_expiry",
+            "a2_cofc_expiry", "gvc_mr_expiry", "gvc_fw_expiry",
+            "practical_competency_date", "article16_agreed_date",
+        ]:
+            val = request.form.get(date_field, "").strip()
+            if val:
+                try:
+                    setattr(current_user, date_field, datetime.strptime(val, "%Y-%m-%d").date())
+                except ValueError:
+                    pass
+            else:
+                setattr(current_user, date_field, None)
+
+        # Boolean
+        current_user.article16_agreed = True if request.form.get("article16_agreed") else False
+
+        # String fields
+        current_user.mentor_examiner = request.form.get("mentor_examiner", "").strip() or None
+        current_user.address_line1 = request.form.get("address_line1", "").strip() or None
+        current_user.address_line2 = request.form.get("address_line2", "").strip() or None
+        current_user.address_city = request.form.get("address_city", "").strip() or None
+        current_user.address_county = request.form.get("address_county", "").strip() or None
+        current_user.address_postcode = request.form.get("address_postcode", "").strip() or None
+        current_user.address_country = request.form.get("address_country", "").strip() or None
+
         new_password = request.form.get("password", "").strip()
         if new_password:
             current_user.set_password(new_password)
@@ -122,8 +144,17 @@ def profile():
 def order_detail(order_id):
     order = _get_pilot_order(order_id)
     allowed_next = PILOT_FORWARD_STATUSES.get(order.status, [])
+    fp = order.flight_plan
+    pois_json = json.dumps(
+        [{"lat": p.lat, "lng": p.lng, "label": p.label} for p in fp.pois]
+    )
+    waypoints_json = json.dumps([w.to_dict() for w in fp.waypoints])
     return render_template(
-        "pilot/order_detail.html", order=order, allowed_next=allowed_next
+        "pilot/order_detail.html",
+        order=order,
+        allowed_next=allowed_next,
+        pois_json=pois_json,
+        waypoints_json=waypoints_json,
     )
 
 
@@ -173,9 +204,14 @@ def update_status(order_id):
         flash("Invalid status transition.", "danger")
         return redirect(url_for("pilot.order_detail", order_id=order.id))
 
-    if new_status == "in_progress" and not order.risk_assessment_completed:
-        flash("You must complete the pre-flight risk assessment before starting the flight.", "danger")
-        return redirect(url_for("pilot.order_detail", order_id=order.id))
+    if new_status == "in_progress":
+        if not order.risk_assessment_completed:
+            flash("You must complete the pre-flight risk assessment before starting the flight.", "danger")
+            return redirect(url_for("pilot.order_detail", order_id=order.id))
+        ra = RiskAssessment.query.filter_by(order_id=order.id).first()
+        if ra and ra.decision == "abort":
+            flash("Flight was aborted in risk assessment. Cannot proceed.", "danger")
+            return redirect(url_for("pilot.order_detail", order_id=order.id))
 
     old_status = order.status
     order.status = new_status
@@ -375,9 +411,8 @@ def risk_assessment(order_id):
 
         db.session.add(ra)
 
-        # Gate: only open if decision is proceed or proceed_with_mitigations
-        if decision in ("proceed", "proceed_with_mitigations"):
-            order.risk_assessment_completed = True
+        # Assessment is completed regardless of decision
+        order.risk_assessment_completed = True
 
         _log_activity(
             order, "risk_assessment_completed",
@@ -439,6 +474,44 @@ def delete_certification(cert_id):
     db.session.delete(cert)
     db.session.commit()
     flash("Certification deleted.", "success")
+    return redirect(url_for("pilot.profile"))
+
+
+# ── Memberships ────────────────────────────────────────────────
+
+@pilot_bp.route("/memberships/add", methods=["POST"])
+@role_required("pilot")
+def add_membership():
+    mem = PilotMembership(
+        user_id=current_user.id,
+        org_name=request.form.get("org_name", "").strip(),
+        membership_number=request.form.get("membership_number", "").strip() or None,
+        membership_type=request.form.get("membership_type", "").strip() or None,
+    )
+    expiry = request.form.get("expiry_date", "").strip()
+    if expiry:
+        try:
+            mem.expiry_date = datetime.strptime(expiry, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    if not mem.org_name:
+        flash("Organisation name is required.", "danger")
+        return redirect(url_for("pilot.profile"))
+    db.session.add(mem)
+    db.session.commit()
+    flash("Membership added.", "success")
+    return redirect(url_for("pilot.profile"))
+
+
+@pilot_bp.route("/memberships/<int:mem_id>/delete", methods=["POST"])
+@role_required("pilot")
+def delete_membership(mem_id):
+    mem = db.get_or_404(PilotMembership, mem_id)
+    if mem.user_id != current_user.id:
+        abort(403)
+    db.session.delete(mem)
+    db.session.commit()
+    flash("Membership deleted.", "success")
     return redirect(url_for("pilot.profile"))
 
 
@@ -536,8 +609,12 @@ def download_document(doc_id):
     doc = db.get_or_404(PilotDocument, doc_id)
     if doc.user_id != current_user.id:
         abort(403)
+    base_dir = _pilot_upload_dir(current_user.id)
+    filepath = os.path.realpath(os.path.join(base_dir, doc.stored_filename))
+    if not filepath.startswith(os.path.realpath(base_dir)):
+        abort(403)
     return send_file(
-        os.path.join(_pilot_upload_dir(current_user.id), doc.stored_filename),
+        filepath,
         as_attachment=True,
         download_name=doc.original_filename,
     )

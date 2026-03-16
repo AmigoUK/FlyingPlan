@@ -145,6 +145,21 @@ def _run_migrations():
         ("insurance_expiry", "DATE"),
         ("availability_status", "VARCHAR(20) DEFAULT 'available'"),
         ("pilot_bio", "TEXT"),
+        ("flying_id_expiry", "DATE"),
+        ("operator_id_expiry", "DATE"),
+        ("a2_cofc_expiry", "DATE"),
+        ("gvc_mr_expiry", "DATE"),
+        ("gvc_fw_expiry", "DATE"),
+        ("practical_competency_date", "DATE"),
+        ("mentor_examiner", "VARCHAR(200)"),
+        ("article16_agreed", "BOOLEAN DEFAULT 0"),
+        ("article16_agreed_date", "DATE"),
+        ("address_line1", "VARCHAR(200)"),
+        ("address_line2", "VARCHAR(200)"),
+        ("address_city", "VARCHAR(100)"),
+        ("address_county", "VARCHAR(100)"),
+        ("address_postcode", "VARCHAR(20)"),
+        ("address_country", "VARCHAR(100) DEFAULT 'United Kingdom'"),
     ]
 
     for col_name, col_type in user_new_columns:

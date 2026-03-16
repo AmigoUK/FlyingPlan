@@ -43,36 +43,129 @@
                         <div class="col-md-6">
                             <label class="form-label">Email</label>
                             <input type="email" name="email" class="form-control"
-                                   value="{{ pilot.email or '' }}">
+                                   value="{{ pilot.email or '' if pilot else '' }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Phone</label>
                             <input type="text" name="phone" class="form-control"
-                                   value="{{ pilot.phone or '' }}">
+                                   value="{{ pilot.phone or '' if pilot else '' }}">
                         </div>
 
                         <hr>
-                        <h6>Pilot Details</h6>
+                        <h6>CAA Regulatory IDs</h6>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Flying ID</label>
+                        <div class="col-md-8">
+                            <label class="form-label">Flyer ID</label>
                             <input type="text" name="flying_id" class="form-control"
-                                   value="{{ pilot.flying_id or '' }}" placeholder="e.g. CAA-12345">
+                                   value="{{ pilot.flying_id or '' if pilot else '' }}" placeholder="GBR-RP-XXXXXXXXXX">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label class="form-label">Flyer ID Expiry</label>
+                            <input type="date" name="flying_id_expiry" class="form-control"
+                                   value="{{ pilot.flying_id_expiry.strftime('%Y-%m-%d') if pilot and pilot.flying_id_expiry else '' }}">
+                        </div>
+                        <div class="col-md-8">
                             <label class="form-label">Operator ID</label>
                             <input type="text" name="operator_id" class="form-control"
-                                   value="{{ pilot.operator_id or '' }}" placeholder="e.g. REOC-6789">
+                                   value="{{ pilot.operator_id or '' if pilot else '' }}" placeholder="GBR-OP-XXXXXXXXXX">
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Operator ID Expiry</label>
+                            <input type="date" name="operator_id_expiry" class="form-control"
+                                   value="{{ pilot.operator_id_expiry.strftime('%Y-%m-%d') if pilot and pilot.operator_id_expiry else '' }}">
+                        </div>
+
+                        <hr>
+                        <h6>UK Qualifications</h6>
+
+                        <div class="col-md-4">
+                            <label class="form-label">A2 CofC Expiry</label>
+                            <input type="date" name="a2_cofc_expiry" class="form-control"
+                                   value="{{ pilot.a2_cofc_expiry.strftime('%Y-%m-%d') if pilot and pilot.a2_cofc_expiry else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">GVC MR Expiry</label>
+                            <input type="date" name="gvc_mr_expiry" class="form-control"
+                                   value="{{ pilot.gvc_mr_expiry.strftime('%Y-%m-%d') if pilot and pilot.gvc_mr_expiry else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">GVC FW Expiry</label>
+                            <input type="date" name="gvc_fw_expiry" class="form-control"
+                                   value="{{ pilot.gvc_fw_expiry.strftime('%Y-%m-%d') if pilot and pilot.gvc_fw_expiry else '' }}">
+                        </div>
+
+                        <hr>
+                        <h6>Certificate of Competency</h6>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Practical Competency Date</label>
+                            <input type="date" name="practical_competency_date" class="form-control"
+                                   value="{{ pilot.practical_competency_date.strftime('%Y-%m-%d') if pilot and pilot.practical_competency_date else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mentor / Examiner</label>
+                            <input type="text" name="mentor_examiner" class="form-control"
+                                   value="{{ pilot.mentor_examiner or '' if pilot else '' }}">
+                        </div>
+
+                        <hr>
+                        <h6>Article 16</h6>
+
+                        <div class="col-md-8">
+                            <div class="form-check mt-2">
+                                <input type="checkbox" name="article16_agreed" class="form-check-input" id="article16form"
+                                       {{ 'checked' if pilot and pilot.article16_agreed }}>
+                                <label class="form-check-label" for="article16form">
+                                    I have read and understood the Article 16 operational authorisation requirements
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date Agreed</label>
+                            <input type="date" name="article16_agreed_date" class="form-control"
+                                   value="{{ pilot.article16_agreed_date.strftime('%Y-%m-%d') if pilot and pilot.article16_agreed_date else '' }}">
+                        </div>
+
+                        <hr>
+                        <h6>Home Address</h6>
+
+                        <div class="col-md-12">
+                            <input type="text" name="address_line1" class="form-control"
+                                   placeholder="Address Line 1" value="{{ pilot.address_line1 or '' if pilot else '' }}">
+                        </div>
+                        <div class="col-md-12">
+                            <input type="text" name="address_line2" class="form-control"
+                                   placeholder="Address Line 2" value="{{ pilot.address_line2 or '' if pilot else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="address_city" class="form-control"
+                                   placeholder="City / Town" value="{{ pilot.address_city or '' if pilot else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="address_county" class="form-control"
+                                   placeholder="County" value="{{ pilot.address_county or '' if pilot else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="address_postcode" class="form-control"
+                                   placeholder="Postcode" value="{{ pilot.address_postcode or '' if pilot else '' }}">
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" name="address_country" class="form-control"
+                                   placeholder="Country" value="{{ pilot.address_country or 'United Kingdom' if pilot else 'United Kingdom' }}">
+                        </div>
+
+                        <hr>
+                        <h6>Insurance</h6>
+
                         <div class="col-md-4">
                             <label class="form-label">Insurance Provider</label>
                             <input type="text" name="insurance_provider" class="form-control"
-                                   value="{{ pilot.insurance_provider or '' }}">
+                                   value="{{ pilot.insurance_provider or '' if pilot else '' }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Policy Number</label>
                             <input type="text" name="insurance_policy_no" class="form-control"
-                                   value="{{ pilot.insurance_policy_no or '' }}">
+                                   value="{{ pilot.insurance_policy_no or '' if pilot else '' }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Insurance Expiry</label>

@@ -8,6 +8,7 @@ from models.job_type import JobType
 from models.purpose_option import PurposeOption
 from models.heard_about_option import HeardAboutOption
 from models.pilot_certification import PilotCertification
+from models.pilot_membership import PilotMembership
 from models.pilot_equipment import PilotEquipment
 from models.pilot_document import PilotDocument
 from models.order import Order

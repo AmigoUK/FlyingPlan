@@ -26,11 +26,34 @@ class User(UserMixin, db.Model):
     # Pilot profile fields
     flying_id = db.Column(db.String(100))
     operator_id = db.Column(db.String(100))
+    flying_id_expiry = db.Column(db.Date)
+    operator_id_expiry = db.Column(db.Date)
     insurance_provider = db.Column(db.String(200))
     insurance_policy_no = db.Column(db.String(100))
     insurance_expiry = db.Column(db.Date)
     availability_status = db.Column(db.String(20), default="available")
     pilot_bio = db.Column(db.Text)
+
+    # UK Drone Qualifications
+    a2_cofc_expiry = db.Column(db.Date)
+    gvc_mr_expiry = db.Column(db.Date)
+    gvc_fw_expiry = db.Column(db.Date)
+
+    # Certificate of Competency
+    practical_competency_date = db.Column(db.Date)
+    mentor_examiner = db.Column(db.String(200))
+
+    # Article 16
+    article16_agreed = db.Column(db.Boolean, default=False)
+    article16_agreed_date = db.Column(db.Date)
+
+    # Home Address
+    address_line1 = db.Column(db.String(200))
+    address_line2 = db.Column(db.String(200))
+    address_city = db.Column(db.String(100))
+    address_county = db.Column(db.String(100))
+    address_postcode = db.Column(db.String(20))
+    address_country = db.Column(db.String(100), default="United Kingdom")
 
     @property
     def is_active(self):
@@ -54,3 +77,13 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    @property
+    def flying_id_valid(self):
+        from datetime import date
+        return bool(self.flying_id and self.flying_id_expiry and self.flying_id_expiry >= date.today())
+
+    @property
+    def operator_id_valid(self):
+        from datetime import date
+        return bool(self.operator_id and self.operator_id_expiry and self.operator_id_expiry >= date.today())

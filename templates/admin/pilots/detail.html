@@ -44,15 +44,89 @@
                 <p class="mb-1"><strong>Username:</strong> {{ pilot.username }}</p>
                 <p class="mb-1"><strong>Email:</strong> {{ pilot.email or '-' }}</p>
                 <p class="mb-1"><strong>Phone:</strong> {{ pilot.phone or '-' }}</p>
-                <p class="mb-1"><strong>Flying ID:</strong> {{ pilot.flying_id or '-' }}</p>
-                <p class="mb-1"><strong>Operator ID:</strong> {{ pilot.operator_id or '-' }}</p>
-                <p class="mb-1"><strong>Insurance:</strong> {{ pilot.insurance_provider or '-' }}
+
+                <hr class="my-2">
+                <h6 class="small text-muted mb-1">CAA Regulatory IDs</h6>
+                <p class="mb-1">
+                    <strong>Flyer ID:</strong> {{ pilot.flying_id or '-' }}
+                    {% if pilot.flying_id %}
+                        {% if pilot.flying_id_valid %}
+                        <span class="badge bg-success">VALID</span>
+                        {% else %}
+                        <span class="badge bg-danger">EXPIRED</span>
+                        {% endif %}
+                    {% endif %}
+                    {% if pilot.flying_id_expiry %}
+                    <small class="text-muted">(exp. {{ pilot.flying_id_expiry.strftime('%d %b %Y') }})</small>
+                    {% endif %}
+                </p>
+                <p class="mb-1">
+                    <strong>Operator ID:</strong> {{ pilot.operator_id or '-' }}
+                    {% if pilot.operator_id %}
+                        {% if pilot.operator_id_valid %}
+                        <span class="badge bg-success">VALID</span>
+                        {% else %}
+                        <span class="badge bg-danger">EXPIRED</span>
+                        {% endif %}
+                    {% endif %}
+                    {% if pilot.operator_id_expiry %}
+                    <small class="text-muted">(exp. {{ pilot.operator_id_expiry.strftime('%d %b %Y') }})</small>
+                    {% endif %}
+                </p>
+
+                <hr class="my-2">
+                <h6 class="small text-muted mb-1">UK Qualifications</h6>
+                <p class="mb-1"><strong>A2 CofC:</strong>
+                    {{ pilot.a2_cofc_expiry.strftime('%d %b %Y') if pilot.a2_cofc_expiry else '-' }}</p>
+                <p class="mb-1"><strong>GVC Multi-Rotor:</strong>
+                    {{ pilot.gvc_mr_expiry.strftime('%d %b %Y') if pilot.gvc_mr_expiry else '-' }}</p>
+                <p class="mb-1"><strong>GVC Fixed Wing:</strong>
+                    {{ pilot.gvc_fw_expiry.strftime('%d %b %Y') if pilot.gvc_fw_expiry else '-' }}</p>
+
+                {% if pilot.practical_competency_date or pilot.mentor_examiner %}
+                <hr class="my-2">
+                <h6 class="small text-muted mb-1">Competency</h6>
+                <p class="mb-1"><strong>Practical Date:</strong>
+                    {{ pilot.practical_competency_date.strftime('%d %b %Y') if pilot.practical_competency_date else '-' }}</p>
+                <p class="mb-1"><strong>Mentor/Examiner:</strong> {{ pilot.mentor_examiner or '-' }}</p>
+                {% endif %}
+
+                <hr class="my-2">
+                <h6 class="small text-muted mb-1">Article 16</h6>
+                <p class="mb-1">
+                    {% if pilot.article16_agreed %}
+                    <span class="badge bg-success">Agreed</span>
+                    {% if pilot.article16_agreed_date %}
+                    <small class="text-muted">on {{ pilot.article16_agreed_date.strftime('%d %b %Y') }}</small>
+                    {% endif %}
+                    {% else %}
+                    <span class="badge bg-secondary">Not Agreed</span>
+                    {% endif %}
+                </p>
+
+                {% if pilot.address_line1 or pilot.address_city or pilot.address_postcode %}
+                <hr class="my-2">
+                <h6 class="small text-muted mb-1">Home Address</h6>
+                <p class="mb-0">
+                    {% if pilot.address_line1 %}{{ pilot.address_line1 }}<br>{% endif %}
+                    {% if pilot.address_line2 %}{{ pilot.address_line2 }}<br>{% endif %}
+                    {% if pilot.address_city %}{{ pilot.address_city }}{% endif %}
+                    {% if pilot.address_county %}, {{ pilot.address_county }}{% endif %}
+                    {% if pilot.address_postcode %}<br>{{ pilot.address_postcode }}{% endif %}
+                    {% if pilot.address_country %}<br>{{ pilot.address_country }}{% endif %}
+                </p>
+                {% endif %}
+
+                <hr class="my-2">
+                <h6 class="small text-muted mb-1">Insurance</h6>
+                <p class="mb-1"><strong>Provider:</strong> {{ pilot.insurance_provider or '-' }}
                     {% if pilot.insurance_policy_no %} ({{ pilot.insurance_policy_no }}){% endif %}
                 </p>
                 {% if pilot.insurance_expiry %}
-                <p class="mb-1"><strong>Insurance Expiry:</strong> {{ pilot.insurance_expiry.strftime('%d %b %Y') }}</p>
+                <p class="mb-1"><strong>Expiry:</strong> {{ pilot.insurance_expiry.strftime('%d %b %Y') }}</p>
                 {% endif %}
                 {% if pilot.pilot_bio %}
+                <hr class="my-2">
                 <p class="mb-0"><strong>Bio:</strong> {{ pilot.pilot_bio }}</p>
                 {% endif %}
             </div>
@@ -60,43 +134,126 @@
                 <div class="card-body border-top">
                     <form method="POST" action="{{ url_for('pilots.edit_pilot', pilot_id=pilot.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        {% include "admin/pilots/form.html" ignore missing %}
                         <div class="row g-2">
                             <div class="col-md-6">
+                                <label class="form-label small">Display Name</label>
                                 <input type="text" name="display_name" class="form-control form-control-sm"
-                                       placeholder="Display Name" value="{{ pilot.display_name }}">
+                                       value="{{ pilot.display_name }}">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label small">Email</label>
                                 <input type="email" name="email" class="form-control form-control-sm"
-                                       placeholder="Email" value="{{ pilot.email or '' }}">
+                                       value="{{ pilot.email or '' }}">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label small">Phone</label>
                                 <input type="text" name="phone" class="form-control form-control-sm"
-                                       placeholder="Phone" value="{{ pilot.phone or '' }}">
+                                       value="{{ pilot.phone or '' }}">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label small">New Password</label>
+                                <input type="password" name="password" class="form-control form-control-sm"
+                                       placeholder="(optional)">
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"><h6 class="small text-muted">CAA Regulatory IDs</h6></div>
+                            <div class="col-8">
                                 <input type="text" name="flying_id" class="form-control form-control-sm"
-                                       placeholder="Flying ID" value="{{ pilot.flying_id or '' }}">
+                                       placeholder="Flyer ID (GBR-RP-...)" value="{{ pilot.flying_id or '' }}">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-4">
+                                <input type="date" name="flying_id_expiry" class="form-control form-control-sm"
+                                       value="{{ pilot.flying_id_expiry.strftime('%Y-%m-%d') if pilot.flying_id_expiry else '' }}">
+                            </div>
+                            <div class="col-8">
                                 <input type="text" name="operator_id" class="form-control form-control-sm"
-                                       placeholder="Operator ID" value="{{ pilot.operator_id or '' }}">
+                                       placeholder="Operator ID (GBR-OP-...)" value="{{ pilot.operator_id or '' }}">
+                            </div>
+                            <div class="col-4">
+                                <input type="date" name="operator_id_expiry" class="form-control form-control-sm"
+                                       value="{{ pilot.operator_id_expiry.strftime('%Y-%m-%d') if pilot.operator_id_expiry else '' }}">
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"><h6 class="small text-muted">UK Qualifications</h6></div>
+                            <div class="col-4"><label class="form-label small">A2 CofC Expiry</label></div>
+                            <div class="col-8">
+                                <input type="date" name="a2_cofc_expiry" class="form-control form-control-sm"
+                                       value="{{ pilot.a2_cofc_expiry.strftime('%Y-%m-%d') if pilot.a2_cofc_expiry else '' }}">
+                            </div>
+                            <div class="col-4"><label class="form-label small">GVC MR Expiry</label></div>
+                            <div class="col-8">
+                                <input type="date" name="gvc_mr_expiry" class="form-control form-control-sm"
+                                       value="{{ pilot.gvc_mr_expiry.strftime('%Y-%m-%d') if pilot.gvc_mr_expiry else '' }}">
+                            </div>
+                            <div class="col-4"><label class="form-label small">GVC FW Expiry</label></div>
+                            <div class="col-8">
+                                <input type="date" name="gvc_fw_expiry" class="form-control form-control-sm"
+                                       value="{{ pilot.gvc_fw_expiry.strftime('%Y-%m-%d') if pilot.gvc_fw_expiry else '' }}">
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"><h6 class="small text-muted">Competency</h6></div>
+                            <div class="col-md-6">
+                                <label class="form-label small">Practical Date</label>
+                                <input type="date" name="practical_competency_date" class="form-control form-control-sm"
+                                       value="{{ pilot.practical_competency_date.strftime('%Y-%m-%d') if pilot.practical_competency_date else '' }}">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label small">Mentor/Examiner</label>
+                                <input type="text" name="mentor_examiner" class="form-control form-control-sm"
+                                       value="{{ pilot.mentor_examiner or '' }}">
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"><h6 class="small text-muted">Article 16</h6></div>
+                            <div class="col-md-8">
+                                <div class="form-check">
+                                    <input type="checkbox" name="article16_agreed" class="form-check-input" id="article16edit"
+                                           {{ 'checked' if pilot.article16_agreed }}>
+                                    <label class="form-check-label small" for="article16edit">Agreed</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="date" name="article16_agreed_date" class="form-control form-control-sm"
+                                       value="{{ pilot.article16_agreed_date.strftime('%Y-%m-%d') if pilot.article16_agreed_date else '' }}">
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"><h6 class="small text-muted">Home Address</h6></div>
+                            <div class="col-12">
+                                <input type="text" name="address_line1" class="form-control form-control-sm"
+                                       placeholder="Address Line 1" value="{{ pilot.address_line1 or '' }}">
+                            </div>
+                            <div class="col-12">
+                                <input type="text" name="address_line2" class="form-control form-control-sm"
+                                       placeholder="Address Line 2" value="{{ pilot.address_line2 or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="address_city" class="form-control form-control-sm"
+                                       placeholder="City / Town" value="{{ pilot.address_city or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="address_county" class="form-control form-control-sm"
+                                       placeholder="County" value="{{ pilot.address_county or '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="address_postcode" class="form-control form-control-sm"
+                                       placeholder="Postcode" value="{{ pilot.address_postcode or '' }}">
+                            </div>
+                            <div class="col-md-8">
+                                <input type="text" name="address_country" class="form-control form-control-sm"
+                                       placeholder="Country" value="{{ pilot.address_country or 'United Kingdom' }}">
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"><h6 class="small text-muted">Insurance</h6></div>
+                            <div class="col-md-4">
                                 <input type="text" name="insurance_provider" class="form-control form-control-sm"
-                                       placeholder="Insurance Provider" value="{{ pilot.insurance_provider or '' }}">
+                                       placeholder="Provider" value="{{ pilot.insurance_provider or '' }}">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <input type="text" name="insurance_policy_no" class="form-control form-control-sm"
                                        placeholder="Policy No" value="{{ pilot.insurance_policy_no or '' }}">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <input type="date" name="insurance_expiry" class="form-control form-control-sm"
                                        value="{{ pilot.insurance_expiry.strftime('%Y-%m-%d') if pilot.insurance_expiry else '' }}">
-                            </div>
-                            <div class="col-md-6">
-                                <input type="password" name="password" class="form-control form-control-sm"
-                                       placeholder="New password (optional)">
                             </div>
                             <div class="col-12">
                                 <textarea name="pilot_bio" class="form-control form-control-sm" rows="2"
@@ -113,14 +270,14 @@
             </div>
         </div>
 
-        <!-- Order History (placeholder for Phase 3) -->
+        <!-- Order History -->
         <div class="card mb-3">
             <div class="card-header"><i class="bi bi-clock-history"></i> Order History</div>
             <div class="card-body text-muted small">No orders yet.</div>
         </div>
     </div>
 
-    <!-- Right: Certs, Equipment, Documents -->
+    <!-- Right: Certs, Memberships, Equipment, Documents -->
     <div class="col-lg-7">
         <!-- Certifications -->
         <div class="card mb-3">
@@ -181,6 +338,68 @@
                         </tr>
                         {% else %}
                         <tr><td colspan="5" class="text-muted text-center small">No certifications.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Memberships -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-people"></i> Memberships</span>
+                <button class="btn btn-sm btn-outline-success" data-bs-toggle="collapse" data-bs-target="#addMem">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+            </div>
+            <div class="collapse" id="addMem">
+                <div class="card-body border-bottom">
+                    <form method="POST" action="{{ url_for('pilots.add_membership', pilot_id=pilot.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="org_name" class="form-control form-control-sm"
+                                       placeholder="Organisation Name *" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="membership_number" class="form-control form-control-sm"
+                                       placeholder="Membership Number">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="membership_type" class="form-control form-control-sm"
+                                       placeholder="Type (e.g. Full, Associate)">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="date" name="expiry_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-plus"></i> Add Membership
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Organisation</th><th>Number</th><th>Type</th><th>Expiry</th><th></th></tr></thead>
+                    <tbody>
+                        {% for mem in pilot.memberships %}
+                        <tr>
+                            <td>{{ mem.org_name }}</td>
+                            <td>{{ mem.membership_number or '-' }}</td>
+                            <td>{{ mem.membership_type or '-' }}</td>
+                            <td>{{ mem.expiry_date.strftime('%d %b %Y') if mem.expiry_date else '-' }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('pilots.delete_membership', pilot_id=pilot.id, mem_id=mem.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-muted text-center small">No memberships.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

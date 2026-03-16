@@ -7,11 +7,13 @@
 <div class="row g-4">
     <!-- Left: Profile Form -->
     <div class="col-lg-5">
-        <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-person"></i> Profile Details</div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('pilot.profile') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <form method="POST" action="{{ url_for('pilot.profile') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Personal Details -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-person"></i> Personal Details</div>
+                <div class="card-body">
                     <div class="row g-2">
                         <div class="col-md-6">
                             <label class="form-label small">Display Name</label>
@@ -29,50 +31,189 @@
                                    value="{{ current_user.phone or '' }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">Flying ID</label>
+                            <label class="form-label small">New Password <small class="text-muted">(optional)</small></label>
+                            <input type="password" name="password" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Home Address -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-house"></i> Home Address</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <input type="text" name="address_line1" class="form-control form-control-sm"
+                                   placeholder="Address Line 1" value="{{ current_user.address_line1 or '' }}">
+                        </div>
+                        <div class="col-12">
+                            <input type="text" name="address_line2" class="form-control form-control-sm"
+                                   placeholder="Address Line 2" value="{{ current_user.address_line2 or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="address_city" class="form-control form-control-sm"
+                                   placeholder="City / Town" value="{{ current_user.address_city or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="address_county" class="form-control form-control-sm"
+                                   placeholder="County" value="{{ current_user.address_county or '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="address_postcode" class="form-control form-control-sm"
+                                   placeholder="Postcode" value="{{ current_user.address_postcode or '' }}">
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" name="address_country" class="form-control form-control-sm"
+                                   placeholder="Country" value="{{ current_user.address_country or 'United Kingdom' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CAA Regulatory IDs -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-shield-check"></i> CAA Regulatory IDs</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-8">
+                            <label class="form-label small">Flyer ID</label>
                             <input type="text" name="flying_id" class="form-control form-control-sm"
-                                   value="{{ current_user.flying_id or '' }}">
+                                   placeholder="GBR-RP-XXXXXXXXXX" value="{{ current_user.flying_id or '' }}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small">Operator ID</label>
+                        <div class="col-4">
+                            <label class="form-label small">Expiry</label>
+                            <input type="date" name="flying_id_expiry" class="form-control form-control-sm"
+                                   value="{{ current_user.flying_id_expiry.strftime('%Y-%m-%d') if current_user.flying_id_expiry else '' }}">
+                        </div>
+                        <div class="col-8">
+                            <label class="form-label small">CAA Operator ID</label>
                             <input type="text" name="operator_id" class="form-control form-control-sm"
-                                   value="{{ current_user.operator_id or '' }}">
+                                   placeholder="GBR-OP-XXXXXXXXXX" value="{{ current_user.operator_id or '' }}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small">Expiry</label>
+                            <input type="date" name="operator_id_expiry" class="form-control form-control-sm"
+                                   value="{{ current_user.operator_id_expiry.strftime('%Y-%m-%d') if current_user.operator_id_expiry else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UK Qualifications -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-mortarboard"></i> UK Qualifications</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-4"><label class="form-label small">A2 CofC</label></div>
+                        <div class="col-8">
+                            <input type="date" name="a2_cofc_expiry" class="form-control form-control-sm"
+                                   value="{{ current_user.a2_cofc_expiry.strftime('%Y-%m-%d') if current_user.a2_cofc_expiry else '' }}">
+                        </div>
+                        <div class="col-4"><label class="form-label small">GVC Multi-Rotor</label></div>
+                        <div class="col-8">
+                            <input type="date" name="gvc_mr_expiry" class="form-control form-control-sm"
+                                   value="{{ current_user.gvc_mr_expiry.strftime('%Y-%m-%d') if current_user.gvc_mr_expiry else '' }}">
+                        </div>
+                        <div class="col-4"><label class="form-label small">GVC Fixed Wing</label></div>
+                        <div class="col-8">
+                            <input type="date" name="gvc_fw_expiry" class="form-control form-control-sm"
+                                   value="{{ current_user.gvc_fw_expiry.strftime('%Y-%m-%d') if current_user.gvc_fw_expiry else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate of Competency -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-patch-check"></i> Certificate of Competency</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-12 mb-2">
+                            <label class="form-label small">Drone Law (Theory)</label>
+                            {% if current_user.flying_id_valid %}
+                            <span class="badge bg-success">VALID</span>
+                            {% else %}
+                            <span class="badge bg-danger">EXPIRED</span>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">Insurance Provider</label>
+                            <label class="form-label small">Practical Competency Date</label>
+                            <input type="date" name="practical_competency_date" class="form-control form-control-sm"
+                                   value="{{ current_user.practical_competency_date.strftime('%Y-%m-%d') if current_user.practical_competency_date else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Mentor / Examiner</label>
+                            <input type="text" name="mentor_examiner" class="form-control form-control-sm"
+                                   value="{{ current_user.mentor_examiner or '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 16 -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-file-text"></i> Article 16 Operational Authorisation</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <div class="form-check">
+                                <input type="checkbox" name="article16_agreed" class="form-check-input" id="article16"
+                                       {{ 'checked' if current_user.article16_agreed }}>
+                                <label class="form-check-label small" for="article16">
+                                    I have read and understood the Article 16 operational authorisation requirements
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Date Agreed</label>
+                            <input type="date" name="article16_agreed_date" class="form-control form-control-sm"
+                                   value="{{ current_user.article16_agreed_date.strftime('%Y-%m-%d') if current_user.article16_agreed_date else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insurance -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-shield"></i> Insurance</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label small">Provider</label>
                             <input type="text" name="insurance_provider" class="form-control form-control-sm"
                                    value="{{ current_user.insurance_provider or '' }}">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label small">Policy Number</label>
                             <input type="text" name="insurance_policy_no" class="form-control form-control-sm"
                                    value="{{ current_user.insurance_policy_no or '' }}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small">Insurance Expiry</label>
+                        <div class="col-md-4">
+                            <label class="form-label small">Expiry</label>
                             <input type="date" name="insurance_expiry" class="form-control form-control-sm"
                                    value="{{ current_user.insurance_expiry.strftime('%Y-%m-%d') if current_user.insurance_expiry else '' }}">
                         </div>
-                        <div class="col-12">
-                            <label class="form-label small">Bio / Notes</label>
-                            <textarea name="pilot_bio" class="form-control form-control-sm" rows="2">{{ current_user.pilot_bio or '' }}</textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small">New Password <small class="text-muted">(optional)</small></label>
-                            <input type="password" name="password" class="form-control form-control-sm">
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="bi bi-save"></i> Save Profile
-                            </button>
-                        </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <!-- Bio -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-journal-text"></i> Bio / Notes</div>
+                <div class="card-body">
+                    <textarea name="pilot_bio" class="form-control form-control-sm" rows="3">{{ current_user.pilot_bio or '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Save -->
+            <button type="submit" class="btn btn-primary mb-3">
+                <i class="bi bi-save"></i> Save Profile
+            </button>
+        </form>
     </div>
 
-    <!-- Right: Certs, Equipment, Documents -->
+    <!-- Right: Certs, Memberships, Equipment, Documents -->
     <div class="col-lg-7">
         <!-- Certifications -->
         <div class="card mb-3">
@@ -133,6 +274,68 @@
                         </tr>
                         {% else %}
                         <tr><td colspan="5" class="text-muted text-center small">No certifications.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Memberships -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-people"></i> Memberships</span>
+                <button class="btn btn-sm btn-outline-success" data-bs-toggle="collapse" data-bs-target="#addMem">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+            </div>
+            <div class="collapse" id="addMem">
+                <div class="card-body border-bottom">
+                    <form method="POST" action="{{ url_for('pilot.add_membership') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="org_name" class="form-control form-control-sm"
+                                       placeholder="Organisation Name *" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="membership_number" class="form-control form-control-sm"
+                                       placeholder="Membership Number">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="membership_type" class="form-control form-control-sm"
+                                       placeholder="Type (e.g. Full, Associate)">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="date" name="expiry_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Organisation</th><th>Number</th><th>Type</th><th>Expiry</th><th></th></tr></thead>
+                    <tbody>
+                        {% for mem in current_user.memberships %}
+                        <tr>
+                            <td>{{ mem.org_name }}</td>
+                            <td>{{ mem.membership_number or '-' }}</td>
+                            <td>{{ mem.membership_type or '-' }}</td>
+                            <td>{{ mem.expiry_date.strftime('%d %b %Y') if mem.expiry_date else '-' }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('pilot.delete_membership', mem_id=mem.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-muted text-center small">No memberships.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

@@ -16,6 +16,7 @@ from models.user import User
 from models.pilot_certification import PilotCertification
 from models.pilot_equipment import PilotEquipment
 from models.pilot_document import PilotDocument
+from models.pilot_membership import PilotMembership
 
 ALLOWED_DOC_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf", "doc", "docx"}
 
@@ -68,13 +69,27 @@ def create_pilot():
             insurance_provider=request.form.get("insurance_provider", "").strip() or None,
             insurance_policy_no=request.form.get("insurance_policy_no", "").strip() or None,
             pilot_bio=request.form.get("pilot_bio", "").strip() or None,
+            mentor_examiner=request.form.get("mentor_examiner", "").strip() or None,
+            article16_agreed=True if request.form.get("article16_agreed") else False,
+            address_line1=request.form.get("address_line1", "").strip() or None,
+            address_line2=request.form.get("address_line2", "").strip() or None,
+            address_city=request.form.get("address_city", "").strip() or None,
+            address_county=request.form.get("address_county", "").strip() or None,
+            address_postcode=request.form.get("address_postcode", "").strip() or None,
+            address_country=request.form.get("address_country", "").strip() or None,
         )
-        exp = request.form.get("insurance_expiry", "").strip()
-        if exp:
-            try:
-                pilot.insurance_expiry = datetime.strptime(exp, "%Y-%m-%d").date()
-            except ValueError:
-                pass
+        # Date fields
+        for date_field in [
+            "insurance_expiry", "flying_id_expiry", "operator_id_expiry",
+            "a2_cofc_expiry", "gvc_mr_expiry", "gvc_fw_expiry",
+            "practical_competency_date", "article16_agreed_date",
+        ]:
+            val = request.form.get(date_field, "").strip()
+            if val:
+                try:
+                    setattr(pilot, date_field, datetime.strptime(val, "%Y-%m-%d").date())
+                except ValueError:
+                    pass
         pilot.set_password(password)
         db.session.add(pilot)
         db.session.commit()
@@ -110,14 +125,33 @@ def edit_pilot(pilot_id):
     pilot.insurance_provider = request.form.get("insurance_provider", "").strip() or None
     pilot.insurance_policy_no = request.form.get("insurance_policy_no", "").strip() or None
     pilot.pilot_bio = request.form.get("pilot_bio", "").strip() or None
-    exp = request.form.get("insurance_expiry", "").strip()
-    if exp:
-        try:
-            pilot.insurance_expiry = datetime.strptime(exp, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    else:
-        pilot.insurance_expiry = None
+
+    # Date fields
+    for date_field in [
+        "insurance_expiry", "flying_id_expiry", "operator_id_expiry",
+        "a2_cofc_expiry", "gvc_mr_expiry", "gvc_fw_expiry",
+        "practical_competency_date", "article16_agreed_date",
+    ]:
+        val = request.form.get(date_field, "").strip()
+        if val:
+            try:
+                setattr(pilot, date_field, datetime.strptime(val, "%Y-%m-%d").date())
+            except ValueError:
+                pass
+        else:
+            setattr(pilot, date_field, None)
+
+    # Boolean
+    pilot.article16_agreed = True if request.form.get("article16_agreed") else False
+
+    # String fields
+    pilot.mentor_examiner = request.form.get("mentor_examiner", "").strip() or None
+    pilot.address_line1 = request.form.get("address_line1", "").strip() or None
+    pilot.address_line2 = request.form.get("address_line2", "").strip() or None
+    pilot.address_city = request.form.get("address_city", "").strip() or None
+    pilot.address_county = request.form.get("address_county", "").strip() or None
+    pilot.address_postcode = request.form.get("address_postcode", "").strip() or None
+    pilot.address_country = request.form.get("address_country", "").strip() or None
 
     new_password = request.form.get("password", "").strip()
     if new_password:
@@ -202,6 +236,46 @@ def delete_certification(pilot_id, cert_id):
     db.session.delete(cert)
     db.session.commit()
     flash("Certification deleted.", "success")
+    return redirect(url_for("pilots.detail", pilot_id=pilot_id))
+
+
+# ── Memberships ────────────────────────────────────────────────
+
+@pilots_bp.route("/<int:pilot_id>/memberships/add", methods=["POST"])
+@role_required("admin")
+def add_membership(pilot_id):
+    pilot = db.get_or_404(User, pilot_id)
+    mem = PilotMembership(
+        user_id=pilot.id,
+        org_name=request.form.get("org_name", "").strip(),
+        membership_number=request.form.get("membership_number", "").strip() or None,
+        membership_type=request.form.get("membership_type", "").strip() or None,
+    )
+    expiry = request.form.get("expiry_date", "").strip()
+    if expiry:
+        try:
+            mem.expiry_date = datetime.strptime(expiry, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    if not mem.org_name:
+        flash("Organisation name is required.", "danger")
+        return redirect(url_for("pilots.detail", pilot_id=pilot.id))
+    db.session.add(mem)
+    db.session.commit()
+    flash("Membership added.", "success")
+    return redirect(url_for("pilots.detail", pilot_id=pilot.id))
+
+
+@pilots_bp.route("/<int:pilot_id>/memberships/<int:mem_id>/delete", methods=["POST"])
+@role_required("admin")
+def delete_membership(pilot_id, mem_id):
+    mem = db.get_or_404(PilotMembership, mem_id)
+    if mem.user_id != pilot_id:
+        flash("Invalid membership.", "danger")
+        return redirect(url_for("pilots.detail", pilot_id=pilot_id))
+    db.session.delete(mem)
+    db.session.commit()
+    flash("Membership deleted.", "success")
     return redirect(url_for("pilots.detail", pilot_id=pilot_id))
 
 
