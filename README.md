@@ -428,4 +428,4 @@ After running `flask seed-demo`, all demo users use password **`demo123`**.
 
 ## Licence
 
-All rights reserved.
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
