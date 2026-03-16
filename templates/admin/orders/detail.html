@@ -136,6 +136,47 @@
             </div>
         </div>
 
+        <!-- Flight Parameters & Category -->
+        {% if order.operational_category %}
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-shield-check"></i> Category &amp; Flight Parameters</div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Category:</strong>
+                    {% set cat_class = 'success' if order.operational_category.startswith('open_') else ('primary' if order.operational_category.startswith('specific_') else 'danger') %}
+                    <span class="badge bg-{{ cat_class }}">{{ order.operational_category|replace('_', ' ')|title }}</span>
+                </p>
+                {% if order.equipment %}
+                <p class="mb-1"><strong>Equipment:</strong> {{ order.equipment.drone_model }}
+                    {% if order.equipment.class_mark %}<span class="badge bg-info">{{ order.equipment.class_mark }}</span>{% endif %}
+                    {% if order.equipment.mtom_grams %}<small class="text-muted">({{ order.equipment.mtom_display }})</small>{% endif %}
+                </p>
+                {% endif %}
+                <div class="row small mt-2">
+                    {% if order.time_of_day %}
+                    <div class="col-md-4 mb-1"><strong>Time:</strong> {{ order.time_of_day|title }}</div>
+                    {% endif %}
+                    {% if order.vlos_type %}
+                    <div class="col-md-4 mb-1"><strong>VLOS:</strong> {{ order.vlos_type|upper }}</div>
+                    {% endif %}
+                    {% if order.airspace_type %}
+                    <div class="col-md-4 mb-1"><strong>Airspace:</strong> {{ order.airspace_type|replace('_', ' ')|title }}</div>
+                    {% endif %}
+                    {% if order.environment_type %}
+                    <div class="col-md-4 mb-1"><strong>Environment:</strong> {{ order.environment_type|replace('_', ' ')|title }}</div>
+                    {% endif %}
+                    {% if order.speed_mode %}
+                    <div class="col-md-4 mb-1"><strong>Speed:</strong> {{ order.speed_mode|replace('_', ' ')|title }}</div>
+                    {% endif %}
+                </div>
+                {% if order.category_blockers %}
+                <div class="alert alert-danger py-1 small mt-2 mb-0">
+                    <i class="bi bi-x-circle"></i> Blockers present — see category details.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Risk Assessment Summary -->
         {% if order.risk_assessment %}
         {% set ra = order.risk_assessment %}

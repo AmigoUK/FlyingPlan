@@ -15,6 +15,27 @@
     {% endif %}
 </div>
 
+<!-- Category Info Banner -->
+{% if order.operational_category %}
+{% set cat = order.operational_category %}
+{% set is_open = cat.startswith('open_') %}
+<div class="alert {{ 'alert-secondary' if is_open else 'alert-info' }} mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi bi-{{ 'info-circle' if is_open else 'shield-check' }}"></i>
+            {% if is_open %}
+            <strong>Open Category ({{ cat|replace('open_', 'A')|upper }}):</strong>
+            This pre-flight checklist is good practice. A formal risk assessment is not legally required for Open category flights under Article 11.
+            {% else %}
+            <strong>Specific Category:</strong>
+            A documented risk assessment is legally required under Article 11 for Specific category operations.
+            {% endif %}
+        </div>
+        <span class="badge bg-{{ 'success' if is_open else 'primary' }}">{{ cat|replace('_', ' ')|title }}</span>
+    </div>
+</div>
+{% endif %}
+
 {% if readonly and assessment %}
 <!-- ── Read-Only View ──────────────────────────────────────────── -->
 <div class="row g-4">
@@ -176,6 +197,93 @@
                     </div>
                 </div>
             </div>
+
+            {% if assessment.category_version == 2 %}
+            <!-- Night Flying (if applicable) -->
+            {% if assessment.night_green_light_fitted or assessment.night_green_light_on %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#roNight">
+                        <i class="bi bi-moon me-2"></i> Night Flying Checks
+                        <span class="badge bg-success ms-auto me-2">Checked</span>
+                    </button>
+                </h2>
+                <div id="roNight" class="accordion-collapse collapse" data-bs-parent="#raReadonly">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.night_green_light_fitted else 'secondary' }}"></i> Green flashing light fitted</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.night_green_light_on else 'secondary' }}"></i> Green light switched on</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.night_vlos_maintainable else 'secondary' }}"></i> VLOS maintainable in darkness</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.night_orientation_visible else 'secondary' }}"></i> Drone orientation visible</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- A2 Assessment (if applicable) -->
+            {% if assessment.operational_category == 'open_a2' %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#roA2">
+                        <i class="bi bi-people me-2"></i> A2 People Assessment
+                        <span class="badge bg-success ms-auto me-2">Checked</span>
+                    </button>
+                </h2>
+                <div id="roA2" class="accordion-collapse collapse" data-bs-parent="#raReadonly">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.a2_distance_confirmed else 'secondary' }}"></i> Required distance from people confirmed</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.a2_low_speed_active else 'secondary' }}"></i> Low-speed mode active (if applicable)</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.a2_segregation_assessed else 'secondary' }}"></i> Area segregation assessed</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- A3 Assessment (if applicable) -->
+            {% if assessment.operational_category == 'open_a3' %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#roA3">
+                        <i class="bi bi-arrows-fullscreen me-2"></i> A3 Distance Assessment
+                        <span class="badge bg-success ms-auto me-2">Checked</span>
+                    </button>
+                </h2>
+                <div id="roA3" class="accordion-collapse collapse" data-bs-parent="#raReadonly">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.a3_150m_from_areas else 'secondary' }}"></i> 150m from residential/commercial/industrial areas</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.a3_50m_from_people else 'secondary' }}"></i> 50m from uninvolved people</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.a3_50m_from_buildings else 'secondary' }}"></i> 50m from buildings</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Specific Ops (if applicable) -->
+            {% if assessment.operational_category and assessment.operational_category.startswith('specific_') %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#roSpecific">
+                        <i class="bi bi-file-earmark-text me-2"></i> Specific Operations
+                        <span class="badge bg-success ms-auto me-2">Checked</span>
+                    </button>
+                </h2>
+                <div id="roSpecific" class="accordion-collapse collapse" data-bs-parent="#raReadonly">
+                    <div class="accordion-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.specific_ops_manual_reviewed else 'secondary' }}"></i> Operations manual reviewed</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.specific_insurance_confirmed else 'secondary' }}"></i> Insurance confirmed</li>
+                            <li><i class="bi bi-check-circle-fill text-{{ 'success' if assessment.specific_oa_valid else 'secondary' }}"></i> Operational Authorisation valid</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
         </div>
     </div>
 
@@ -198,6 +306,14 @@
                 </p>
                 {% if assessment.mitigation_notes %}
                 <p class="mb-2"><strong>Mitigations:</strong><br>{{ assessment.mitigation_notes }}</p>
+                {% endif %}
+                {% if assessment.operational_category %}
+                <p class="mb-2"><strong>Category:</strong>
+                    <span class="badge bg-{{ 'success' if assessment.operational_category.startswith('open_') else 'primary' }}">
+                        {{ assessment.operational_category|replace('_', ' ')|title }}
+                    </span>
+                    {% if assessment.category_version == 1 %}<small class="text-muted">(legacy)</small>{% endif %}
+                </p>
                 {% endif %}
                 <p class="mb-2"><strong>Pilot:</strong> {{ assessment.pilot.display_name }}</p>
                 <p class="mb-2"><strong>Completed:</strong> {{ assessment.created_at.strftime('%d %b %Y %H:%M UTC') }}</p>
@@ -458,6 +574,133 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ── Conditional Sections ─────────────────────────── -->
+
+                {% if order.time_of_day in ('night', 'twilight') %}
+                <!-- Night Flying -->
+                <div class="accordion-item border-warning">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secNight">
+                            <i class="bi bi-moon me-2"></i> Night Flying Checks
+                            <span class="badge bg-warning text-dark ms-2">Mandatory</span>
+                            <span class="badge bg-secondary ms-auto me-2" id="badgeNight">0/4</span>
+                        </button>
+                    </h2>
+                    <div id="secNight" class="accordion-collapse collapse" data-bs-parent="#raAccordion">
+                        <div class="accordion-body">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="night_green_light_fitted" id="night_green_light_fitted" value="1" data-section="Night">
+                                <label class="form-check-label" for="night_green_light_fitted">Green flashing light fitted to drone</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="night_green_light_on" id="night_green_light_on" value="1" data-section="Night">
+                                <label class="form-check-label" for="night_green_light_on">Green light switched on and visible from ground</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="night_vlos_maintainable" id="night_vlos_maintainable" value="1" data-section="Night">
+                                <label class="form-check-label" for="night_vlos_maintainable">VLOS maintainable in darkness conditions</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="night_orientation_visible" id="night_orientation_visible" value="1" data-section="Night">
+                                <label class="form-check-label" for="night_orientation_visible">Drone orientation clearly visible</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if order.operational_category == 'open_a2' %}
+                <!-- A2 People Assessment -->
+                <div class="accordion-item border-info">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secA2">
+                            <i class="bi bi-people me-2"></i> A2 People Assessment
+                            <span class="badge bg-info ms-2">A2 Required</span>
+                            <span class="badge bg-secondary ms-auto me-2" id="badgeA2">0/3</span>
+                        </button>
+                    </h2>
+                    <div id="secA2" class="accordion-collapse collapse" data-bs-parent="#raAccordion">
+                        <div class="accordion-body">
+                            {% if category_result %}
+                            <div class="alert alert-info py-1 small mb-3">
+                                <strong>Required distance from people:</strong> {{ category_result.min_distance_people_m }}m
+                            </div>
+                            {% endif %}
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="a2_distance_confirmed" id="a2_distance_confirmed" value="1" data-section="A2">
+                                <label class="form-check-label" for="a2_distance_confirmed">Required horizontal distance from uninvolved people confirmed</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="a2_low_speed_active" id="a2_low_speed_active" value="1" data-section="A2">
+                                <label class="form-check-label" for="a2_low_speed_active">Low-speed mode active (if using 5m reduction)</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="a2_segregation_assessed" id="a2_segregation_assessed" value="1" data-section="A2">
+                                <label class="form-check-label" for="a2_segregation_assessed">Area segregation assessed for close-proximity operations</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if order.operational_category == 'open_a3' %}
+                <!-- A3 Distance Assessment -->
+                <div class="accordion-item border-info">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secA3">
+                            <i class="bi bi-arrows-fullscreen me-2"></i> A3 Distance Assessment
+                            <span class="badge bg-info ms-2">A3 Required</span>
+                            <span class="badge bg-secondary ms-auto me-2" id="badgeA3">0/3</span>
+                        </button>
+                    </h2>
+                    <div id="secA3" class="accordion-collapse collapse" data-bs-parent="#raAccordion">
+                        <div class="accordion-body">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="a3_150m_from_areas" id="a3_150m_from_areas" value="1" data-section="A3">
+                                <label class="form-check-label" for="a3_150m_from_areas">150m from residential, commercial, industrial, and recreational areas confirmed</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="a3_50m_from_people" id="a3_50m_from_people" value="1" data-section="A3">
+                                <label class="form-check-label" for="a3_50m_from_people">50m from uninvolved people confirmed</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="a3_50m_from_buildings" id="a3_50m_from_buildings" value="1" data-section="A3">
+                                <label class="form-check-label" for="a3_50m_from_buildings">50m from buildings confirmed</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if order.operational_category and order.operational_category.startswith('specific_') %}
+                <!-- Specific Ops -->
+                <div class="accordion-item border-primary">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#secSpecific">
+                            <i class="bi bi-file-earmark-text me-2"></i> Specific Operations
+                            <span class="badge bg-primary ms-2">Mandatory</span>
+                            <span class="badge bg-secondary ms-auto me-2" id="badgeSpecific">0/3</span>
+                        </button>
+                    </h2>
+                    <div id="secSpecific" class="accordion-collapse collapse" data-bs-parent="#raAccordion">
+                        <div class="accordion-body">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="specific_ops_manual_reviewed" id="specific_ops_manual_reviewed" value="1" data-section="Specific">
+                                <label class="form-check-label" for="specific_ops_manual_reviewed">Operations manual reviewed and procedures followed</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="specific_insurance_confirmed" id="specific_insurance_confirmed" value="1" data-section="Specific">
+                                <label class="form-check-label" for="specific_insurance_confirmed">Third-party liability insurance confirmed</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input ra-check" type="checkbox" name="specific_oa_valid" id="specific_oa_valid" value="1" data-section="Specific">
+                                <label class="form-check-label" for="specific_oa_valid">Operational Authorisation valid and conditions met</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -544,7 +787,16 @@
         Perms: {total: 4, checked: 0},
         Emergency: {total: 3, checked: 0}
     };
-    var totalChecks = 28;
+    // Dynamically count conditional sections
+    var conditionalSections = ['Night', 'A2', 'A3', 'Specific'];
+    conditionalSections.forEach(function(s) {
+        var checks = document.querySelectorAll('.ra-check[data-section="' + s + '"]');
+        if (checks.length > 0) {
+            sectionCounts[s] = {total: checks.length, checked: 0};
+        }
+    });
+    var totalChecks = 0;
+    for (var s in sectionCounts) totalChecks += sectionCounts[s].total;
 
     function updateBadges() {
         // Reset counts

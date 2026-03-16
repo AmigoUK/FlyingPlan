@@ -463,20 +463,66 @@ def risk_assessment(order_id):
     existing = RiskAssessment.query.filter_by(order_id=order.id).first()
     if existing:
         return render_template(
-            "pilot/risk_assessment.html", order=order, assessment=existing, readonly=True
+            "pilot/risk_assessment.html", order=order, assessment=existing, readonly=True,
+            category_result=None,
         )
 
+    # Determine category result if flight params are set
+    category_result = None
+    if order.operational_category:
+        from services.category_engine import DroneProfile, PilotProfile, FlightParams as FP, determine_category
+        equip = order.equipment
+        drone = DroneProfile(
+            class_mark=equip.class_mark or 'legacy' if equip else 'legacy',
+            mtom_grams=equip.mtom_grams or 0 if equip else 0,
+            has_camera=equip.has_camera if equip else True,
+            green_light_type=equip.green_light_type or 'none' if equip else 'none',
+            green_light_weight_grams=equip.green_light_weight_grams or 0 if equip else 0,
+            has_low_speed_mode=equip.has_low_speed_mode if equip else False,
+            remote_id_capable=equip.remote_id_capable if equip else False,
+        )
+        pilot_profile = PilotProfile(
+            has_flyer_id=current_user.flying_id_valid,
+            has_a2_cofc=current_user.has_a2_cofc,
+            gvc_level=current_user.gvc_level,
+            oa_type=current_user.oa_type,
+            has_insurance=bool(current_user.insurance_expiry),
+        )
+        flight = FP(
+            time_of_day=order.time_of_day or 'day',
+            proximity_to_people=order.proximity_to_people or '50m_plus',
+            environment_type=order.environment_type or 'open_countryside',
+            proximity_to_buildings=order.proximity_to_buildings or 'over_150m',
+            airspace_type=order.airspace_type or 'uncontrolled',
+            vlos_type=order.vlos_type or 'vlos',
+            speed_mode=order.speed_mode or 'normal',
+        )
+        category_result = determine_category(drone, pilot_profile, flight)
+
     if request.method == "POST":
-        # Collect all 28 boolean checks
+        # Determine which checks are required
+        required_checks = list(RiskAssessment.CHECK_FIELDS)
+        category = order.operational_category
+
+        # Add category-specific checks
+        if category:
+            extra = RiskAssessment.CATEGORY_CHECKS.get(category, [])
+            required_checks.extend(extra)
+        # Add night checks if night/twilight
+        if order.time_of_day in ('night', 'twilight'):
+            required_checks.extend(RiskAssessment.NIGHT_CHECK_FIELDS)
+
+        # Collect boolean checks
         missing = []
-        for field in RiskAssessment.CHECK_FIELDS:
+        for field in required_checks:
             if not request.form.get(field):
                 missing.append(field)
 
         if missing:
-            flash(f"All {len(RiskAssessment.CHECK_FIELDS)} safety checks must be confirmed. {len(missing)} remaining.", "danger")
+            flash(f"All required safety checks must be confirmed. {len(missing)} remaining.", "danger")
             return render_template(
-                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False,
+                category_result=category_result,
             )
 
         # Validate decision fields
@@ -487,19 +533,22 @@ def risk_assessment(order_id):
         if risk_level not in RiskAssessment.RISK_LEVELS:
             flash("Please select a risk level.", "danger")
             return render_template(
-                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False,
+                category_result=category_result,
             )
 
         if decision not in RiskAssessment.DECISIONS:
             flash("Please select a decision.", "danger")
             return render_template(
-                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False,
+                category_result=category_result,
             )
 
         if not pilot_declaration:
             flash("You must confirm the pilot declaration.", "danger")
             return render_template(
-                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False,
+                category_result=category_result,
             )
 
         # Mitigations required if proceeding with mitigations
@@ -507,7 +556,8 @@ def risk_assessment(order_id):
         if decision == "proceed_with_mitigations" and not mitigation_notes:
             flash("Mitigation notes are required when proceeding with mitigations.", "danger")
             return render_template(
-                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+                "pilot/risk_assessment.html", order=order, assessment=None, readonly=False,
+                category_result=category_result,
             )
 
         # Build assessment record
@@ -518,11 +568,22 @@ def risk_assessment(order_id):
             decision=decision,
             mitigation_notes=mitigation_notes or None,
             pilot_declaration=True,
+            operational_category=category,
+            category_version=2 if category else 1,
         )
 
-        # Set all boolean checks
+        # Set all base boolean checks
         for field in RiskAssessment.CHECK_FIELDS:
             setattr(ra, field, True)
+
+        # Set category-specific checks
+        if category:
+            for field in RiskAssessment.CATEGORY_CHECKS.get(category, []):
+                setattr(ra, field, bool(request.form.get(field)))
+        # Set night checks
+        if order.time_of_day in ('night', 'twilight'):
+            for field in RiskAssessment.NIGHT_CHECK_FIELDS:
+                setattr(ra, field, bool(request.form.get(field)))
 
         # Numeric/text data inputs
         try:
@@ -569,7 +630,8 @@ def risk_assessment(order_id):
         _log_activity(
             order, "risk_assessment_completed",
             new_value=decision,
-            details=f"Risk level: {risk_level}. Decision: {decision.replace('_', ' ').title()}.",
+            details=f"Risk level: {risk_level}. Decision: {decision.replace('_', ' ').title()}."
+                    + (f" Category: {category}." if category else ""),
         )
         db.session.commit()
 
@@ -581,7 +643,8 @@ def risk_assessment(order_id):
         return redirect(url_for("pilot.order_detail", order_id=order.id))
 
     return render_template(
-        "pilot/risk_assessment.html", order=order, assessment=None, readonly=False
+        "pilot/risk_assessment.html", order=order, assessment=None, readonly=False,
+        category_result=category_result,
     )
 
 
