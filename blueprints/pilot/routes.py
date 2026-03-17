@@ -621,6 +621,24 @@ def download_document(doc_id):
     )
 
 
+# ── Weather Data ──────────────────────────────────────────────
+
+@pilot_bp.route("/orders/<int:order_id>/weather")
+@role_required("pilot")
+def get_weather(order_id):
+    order = _get_pilot_order(order_id)
+    fp = order.flight_plan
+    if not fp.location_lat or not fp.location_lng:
+        return jsonify({"error": "No location set"}), 400
+
+    from services.weather import get_weather as fetch_weather, check_drone_warnings
+    from services.drone_profiles import get_profile
+    weather = fetch_weather(fp.location_lat, fp.location_lng)
+    profile = get_profile(fp.drone_model or "mini_4_pro")
+    weather["warnings"] = check_drone_warnings(weather.get("current"), profile)
+    return jsonify(weather)
+
+
 # ── Elevation Data ────────────────────────────────────────────
 
 @pilot_bp.route("/orders/<int:order_id>/elevation", methods=["POST"])

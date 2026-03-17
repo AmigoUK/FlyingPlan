@@ -199,6 +199,19 @@
             </div>
         </div>
 
+        <!-- Weather -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cloud-sun"></i> Weather</span>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-load-weather">
+                    <i class="bi bi-arrow-repeat"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body" id="weather-panel">
+                <p class="text-muted small mb-0">Click "Refresh" to load live weather.</p>
+            </div>
+        </div>
+
         <!-- Admin notes -->
         <div class="card mb-3">
             <div class="card-header"><i class="bi bi-journal-text"></i> Pilot Notes</div>
@@ -265,6 +278,7 @@
 
 {% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/weather-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map-measure.js') }}"></script>
 <script src="{{ url_for('static', filename='js/elevation-profile.js') }}"></script>
 <script src="{{ url_for('static', filename='js/grid-planner.js') }}"></script>

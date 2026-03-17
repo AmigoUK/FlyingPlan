@@ -127,6 +127,21 @@ def save_notes(plan_id):
     return jsonify({"success": True})
 
 
+@admin_bp.route("/<int:plan_id>/weather")
+@role_required("manager")
+def get_weather(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.location_lat or not fp.location_lng:
+        return jsonify({"error": "No location set"}), 400
+
+    from services.weather import get_weather as fetch_weather, check_drone_warnings
+    from services.drone_profiles import get_profile
+    weather = fetch_weather(fp.location_lat, fp.location_lng)
+    profile = get_profile(fp.drone_model or "mini_4_pro")
+    weather["warnings"] = check_drone_warnings(weather.get("current"), profile)
+    return jsonify(weather)
+
+
 @admin_bp.route("/<int:plan_id>/terrain-follow", methods=["POST"])
 @role_required("manager")
 def terrain_follow(plan_id):

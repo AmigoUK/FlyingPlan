@@ -178,6 +178,20 @@
             </div>
         </div>
 
+        <!-- Weather -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cloud-sun"></i> Weather</span>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-load-weather"
+                        onclick="fetch('/pilot/orders/{{ order.id }}/weather').then(function(r){return r.json()}).then(function(d){if(typeof WeatherPanel!=='undefined')WeatherPanel.render('weather-panel',d)})">
+                    <i class="bi bi-arrow-repeat"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body" id="weather-panel">
+                <p class="text-muted small mb-0">Click "Refresh" to load live weather.</p>
+            </div>
+        </div>
+
         <!-- Pilot Notes -->
         <div class="card mb-3">
             <div class="card-header"><i class="bi bi-journal-text"></i> My Notes</div>
@@ -337,6 +351,7 @@
 {% block scripts %}
 {% if order.flight_plan.location_lat and order.flight_plan.location_lng %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/weather-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map-measure.js') }}"></script>
 {% if order.status in ['accepted', 'in_progress'] %}
 <script src="{{ url_for('static', filename='js/map-pilot-edit.js') }}"></script>

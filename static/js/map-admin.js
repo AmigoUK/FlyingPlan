@@ -560,6 +560,21 @@
         });
     }
 
+    // Weather
+    var weatherBtn = document.getElementById("btn-load-weather");
+    if (weatherBtn) {
+        weatherBtn.addEventListener("click", function () {
+            fetch("/admin/" + planId + "/weather")
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (typeof WeatherPanel !== "undefined") {
+                        WeatherPanel.render("weather-panel", data);
+                    }
+                })
+                .catch(function () { _toast("Weather load failed", "danger"); });
+        });
+    }
+
     // Terrain follow
     var terrainBtn = document.getElementById("btn-terrain-follow");
     if (terrainBtn) {
