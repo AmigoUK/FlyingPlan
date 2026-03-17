@@ -621,6 +621,18 @@ def download_document(doc_id):
     )
 
 
+# ── Elevation Data ────────────────────────────────────────────
+
+@pilot_bp.route("/orders/<int:order_id>/elevation", methods=["POST"])
+@role_required("pilot")
+def get_elevation(order_id):
+    order = _get_pilot_order(order_id)
+    from services.elevation import get_waypoint_elevations
+    waypoints_data = [w.to_dict() for w in order.flight_plan.waypoints]
+    enriched = get_waypoint_elevations(waypoints_data)
+    return jsonify({"success": True, "waypoints": enriched})
+
+
 # ── Import KMZ ────────────────────────────────────────────────
 
 @pilot_bp.route("/orders/<int:order_id>/import-kmz", methods=["POST"])

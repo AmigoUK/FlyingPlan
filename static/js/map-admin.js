@@ -482,6 +482,46 @@
             });
     });
 
+    // Load elevation data
+    var elevBtn = document.getElementById("btn-load-elevation");
+    if (elevBtn) {
+        elevBtn.addEventListener("click", function () {
+            if (waypoints.length === 0) {
+                _toast("Add waypoints first", "warning");
+                return;
+            }
+            fetch("/admin/" + planId + "/elevation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({}),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success && typeof ElevationProfile !== "undefined") {
+                        var chartData = [];
+                        var totalDist = 0;
+                        resp.waypoints.forEach(function (w, i) {
+                            if (i > 0) {
+                                var from = L.latLng(resp.waypoints[i - 1].lat, resp.waypoints[i - 1].lng);
+                                var to = L.latLng(w.lat, w.lng);
+                                totalDist += from.distanceTo(to);
+                            }
+                            chartData.push({
+                                distance_m: totalDist,
+                                ground_elevation_m: w.ground_elevation_m || 0,
+                                flight_altitude_amsl: w.amsl_m || w.altitude_m,
+                                is_waypoint: true,
+                            });
+                        });
+                        var placeholder = document.getElementById("elevation-placeholder");
+                        if (placeholder) placeholder.style.display = "none";
+                        ElevationProfile.render("elevation-canvas", chartData);
+                    }
+                })
+                .catch(function () { _toast("Failed to load elevation", "danger"); });
+        });
+    }
+
     // Import KMZ
     var importInput = document.getElementById("import-kmz-file");
     if (importInput) {

@@ -127,6 +127,16 @@ def save_notes(plan_id):
     return jsonify({"success": True})
 
 
+@admin_bp.route("/<int:plan_id>/elevation", methods=["POST"])
+@role_required("manager")
+def get_elevation(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.elevation import get_waypoint_elevations
+    waypoints_data = [w.to_dict() for w in fp.waypoints]
+    enriched = get_waypoint_elevations(waypoints_data)
+    return jsonify({"success": True, "waypoints": enriched})
+
+
 @admin_bp.route("/<int:plan_id>/import-kmz", methods=["POST"])
 @role_required("manager")
 def import_kmz(plan_id):
