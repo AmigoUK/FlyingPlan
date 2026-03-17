@@ -391,6 +391,48 @@ def save_drone_model(plan_id):
     return jsonify({"error": "Invalid drone model"}), 400
 
 
+@admin_bp.route("/<int:plan_id>/duplicate", methods=["POST"])
+@role_required("manager")
+def duplicate_plan(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    new_fp = FlightPlan(
+        customer_name=fp.customer_name,
+        customer_email=fp.customer_email,
+        customer_phone=fp.customer_phone,
+        customer_company=fp.customer_company,
+        job_type=fp.job_type,
+        job_description=fp.job_description,
+        location_address=fp.location_address,
+        location_lat=fp.location_lat,
+        location_lng=fp.location_lng,
+        area_polygon=fp.area_polygon,
+        estimated_area_sqm=fp.estimated_area_sqm,
+        altitude_preset=fp.altitude_preset,
+        altitude_custom_m=fp.altitude_custom_m,
+        drone_model=fp.drone_model,
+        consent_given=True,
+    )
+    new_fp.generate_reference()
+    db.session.add(new_fp)
+    db.session.flush()
+
+    # Copy waypoints
+    for w in fp.waypoints:
+        new_wp = Waypoint(
+            flight_plan_id=new_fp.id,
+            index=w.index, lat=w.lat, lng=w.lng,
+            altitude_m=w.altitude_m, speed_ms=w.speed_ms,
+            heading_deg=w.heading_deg, gimbal_pitch_deg=w.gimbal_pitch_deg,
+            turn_mode=w.turn_mode, turn_damping_dist=w.turn_damping_dist,
+            hover_time_s=w.hover_time_s, action_type=w.action_type,
+            poi_lat=w.poi_lat, poi_lng=w.poi_lng,
+        )
+        db.session.add(new_wp)
+
+    db.session.commit()
+    return jsonify({"success": True, "new_plan_id": new_fp.id, "reference": new_fp.reference})
+
+
 @admin_bp.route("/<int:plan_id>/export-kmz")
 @role_required("manager")
 def export_kmz(plan_id):

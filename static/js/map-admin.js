@@ -482,6 +482,42 @@
             });
     });
 
+    // Path tools
+    if (typeof PathTools !== "undefined" && document.getElementById("path-tools-bar")) {
+        PathTools.buildToolbar("path-tools-bar");
+
+        function _applyPathTransform(newWps) {
+            waypointMarkers.forEach(function (m) { map.removeLayer(m); });
+            waypointMarkers.length = 0;
+            waypoints.length = 0;
+            routeLayerGroup.clearLayers();
+            selectedIndex = -1;
+            newWps.forEach(function (w) { addWaypoint(L.latLng(w.lat, w.lng), w); });
+            updateRoute();
+        }
+
+        document.getElementById("path-tools-bar").addEventListener("click", function (e) {
+            var target = e.target.closest("button");
+            if (!target || waypoints.length < 2) return;
+
+            if (target.id === "btn-path-reverse") {
+                _applyPathTransform(PathTools.reversePath(waypoints));
+                _toast("Path reversed", "success");
+            } else if (target.id === "btn-path-straighten") {
+                _applyPathTransform(PathTools.straightenPath(waypoints));
+                _toast("Path straightened", "success");
+            } else if (target.id === "btn-path-offset-left") {
+                var dist = parseFloat(prompt("Offset distance (metres):", "10")) || 10;
+                _applyPathTransform(PathTools.offsetPath(waypoints, dist, "left"));
+                _toast("Path offset left " + dist + "m", "success");
+            } else if (target.id === "btn-path-offset-right") {
+                var dist2 = parseFloat(prompt("Offset distance (metres):", "10")) || 10;
+                _applyPathTransform(PathTools.offsetPath(waypoints, dist2, "right"));
+                _toast("Path offset right " + dist2 + "m", "success");
+            }
+        });
+    }
+
     // GSD Calculator
     if (typeof GSDCalculator !== "undefined" && document.getElementById("gsd-panel")) {
         GSDCalculator.buildPanel("gsd-panel");
