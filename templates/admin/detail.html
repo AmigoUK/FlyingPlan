@@ -235,9 +235,14 @@
         <div class="card mt-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-graph-up"></i> Elevation Profile</span>
-                <button class="btn btn-sm btn-outline-secondary" id="btn-load-elevation">
-                    <i class="bi bi-arrow-repeat"></i> Load Terrain
-                </button>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-secondary" id="btn-load-elevation">
+                        <i class="bi bi-arrow-repeat"></i> Load Terrain
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" id="btn-terrain-follow" title="Adjust altitudes to follow terrain">
+                        <i class="bi bi-bezier2"></i> Terrain Follow
+                    </button>
+                </div>
             </div>
             <div class="card-body p-2">
                 <canvas id="elevation-canvas" style="width:100%; display:none;"></canvas>

@@ -127,6 +127,41 @@ def save_notes(plan_id):
     return jsonify({"success": True})
 
 
+@admin_bp.route("/<int:plan_id>/terrain-follow", methods=["POST"])
+@role_required("manager")
+def terrain_follow(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        return jsonify({"error": "No waypoints to adjust"}), 400
+
+    data = request.get_json() or {}
+    target_agl = float(data.get("target_agl_m", 30))
+
+    from services.terrain_follower import apply_terrain_following
+    waypoints_data = [w.to_dict() for w in fp.waypoints]
+    adjusted = apply_terrain_following(waypoints_data, target_agl_m=target_agl)
+
+    # Replace waypoints
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in adjusted:
+        wp = Waypoint(
+            flight_plan_id=fp.id,
+            index=w["index"],
+            lat=w["lat"],
+            lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+        )
+        db.session.add(wp)
+
+    db.session.commit()
+    return jsonify({"success": True, "count": len(adjusted), "waypoints": adjusted})
+
+
 @admin_bp.route("/<int:plan_id>/generate-grid", methods=["POST"])
 @role_required("manager")
 def generate_grid(plan_id):

@@ -560,6 +560,41 @@
         });
     }
 
+    // Terrain follow
+    var terrainBtn = document.getElementById("btn-terrain-follow");
+    if (terrainBtn) {
+        terrainBtn.addEventListener("click", function () {
+            if (waypoints.length === 0) {
+                _toast("Add waypoints first", "warning");
+                return;
+            }
+            var agl = prompt("Target AGL (metres above ground):", "30");
+            if (agl === null) return;
+            fetch("/admin/" + planId + "/terrain-follow", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({ target_agl_m: parseFloat(agl) || 30 }),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) {
+                        waypointMarkers.forEach(function (m) { map.removeLayer(m); });
+                        waypointMarkers.length = 0;
+                        waypoints.length = 0;
+                        routeLayerGroup.clearLayers();
+                        resp.waypoints.forEach(function (w) {
+                            addWaypoint(L.latLng(w.lat, w.lng), w);
+                        });
+                        updateRoute();
+                        _toast("Terrain follow applied (" + resp.count + " points)", "success");
+                    } else {
+                        _toast("Error: " + (resp.error || "Unknown"), "danger");
+                    }
+                })
+                .catch(function () { _toast("Terrain follow failed", "danger"); });
+        });
+    }
+
     // Import KMZ
     var importInput = document.getElementById("import-kmz-file");
     if (importInput) {
