@@ -482,6 +482,44 @@
             });
     });
 
+    // Grid planner
+    if (typeof GridPlanner !== "undefined" && document.getElementById("grid-planner-panel")) {
+        GridPlanner.init("grid-planner-panel");
+        GridPlanner.buildPanel();
+        document.getElementById("grid-planner-panel").addEventListener("click", function (e) {
+            var genBtn = e.target.closest("#btn-generate-grid");
+            if (!genBtn) return;
+            var config = GridPlanner.getConfig();
+            var polygon = document.getElementById("plan-polygon").value;
+            if (!polygon) {
+                _toast("No polygon area defined", "warning");
+                return;
+            }
+            fetch("/admin/" + planId + "/generate-grid", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({ polygon: polygon, config: config }),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) {
+                        waypointMarkers.forEach(function (m) { map.removeLayer(m); });
+                        waypointMarkers.length = 0;
+                        waypoints.length = 0;
+                        routeLayerGroup.clearLayers();
+                        resp.waypoints.forEach(function (w) {
+                            addWaypoint(L.latLng(w.lat, w.lng), w);
+                        });
+                        updateRoute();
+                        _toast("Generated " + resp.count + " grid waypoints", "success");
+                    } else {
+                        _toast("Grid error: " + (resp.error || "Unknown"), "danger");
+                    }
+                })
+                .catch(function () { _toast("Grid generation failed", "danger"); });
+        });
+    }
+
     // Load elevation data
     var elevBtn = document.getElementById("btn-load-elevation");
     if (elevBtn) {

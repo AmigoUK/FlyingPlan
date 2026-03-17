@@ -127,6 +127,51 @@ def save_notes(plan_id):
     return jsonify({"success": True})
 
 
+@admin_bp.route("/<int:plan_id>/generate-grid", methods=["POST"])
+@role_required("manager")
+def generate_grid(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    polygon_str = data.get("polygon") or fp.area_polygon
+    if not polygon_str:
+        return jsonify({"error": "No polygon area defined"}), 400
+
+    import json as json_mod
+    if isinstance(polygon_str, str):
+        polygon_coords = json_mod.loads(polygon_str)
+    else:
+        polygon_coords = polygon_str
+
+    config = data.get("config", {})
+    from services.grid_generator import generate_grid as gen_grid
+    waypoints = gen_grid(polygon_coords, config)
+
+    if not waypoints:
+        return jsonify({"error": "Could not generate grid — polygon too small or invalid"}), 400
+
+    # Replace existing waypoints
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in waypoints:
+        wp = Waypoint(
+            flight_plan_id=fp.id,
+            index=w["index"],
+            lat=w["lat"],
+            lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+        )
+        db.session.add(wp)
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+    return jsonify({"success": True, "count": len(waypoints), "waypoints": waypoints})
+
+
 @admin_bp.route("/<int:plan_id>/elevation", methods=["POST"])
 @role_required("manager")
 def get_elevation(plan_id):
