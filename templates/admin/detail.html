@@ -27,6 +27,10 @@
             <option value="{{ value }}" {{ 'selected' if fp.drone_model == value }}>{{ name }}</option>
             {% endfor %}
         </select>
+        <label class="btn btn-sm btn-outline-primary mb-0" for="import-kmz-file">
+            <i class="bi bi-upload"></i> Import KMZ
+        </label>
+        <input type="file" id="import-kmz-file" accept=".kmz" class="d-none">
         <a href="{{ url_for('admin.export_kmz', plan_id=fp.id) }}"
            class="btn btn-sm btn-success" id="btn-export">
             <i class="bi bi-download"></i> Export KMZ

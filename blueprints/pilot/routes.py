@@ -621,6 +621,60 @@ def download_document(doc_id):
     )
 
 
+# ── Import KMZ ────────────────────────────────────────────────
+
+@pilot_bp.route("/orders/<int:order_id>/import-kmz", methods=["POST"])
+@role_required("pilot")
+def import_kmz(order_id):
+    order = _get_pilot_order(order_id)
+    if order.status not in ("accepted", "in_progress"):
+        return jsonify({"error": "Cannot import in current status"}), 403
+
+    file = request.files.get("kmz_file")
+    if not file or not file.filename:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    from services.kmz_parser import parse_kmz
+    result = parse_kmz(file.read())
+    if result["error"]:
+        return jsonify({"error": result["error"]}), 400
+
+    if not result["waypoints"]:
+        return jsonify({"error": "No waypoints found in KMZ"}), 400
+
+    fp = order.flight_plan
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in result["waypoints"]:
+        wp = Waypoint(
+            flight_plan_id=fp.id,
+            index=w["index"],
+            lat=w["lat"],
+            lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            turn_damping_dist=w.get("turn_damping_dist", 0.0),
+            hover_time_s=w.get("hover_time_s", 0.0),
+            action_type=w.get("action_type"),
+        )
+        db.session.add(wp)
+
+    if result["drone_model"]:
+        fp.drone_model = result["drone_model"]
+
+    _log_activity(order, "waypoints_updated", new_value=f"Imported {len(result['waypoints'])} from KMZ")
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "count": len(result["waypoints"]),
+        "drone_model": result["drone_model"],
+        "waypoints": result["waypoints"],
+    })
+
+
 # ── Save Waypoints ─────────────────────────────────────────────
 
 @pilot_bp.route("/orders/<int:order_id>/waypoints", methods=["POST"])

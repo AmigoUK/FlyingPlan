@@ -482,6 +482,44 @@
             });
     });
 
+    // Import KMZ
+    var importInput = document.getElementById("import-kmz-file");
+    if (importInput) {
+        importInput.addEventListener("change", function () {
+            if (!importInput.files.length) return;
+            var formData = new FormData();
+            formData.append("kmz_file", importInput.files[0]);
+            fetch("/admin/" + planId + "/import-kmz", {
+                method: "POST",
+                headers: { "X-CSRFToken": csrfToken },
+                body: formData,
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) {
+                        // Clear existing and reload
+                        waypointMarkers.forEach(function (m) { map.removeLayer(m); });
+                        waypointMarkers.length = 0;
+                        waypoints.length = 0;
+                        routeLayerGroup.clearLayers();
+                        resp.waypoints.forEach(function (w) {
+                            addWaypoint(L.latLng(w.lat, w.lng), w);
+                        });
+                        updateRoute();
+                        if (resp.drone_model) {
+                            var ds = document.getElementById("drone-model-select");
+                            if (ds) ds.value = resp.drone_model;
+                        }
+                        _toast("Imported " + resp.count + " waypoints from KMZ", "success");
+                    } else {
+                        _toast("Import error: " + (resp.error || "Unknown"), "danger");
+                    }
+                })
+                .catch(function () { _toast("Import failed", "danger"); });
+            importInput.value = "";
+        });
+    }
+
     // Save drone model
     var droneSelect = document.getElementById("drone-model-select");
     if (droneSelect) {
