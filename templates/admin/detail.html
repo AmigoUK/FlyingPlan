@@ -22,10 +22,36 @@
             </option>
             {% endfor %}
         </select>
-        <a href="{{ url_for('admin.export_kmz', plan_id=fp.id) }}"
-           class="btn btn-sm btn-success" id="btn-export">
-            <i class="bi bi-download"></i> Export KMZ
-        </a>
+        <select id="drone-model-select" class="form-select form-select-sm" style="width: auto;">
+            {% for value, name in drone_choices %}
+            <option value="{{ value }}" {{ 'selected' if fp.drone_model == value }}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <label class="btn btn-sm btn-outline-primary mb-0" for="import-kmz-file">
+            <i class="bi bi-upload"></i> Import KMZ
+        </label>
+        <input type="file" id="import-kmz-file" accept=".kmz" class="d-none">
+        <div class="btn-group">
+            <a href="{{ url_for('admin.export_kmz', plan_id=fp.id) }}"
+               class="btn btn-sm btn-success">
+                <i class="bi bi-download"></i> Export KMZ
+            </a>
+            <button type="button" class="btn btn-sm btn-success dropdown-toggle dropdown-toggle-split"
+                    data-bs-toggle="dropdown"></button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_kml', plan_id=fp.id) }}"><i class="bi bi-globe me-1"></i> KML (Google Earth)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_geojson', plan_id=fp.id) }}"><i class="bi bi-braces me-1"></i> GeoJSON (GIS)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_csv', plan_id=fp.id) }}"><i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV (Spreadsheet)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_gpx', plan_id=fp.id) }}"><i class="bi bi-pin-map me-1"></i> GPX (GPS)</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_litchi', plan_id=fp.id) }}"><i class="bi bi-phone me-1"></i> Litchi CSV</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_photo_positions', plan_id=fp.id) }}"><i class="bi bi-camera me-1"></i> Photo Positions CSV</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_enhanced_geojson', plan_id=fp.id) }}"><i class="bi bi-geo me-1"></i> Enhanced GeoJSON (3D)</a></li>
+            </ul>
+        </div>
+        <button class="btn btn-sm btn-outline-info" id="btn-share" title="Create shareable link">
+            <i class="bi bi-share"></i> Share
+        </button>
     </div>
 </div>
 
@@ -124,6 +150,85 @@
             </div>
         </div>
 
+        <!-- Route Stats -->
+        <div class="card mb-3">
+            <div class="card-body py-2" id="route-stats"></div>
+        </div>
+
+        <!-- Path Tools -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-tools"></i> Path Tools</div>
+            <div class="card-body py-2" id="path-tools-bar"></div>
+        </div>
+
+        <!-- GSD Calculator -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-aspect-ratio"></i> GSD Calculator
+            </div>
+            <div class="card-body" id="gsd-panel"></div>
+        </div>
+
+        <!-- Mission Patterns -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-bullseye"></i> Mission Patterns
+            </div>
+            <div class="card-body" id="mission-patterns-panel"></div>
+        </div>
+
+        {% if fp.area_polygon %}
+        <!-- Grid Mission -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-grid-3x3"></i> Grid Mission
+            </div>
+            <div class="card-body" id="grid-planner-panel"></div>
+        </div>
+
+        <!-- Oblique Grid / 3D Mapping -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-grid-3x3-gap"></i> 3D Mapping Grid
+            </div>
+            <div class="card-body" id="oblique-planner-panel"></div>
+        </div>
+        {% endif %}
+
+        <!-- Facade Scanner -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-building"></i> Facade Scanner
+            </div>
+            <div class="card-body" id="facade-planner-panel"></div>
+        </div>
+
+        <!-- Coverage Analysis -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-grid-fill"></i> Coverage Analysis</span>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-run-coverage">
+                    <i class="bi bi-play"></i> Analyse
+                </button>
+            </div>
+            <div class="card-body" id="coverage-panel">
+                <p class="text-muted small mb-0">Click "Analyse" to compute photo overlap coverage.</p>
+            </div>
+        </div>
+
+        <!-- Quality Report -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-award"></i> Quality Report</span>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-run-quality">
+                    <i class="bi bi-play"></i> Analyse
+                </button>
+            </div>
+            <div class="card-body" id="quality-panel">
+                <p class="text-muted small mb-0">Click "Analyse" to estimate 3D reconstruction quality.</p>
+            </div>
+        </div>
+
         <!-- Waypoint panel -->
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -175,6 +280,19 @@
             </div>
         </div>
 
+        <!-- Weather -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cloud-sun"></i> Weather</span>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-load-weather">
+                    <i class="bi bi-arrow-repeat"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body" id="weather-panel">
+                <p class="text-muted small mb-0">Click "Refresh" to load live weather.</p>
+            </div>
+        </div>
+
         <!-- Admin notes -->
         <div class="card mb-3">
             <div class="card-header"><i class="bi bi-journal-text"></i> Pilot Notes</div>
@@ -193,13 +311,55 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-map"></i> Flight Route Editor</span>
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="toggle-satellite">
-                    <label class="form-check-label small" for="toggle-satellite">Satellite</label>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-info" id="btn-ruler" title="Measure distance">
+                        <i class="bi bi-rulers"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" id="btn-coverage-toggle" title="Toggle coverage heatmap">
+                        <i class="bi bi-grid-fill"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="btn-airspace" title="Toggle airspace">
+                        <i class="bi bi-broadcast"></i>
+                    </button>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="toggle-satellite">
+                        <label class="form-check-label small" for="toggle-satellite">Satellite</label>
+                    </div>
                 </div>
             </div>
             <div class="card-body p-0">
                 <div id="admin-map"></div>
+            </div>
+        </div>
+        <!-- 3D Preview -->
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-box"></i> 3D Mission Preview</span>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-load-3d">
+                    <i class="bi bi-play"></i> Load 3D
+                </button>
+            </div>
+            <div class="card-body p-0" id="three-preview-container" style="display:none;">
+                <canvas id="three-preview-canvas" style="width:100%;"></canvas>
+            </div>
+        </div>
+
+        <!-- Elevation Profile -->
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-graph-up"></i> Elevation Profile</span>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-secondary" id="btn-load-elevation">
+                        <i class="bi bi-arrow-repeat"></i> Load Terrain
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" id="btn-terrain-follow" title="Adjust altitudes to follow terrain">
+                        <i class="bi bi-bezier2"></i> Terrain Follow
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <canvas id="elevation-canvas" style="width:100%; display:none;"></canvas>
+                <p class="text-muted small mb-0" id="elevation-placeholder">Click "Load Terrain" to fetch elevation data for waypoints.</p>
             </div>
         </div>
     </div>
@@ -218,5 +378,20 @@
 
 {% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script src="{{ url_for('static', filename='js/airspace-layer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/weather-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/map-measure.js') }}"></script>
+<script src="{{ url_for('static', filename='js/elevation-profile.js') }}"></script>
+<script src="{{ url_for('static', filename='js/path-tools.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gsd-calculator.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mission-patterns.js') }}"></script>
+<script src="{{ url_for('static', filename='js/grid-planner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/oblique-planner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/facade-planner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/coverage-heatmap.js') }}"></script>
+<script src="{{ url_for('static', filename='js/three-preview.js') }}"></script>
+<script src="{{ url_for('static', filename='js/quality-report.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map-admin.js') }}"></script>
 {% endblock %}

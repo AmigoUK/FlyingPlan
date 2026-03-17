@@ -50,6 +50,7 @@ def dashboard():
 @admin_bp.route("/<int:plan_id>")
 @role_required("manager")
 def detail(plan_id):
+    from services.drone_profiles import get_choices
     fp = db.get_or_404(FlightPlan, plan_id)
     waypoints_json = json.dumps([w.to_dict() for w in fp.waypoints])
     pois_json = json.dumps(
@@ -64,6 +65,7 @@ def detail(plan_id):
         waypoints_json=waypoints_json,
         pois_json=pois_json,
         available_pilots=available_pilots,
+        drone_choices=get_choices(),
     )
 
 
@@ -125,6 +127,319 @@ def save_notes(plan_id):
     return jsonify({"success": True})
 
 
+@admin_bp.route("/<int:plan_id>/gsd", methods=["POST"])
+@role_required("manager")
+def calculate_gsd(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json() or {}
+    from services.gsd_calculator import calculate_gsd as calc_gsd
+    result = calc_gsd(
+        drone_model=fp.drone_model or "mini_4_pro",
+        altitude_m=float(data.get("altitude_m", 30)),
+        overlap_pct=float(data.get("overlap_pct", 70)),
+        area_sqm=fp.estimated_area_sqm,
+    )
+    return jsonify(result)
+
+
+@admin_bp.route("/<int:plan_id>/generate-pattern", methods=["POST"])
+@role_required("manager")
+def generate_pattern(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    pattern_type = data.get("type", "orbit")
+    config = data.get("config", {})
+
+    from services.mission_patterns import generate_orbit, generate_spiral, generate_cable_cam
+
+    if pattern_type == "orbit":
+        wps = generate_orbit(
+            config.get("center_lat", fp.location_lat),
+            config.get("center_lng", fp.location_lng),
+            radius_m=config.get("radius_m", 30),
+            altitude_m=config.get("altitude_m", 30),
+            num_points=int(config.get("num_points", 12)),
+            speed_ms=config.get("speed_ms", 5),
+        )
+    elif pattern_type == "spiral":
+        wps = generate_spiral(
+            config.get("center_lat", fp.location_lat),
+            config.get("center_lng", fp.location_lng),
+            radius_m=config.get("radius_m", 30),
+            start_altitude_m=config.get("start_altitude_m", 20),
+            end_altitude_m=config.get("end_altitude_m", 60),
+            num_revolutions=int(config.get("num_revolutions", 3)),
+            speed_ms=config.get("speed_ms", 4),
+        )
+    elif pattern_type == "cable_cam":
+        wps = generate_cable_cam(
+            config.get("start_lat", fp.location_lat),
+            config.get("start_lng", fp.location_lng),
+            config.get("end_lat", fp.location_lat + 0.001),
+            config.get("end_lng", fp.location_lng + 0.001),
+            altitude_m=config.get("altitude_m", 30),
+            num_points=int(config.get("num_points", 10)),
+            speed_ms=config.get("speed_ms", 3),
+        )
+    elif pattern_type == "multi_orbit":
+        from services.facade_scanner import generate_multi_altitude_orbit
+        wps = generate_multi_altitude_orbit(
+            config.get("center_lat", fp.location_lat),
+            config.get("center_lng", fp.location_lng),
+            config,
+        )
+    else:
+        return jsonify({"error": "Unknown pattern type"}), 400
+
+    if not wps:
+        return jsonify({"error": "Failed to generate pattern"}), 400
+
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in wps:
+        wp = Waypoint(
+            flight_plan_id=fp.id, index=w["index"],
+            lat=w["lat"], lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30),
+            speed_ms=w.get("speed_ms", 5),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+            poi_lat=w.get("poi_lat"),
+            poi_lng=w.get("poi_lng"),
+        )
+        db.session.add(wp)
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+    return jsonify({"success": True, "count": len(wps), "waypoints": wps})
+
+
+@admin_bp.route("/<int:plan_id>/airspace")
+@role_required("manager")
+def get_airspace(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.airspace import get_airspace_geojson, check_route_airspace
+    geojson = get_airspace_geojson()
+    violations = {}
+    if fp.waypoints:
+        violations = check_route_airspace([w.to_dict() for w in fp.waypoints], geojson)
+    return jsonify({"geojson": geojson, "violations": violations})
+
+
+@admin_bp.route("/<int:plan_id>/weather")
+@role_required("manager")
+def get_weather(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.location_lat or not fp.location_lng:
+        return jsonify({"error": "No location set"}), 400
+
+    from services.weather import get_weather as fetch_weather, check_drone_warnings
+    from services.drone_profiles import get_profile
+    weather = fetch_weather(fp.location_lat, fp.location_lng)
+    profile = get_profile(fp.drone_model or "mini_4_pro")
+    weather["warnings"] = check_drone_warnings(weather.get("current"), profile)
+    return jsonify(weather)
+
+
+@admin_bp.route("/<int:plan_id>/terrain-follow", methods=["POST"])
+@role_required("manager")
+def terrain_follow(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        return jsonify({"error": "No waypoints to adjust"}), 400
+
+    data = request.get_json() or {}
+    target_agl = float(data.get("target_agl_m", 30))
+
+    from services.terrain_follower import apply_terrain_following
+    waypoints_data = [w.to_dict() for w in fp.waypoints]
+    adjusted = apply_terrain_following(waypoints_data, target_agl_m=target_agl)
+
+    # Replace waypoints
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in adjusted:
+        wp = Waypoint(
+            flight_plan_id=fp.id,
+            index=w["index"],
+            lat=w["lat"],
+            lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+        )
+        db.session.add(wp)
+
+    db.session.commit()
+    return jsonify({"success": True, "count": len(adjusted), "waypoints": adjusted})
+
+
+@admin_bp.route("/<int:plan_id>/generate-grid", methods=["POST"])
+@role_required("manager")
+def generate_grid(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    polygon_str = data.get("polygon") or fp.area_polygon
+    if not polygon_str:
+        return jsonify({"error": "No polygon area defined"}), 400
+
+    import json as json_mod
+    if isinstance(polygon_str, str):
+        polygon_coords = json_mod.loads(polygon_str)
+    else:
+        polygon_coords = polygon_str
+
+    config = data.get("config", {})
+    from services.grid_generator import generate_grid as gen_grid
+    waypoints = gen_grid(polygon_coords, config)
+
+    if not waypoints:
+        return jsonify({"error": "Could not generate grid — polygon too small or invalid"}), 400
+
+    # Replace existing waypoints
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in waypoints:
+        wp = Waypoint(
+            flight_plan_id=fp.id,
+            index=w["index"],
+            lat=w["lat"],
+            lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+        )
+        db.session.add(wp)
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+    return jsonify({"success": True, "count": len(waypoints), "waypoints": waypoints})
+
+
+@admin_bp.route("/<int:plan_id>/elevation", methods=["POST"])
+@role_required("manager")
+def get_elevation(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.elevation import get_waypoint_elevations
+    waypoints_data = [w.to_dict() for w in fp.waypoints]
+    enriched = get_waypoint_elevations(waypoints_data)
+    return jsonify({"success": True, "waypoints": enriched})
+
+
+@admin_bp.route("/<int:plan_id>/import-kmz", methods=["POST"])
+@role_required("manager")
+def import_kmz(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    file = request.files.get("kmz_file")
+    if not file or not file.filename:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    from services.kmz_parser import parse_kmz
+    result = parse_kmz(file.read())
+    if result["error"]:
+        return jsonify({"error": result["error"]}), 400
+
+    if not result["waypoints"]:
+        return jsonify({"error": "No waypoints found in KMZ"}), 400
+
+    # Replace existing waypoints
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in result["waypoints"]:
+        wp = Waypoint(
+            flight_plan_id=fp.id,
+            index=w["index"],
+            lat=w["lat"],
+            lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            turn_damping_dist=w.get("turn_damping_dist", 0.0),
+            hover_time_s=w.get("hover_time_s", 0.0),
+            action_type=w.get("action_type"),
+        )
+        db.session.add(wp)
+
+    # Update drone model if detected
+    if result["drone_model"]:
+        fp.drone_model = result["drone_model"]
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "count": len(result["waypoints"]),
+        "drone_model": result["drone_model"],
+        "waypoints": result["waypoints"],
+    })
+
+
+@admin_bp.route("/<int:plan_id>/drone-model", methods=["POST"])
+@role_required("manager")
+def save_drone_model(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    from services.drone_profiles import DRONE_PROFILES
+    model = data.get("drone_model", "mini_4_pro")
+    if model in DRONE_PROFILES:
+        fp.drone_model = model
+        db.session.commit()
+        return jsonify({"success": True, "drone_model": model})
+    return jsonify({"error": "Invalid drone model"}), 400
+
+
+@admin_bp.route("/<int:plan_id>/duplicate", methods=["POST"])
+@role_required("manager")
+def duplicate_plan(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    new_fp = FlightPlan(
+        customer_name=fp.customer_name,
+        customer_email=fp.customer_email,
+        customer_phone=fp.customer_phone,
+        customer_company=fp.customer_company,
+        job_type=fp.job_type,
+        job_description=fp.job_description,
+        location_address=fp.location_address,
+        location_lat=fp.location_lat,
+        location_lng=fp.location_lng,
+        area_polygon=fp.area_polygon,
+        estimated_area_sqm=fp.estimated_area_sqm,
+        altitude_preset=fp.altitude_preset,
+        altitude_custom_m=fp.altitude_custom_m,
+        drone_model=fp.drone_model,
+        consent_given=True,
+    )
+    new_fp.generate_reference()
+    db.session.add(new_fp)
+    db.session.flush()
+
+    # Copy waypoints
+    for w in fp.waypoints:
+        new_wp = Waypoint(
+            flight_plan_id=new_fp.id,
+            index=w.index, lat=w.lat, lng=w.lng,
+            altitude_m=w.altitude_m, speed_ms=w.speed_ms,
+            heading_deg=w.heading_deg, gimbal_pitch_deg=w.gimbal_pitch_deg,
+            turn_mode=w.turn_mode, turn_damping_dist=w.turn_damping_dist,
+            hover_time_s=w.hover_time_s, action_type=w.action_type,
+            poi_lat=w.poi_lat, poi_lng=w.poi_lng,
+        )
+        db.session.add(new_wp)
+
+    db.session.commit()
+    return jsonify({"success": True, "new_plan_id": new_fp.id, "reference": new_fp.reference})
+
+
 @admin_bp.route("/<int:plan_id>/export-kmz")
 @role_required("manager")
 def export_kmz(plan_id):
@@ -142,3 +457,289 @@ def export_kmz(plan_id):
         as_attachment=True,
         download_name=f"{fp.reference}.kmz",
     )
+
+
+@admin_bp.route("/<int:plan_id>/export-kml")
+@role_required("manager")
+def export_kml(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.export_formats import generate_kml
+    buf = generate_kml(fp)
+    return send_file(buf, mimetype="application/vnd.google-earth.kml",
+                     as_attachment=True, download_name=f"{fp.reference}.kml")
+
+
+@admin_bp.route("/<int:plan_id>/export-geojson")
+@role_required("manager")
+def export_geojson(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.export_formats import generate_geojson
+    buf = generate_geojson(fp)
+    return send_file(buf, mimetype="application/geo+json",
+                     as_attachment=True, download_name=f"{fp.reference}.geojson")
+
+
+@admin_bp.route("/<int:plan_id>/export-csv")
+@role_required("manager")
+def export_csv(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.export_formats import generate_csv
+    buf = generate_csv(fp)
+    return send_file(buf, mimetype="text/csv",
+                     as_attachment=True, download_name=f"{fp.reference}.csv")
+
+
+@admin_bp.route("/<int:plan_id>/export-gpx")
+@role_required("manager")
+def export_gpx(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.export_formats import generate_gpx
+    buf = generate_gpx(fp)
+    return send_file(buf, mimetype="application/gpx+xml",
+                     as_attachment=True, download_name=f"{fp.reference}.gpx")
+
+
+@admin_bp.route("/<int:plan_id>/generate-oblique-grid", methods=["POST"])
+@role_required("manager")
+def generate_oblique_grid(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    polygon_str = data.get("polygon") or fp.area_polygon
+    if not polygon_str:
+        return jsonify({"error": "No polygon area defined"}), 400
+
+    import json as json_mod
+    if isinstance(polygon_str, str):
+        polygon_coords = json_mod.loads(polygon_str)
+    else:
+        polygon_coords = polygon_str
+
+    config = data.get("config", {})
+    from services.oblique_grid import generate_oblique_grid as gen_oblique
+    waypoints = gen_oblique(polygon_coords, config)
+
+    if not waypoints:
+        return jsonify({"error": "Could not generate grid"}), 400
+
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in waypoints:
+        wp = Waypoint(
+            flight_plan_id=fp.id, index=w["index"],
+            lat=w["lat"], lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+            poi_lat=w.get("poi_lat"),
+            poi_lng=w.get("poi_lng"),
+        )
+        db.session.add(wp)
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+    return jsonify({"success": True, "count": len(waypoints), "waypoints": waypoints})
+
+
+@admin_bp.route("/<int:plan_id>/generate-facade-scan", methods=["POST"])
+@role_required("manager")
+def generate_facade_scan(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    face_start = data.get("face_start")
+    face_end = data.get("face_end")
+    config = data.get("config", {})
+
+    # Multi-face from polygon
+    mode = data.get("mode", "single")
+    if mode == "multi" or (not face_start and fp.area_polygon):
+        import json as json_mod
+        polygon_str = data.get("polygon") or fp.area_polygon
+        if not polygon_str:
+            return jsonify({"error": "No polygon or facade line defined"}), 400
+        if isinstance(polygon_str, str):
+            polygon_coords = json_mod.loads(polygon_str)
+        else:
+            polygon_coords = polygon_str
+        from services.facade_scanner import generate_multi_face_scan
+        wps = generate_multi_face_scan(polygon_coords, config)
+    else:
+        if not face_start or not face_end:
+            return jsonify({"error": "face_start and face_end required"}), 400
+        from services.facade_scanner import generate_facade_scan as gen_facade
+        wps = gen_facade(face_start, face_end, config)
+
+    if not wps:
+        return jsonify({"error": "Could not generate facade scan"}), 400
+
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in wps:
+        wp = Waypoint(
+            flight_plan_id=fp.id, index=w["index"],
+            lat=w["lat"], lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+            poi_lat=w.get("poi_lat"),
+            poi_lng=w.get("poi_lng"),
+        )
+        db.session.add(wp)
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+    return jsonify({"success": True, "count": len(wps), "waypoints": wps})
+
+
+@admin_bp.route("/<int:plan_id>/generate-multi-orbit", methods=["POST"])
+@role_required("manager")
+def generate_multi_orbit(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    config = data.get("config", {})
+
+    from services.facade_scanner import generate_multi_altitude_orbit
+    wps = generate_multi_altitude_orbit(
+        config.get("center_lat", fp.location_lat),
+        config.get("center_lng", fp.location_lng),
+        config,
+    )
+
+    if not wps:
+        return jsonify({"error": "Could not generate multi-orbit"}), 400
+
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in wps:
+        wp = Waypoint(
+            flight_plan_id=fp.id, index=w["index"],
+            lat=w["lat"], lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30.0),
+            speed_ms=w.get("speed_ms", 5.0),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90.0),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+            poi_lat=w.get("poi_lat"),
+            poi_lng=w.get("poi_lng"),
+        )
+        db.session.add(wp)
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+    return jsonify({"success": True, "count": len(wps), "waypoints": wps})
+
+
+@admin_bp.route("/<int:plan_id>/coverage-analysis", methods=["POST"])
+@role_required("manager")
+def coverage_analysis(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        return jsonify({"error": "No waypoints for coverage analysis"}), 400
+
+    from services.coverage_analyzer import compute_coverage_grid
+    waypoints_data = [w.to_dict() for w in fp.waypoints]
+    result = compute_coverage_grid(
+        waypoints_data,
+        drone_model=fp.drone_model or "mini_4_pro",
+    )
+    return jsonify({"success": True, **result})
+
+
+@admin_bp.route("/<int:plan_id>/terrain-mesh")
+@role_required("manager")
+def terrain_mesh(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        return jsonify({"error": "No waypoints"}), 400
+
+    from services.terrain_mesh import get_terrain_mesh
+    waypoints_data = [w.to_dict() for w in fp.waypoints]
+    result = get_terrain_mesh(waypoints_data)
+    return jsonify(result)
+
+
+@admin_bp.route("/<int:plan_id>/quality-report", methods=["POST"])
+@role_required("manager")
+def quality_report(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        return jsonify({"error": "No waypoints for quality analysis"}), 400
+
+    from services.photogrammetry_estimator import generate_quality_report
+    waypoints_data = [w.to_dict() for w in fp.waypoints]
+    report = generate_quality_report(
+        waypoints_data,
+        drone_model=fp.drone_model or "mini_4_pro",
+    )
+    return jsonify({"success": True, **report})
+
+
+@admin_bp.route("/<int:plan_id>/export-litchi")
+@role_required("manager")
+def export_litchi(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        flash("No waypoints to export.", "warning")
+        return redirect(url_for("admin.detail", plan_id=plan_id))
+
+    from services.litchi_export import generate_litchi_csv
+    buf = generate_litchi_csv(fp)
+    return send_file(buf, mimetype="text/csv",
+                     as_attachment=True, download_name=f"{fp.reference}_litchi.csv")
+
+
+@admin_bp.route("/<int:plan_id>/export-photo-positions")
+@role_required("manager")
+def export_photo_positions(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        flash("No waypoints to export.", "warning")
+        return redirect(url_for("admin.detail", plan_id=plan_id))
+
+    from services.photo_positions import generate_photo_positions_csv
+    buf = generate_photo_positions_csv(fp)
+    return send_file(buf, mimetype="text/csv",
+                     as_attachment=True, download_name=f"{fp.reference}_photo_positions.csv")
+
+
+@admin_bp.route("/<int:plan_id>/export-enhanced-geojson")
+@role_required("manager")
+def export_enhanced_geojson(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    if not fp.waypoints:
+        flash("No waypoints to export.", "warning")
+        return redirect(url_for("admin.detail", plan_id=plan_id))
+
+    from services.export_formats import generate_enhanced_geojson
+    buf = generate_enhanced_geojson(fp, drone_model=fp.drone_model or "mini_4_pro")
+    return send_file(buf, mimetype="application/geo+json",
+                     as_attachment=True, download_name=f"{fp.reference}_enhanced.geojson")
+
+
+@admin_bp.route("/<int:plan_id>/share", methods=["POST"])
+@role_required("manager")
+def create_share_link(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from models.shared_link import SharedLink
+    from datetime import timedelta
+
+    data = request.get_json() or {}
+    days = int(data.get("expires_days", 30))
+
+    link = SharedLink(flight_plan_id=fp.id)
+    link.generate_token()
+    if days > 0:
+        from datetime import datetime, timezone
+        link.expires_at = datetime.now(timezone.utc) + timedelta(days=days)
+
+    db.session.add(link)
+    db.session.commit()
+
+    share_url = url_for("shared.mission_view", token=link.token, _external=True)
+    return jsonify({"success": True, "url": share_url, "token": link.token})

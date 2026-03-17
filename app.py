@@ -55,6 +55,8 @@ def create_app(config_class=None):
     from blueprints.pilots import pilots_bp
     from blueprints.orders import orders_bp
     from blueprints.pilot import pilot_bp
+    from blueprints.shared import shared_bp
+    from blueprints.help import help_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(public_bp)
@@ -63,6 +65,8 @@ def create_app(config_class=None):
     app.register_blueprint(pilots_bp, url_prefix="/admin/pilots")
     app.register_blueprint(orders_bp, url_prefix="/admin/orders")
     app.register_blueprint(pilot_bp, url_prefix="/pilot")
+    app.register_blueprint(shared_bp, url_prefix="/shared")
+    app.register_blueprint(help_bp, url_prefix="/help")
 
     # Context processor — inject settings and lookup data into all templates
     from models.app_settings import AppSettings
@@ -92,6 +96,9 @@ def create_app(config_class=None):
             "active_purposes": active_purposes,
             "active_heard_about": active_heard_about,
         }
+
+    # Ensure all models are imported for create_all
+    import models.shared_link  # noqa: F401
 
     # Create tables and seed data
     with app.app_context():
@@ -124,6 +131,7 @@ def _run_migrations():
         ("video_duration", "VARCHAR(100)"),
         ("shot_types", "TEXT"),
         ("delivery_timeline", "VARCHAR(50)"),
+        ("drone_model", "VARCHAR(50) DEFAULT 'mini_4_pro'"),
     ]
 
     for col_name, col_type in new_columns:
