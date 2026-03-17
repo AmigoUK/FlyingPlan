@@ -127,6 +127,73 @@ def save_notes(plan_id):
     return jsonify({"success": True})
 
 
+@admin_bp.route("/<int:plan_id>/generate-pattern", methods=["POST"])
+@role_required("manager")
+def generate_pattern(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json()
+    pattern_type = data.get("type", "orbit")
+    config = data.get("config", {})
+
+    from services.mission_patterns import generate_orbit, generate_spiral, generate_cable_cam
+
+    if pattern_type == "orbit":
+        wps = generate_orbit(
+            config.get("center_lat", fp.location_lat),
+            config.get("center_lng", fp.location_lng),
+            radius_m=config.get("radius_m", 30),
+            altitude_m=config.get("altitude_m", 30),
+            num_points=int(config.get("num_points", 12)),
+            speed_ms=config.get("speed_ms", 5),
+        )
+    elif pattern_type == "spiral":
+        wps = generate_spiral(
+            config.get("center_lat", fp.location_lat),
+            config.get("center_lng", fp.location_lng),
+            radius_m=config.get("radius_m", 30),
+            start_altitude_m=config.get("start_altitude_m", 20),
+            end_altitude_m=config.get("end_altitude_m", 60),
+            num_revolutions=int(config.get("num_revolutions", 3)),
+            speed_ms=config.get("speed_ms", 4),
+        )
+    elif pattern_type == "cable_cam":
+        wps = generate_cable_cam(
+            config.get("start_lat", fp.location_lat),
+            config.get("start_lng", fp.location_lng),
+            config.get("end_lat", fp.location_lat + 0.001),
+            config.get("end_lng", fp.location_lng + 0.001),
+            altitude_m=config.get("altitude_m", 30),
+            num_points=int(config.get("num_points", 10)),
+            speed_ms=config.get("speed_ms", 3),
+        )
+    else:
+        return jsonify({"error": "Unknown pattern type"}), 400
+
+    if not wps:
+        return jsonify({"error": "Failed to generate pattern"}), 400
+
+    Waypoint.query.filter_by(flight_plan_id=fp.id).delete()
+    for w in wps:
+        wp = Waypoint(
+            flight_plan_id=fp.id, index=w["index"],
+            lat=w["lat"], lng=w["lng"],
+            altitude_m=w.get("altitude_m", 30),
+            speed_ms=w.get("speed_ms", 5),
+            heading_deg=w.get("heading_deg"),
+            gimbal_pitch_deg=w.get("gimbal_pitch_deg", -90),
+            turn_mode=w.get("turn_mode", "toPointAndStopWithDiscontinuityCurvature"),
+            action_type=w.get("action_type"),
+            poi_lat=w.get("poi_lat"),
+            poi_lng=w.get("poi_lng"),
+        )
+        db.session.add(wp)
+
+    if fp.status == "new":
+        fp.status = "in_review"
+    db.session.commit()
+    return jsonify({"success": True, "count": len(wps), "waypoints": wps})
+
+
 @admin_bp.route("/<int:plan_id>/airspace")
 @role_required("manager")
 def get_airspace(plan_id):

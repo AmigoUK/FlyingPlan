@@ -138,6 +138,14 @@
             <div class="card-body py-2" id="route-stats"></div>
         </div>
 
+        <!-- Mission Patterns -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-bullseye"></i> Mission Patterns
+            </div>
+            <div class="card-body" id="mission-patterns-panel"></div>
+        </div>
+
         {% if fp.area_polygon %}
         <!-- Grid Mission -->
         <div class="card mb-3">
@@ -285,6 +293,7 @@
 <script src="{{ url_for('static', filename='js/weather-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map-measure.js') }}"></script>
 <script src="{{ url_for('static', filename='js/elevation-profile.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mission-patterns.js') }}"></script>
 <script src="{{ url_for('static', filename='js/grid-planner.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map-admin.js') }}"></script>
 {% endblock %}

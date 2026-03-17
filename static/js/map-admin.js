@@ -482,6 +482,43 @@
             });
     });
 
+    // Mission patterns
+    if (typeof MissionPatterns !== "undefined" && document.getElementById("mission-patterns-panel")) {
+        MissionPatterns.buildPanel("mission-patterns-panel");
+        document.getElementById("mission-patterns-panel").addEventListener("click", function (e) {
+            var genBtn = e.target.closest("#btn-generate-pattern");
+            if (!genBtn) return;
+            var config = MissionPatterns.getConfig();
+            config.config = Object.assign({}, config);
+            config.config.center_lat = planLat;
+            config.config.center_lng = planLng;
+            config.config.start_lat = planLat;
+            config.config.start_lng = planLng;
+            fetch("/admin/" + planId + "/generate-pattern", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify(config),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) {
+                        waypointMarkers.forEach(function (m) { map.removeLayer(m); });
+                        waypointMarkers.length = 0;
+                        waypoints.length = 0;
+                        routeLayerGroup.clearLayers();
+                        resp.waypoints.forEach(function (w) {
+                            addWaypoint(L.latLng(w.lat, w.lng), w);
+                        });
+                        updateRoute();
+                        _toast("Generated " + resp.count + " pattern waypoints", "success");
+                    } else {
+                        _toast("Pattern error: " + (resp.error || "Unknown"), "danger");
+                    }
+                })
+                .catch(function () { _toast("Pattern generation failed", "danger"); });
+        });
+    }
+
     // Grid planner
     if (typeof GridPlanner !== "undefined" && document.getElementById("grid-planner-panel")) {
         GridPlanner.init("grid-planner-panel");
