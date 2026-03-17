@@ -560,6 +560,33 @@
         });
     }
 
+    // Airspace layer
+    if (typeof AirspaceLayer !== "undefined") {
+        AirspaceLayer.init(map);
+        var airspaceBtn = document.getElementById("btn-airspace");
+        var _airspaceLoaded = false;
+        if (airspaceBtn) {
+            airspaceBtn.addEventListener("click", function () {
+                if (!_airspaceLoaded) {
+                    fetch("/admin/" + planId + "/airspace")
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            AirspaceLayer.loadData(data.geojson);
+                            _airspaceLoaded = true;
+                            AirspaceLayer.toggle();
+                            airspaceBtn.classList.toggle("active", AirspaceLayer.isVisible());
+                            if (data.violations && Object.keys(data.violations).length > 0) {
+                                _toast("Warning: waypoints in restricted airspace!", "danger");
+                            }
+                        });
+                } else {
+                    var visible = AirspaceLayer.toggle();
+                    airspaceBtn.classList.toggle("active", visible);
+                }
+            });
+        }
+    }
+
     // Weather
     var weatherBtn = document.getElementById("btn-load-weather");
     if (weatherBtn) {

@@ -127,6 +127,18 @@ def save_notes(plan_id):
     return jsonify({"success": True})
 
 
+@admin_bp.route("/<int:plan_id>/airspace")
+@role_required("manager")
+def get_airspace(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.airspace import get_airspace_geojson, check_route_airspace
+    geojson = get_airspace_geojson()
+    violations = {}
+    if fp.waypoints:
+        violations = check_route_airspace([w.to_dict() for w in fp.waypoints], geojson)
+    return jsonify({"geojson": geojson, "violations": violations})
+
+
 @admin_bp.route("/<int:plan_id>/weather")
 @role_required("manager")
 def get_weather(plan_id):

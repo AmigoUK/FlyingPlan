@@ -234,6 +234,9 @@
                     <button class="btn btn-sm btn-outline-info" id="btn-ruler" title="Measure distance">
                         <i class="bi bi-rulers"></i>
                     </button>
+                    <button class="btn btn-sm btn-outline-danger" id="btn-airspace" title="Toggle airspace">
+                        <i class="bi bi-broadcast"></i>
+                    </button>
                     <div class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" id="toggle-satellite">
                         <label class="form-check-label small" for="toggle-satellite">Satellite</label>
@@ -278,6 +281,7 @@
 
 {% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/airspace-layer.js') }}"></script>
 <script src="{{ url_for('static', filename='js/weather-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map-measure.js') }}"></script>
 <script src="{{ url_for('static', filename='js/elevation-profile.js') }}"></script>
