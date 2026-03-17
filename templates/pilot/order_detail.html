@@ -205,6 +205,9 @@
                     <a href="{{ url_for('pilot.export_kmz', order_id=order.id) }}" class="btn btn-sm btn-outline-success">
                         <i class="bi bi-download"></i> Export KMZ
                     </a>
+                    <button class="btn btn-sm btn-outline-info" id="btn-ruler" title="Measure distance">
+                        <i class="bi bi-rulers"></i>
+                    </button>
                     <div class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" id="toggle-satellite">
                         <label class="form-check-label small" for="toggle-satellite">Satellite</label>
@@ -222,6 +225,7 @@
             </div>
             {% if order.status in ['accepted', 'in_progress'] %}
             <div class="card-footer">
+                <div id="route-stats" class="mb-2"></div>
                 <div class="d-flex gap-2 mb-2">
                     <button id="btn-save-waypoints" class="btn btn-sm btn-success">
                         <i class="bi bi-save"></i> Save Waypoints
@@ -333,6 +337,7 @@
 {% block scripts %}
 {% if order.flight_plan.location_lat and order.flight_plan.location_lng %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/map-measure.js') }}"></script>
 {% if order.status in ['accepted', 'in_progress'] %}
 <script src="{{ url_for('static', filename='js/map-pilot-edit.js') }}"></script>
 {% else %}

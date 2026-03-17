@@ -110,8 +110,26 @@
         map.fitBounds(allLatLngs, { padding: [30, 30], maxZoom: 17 });
     }
 
+    // Measurement tools
+    if (typeof MapMeasure !== "undefined") {
+        MapMeasure.init(map);
+    }
+    var rulerBtn = document.getElementById("btn-ruler");
+    if (rulerBtn) {
+        rulerBtn.addEventListener("click", function () {
+            var active = MapMeasure.toggleRuler();
+            rulerBtn.classList.toggle("active", active);
+            rulerBtn.classList.toggle("btn-outline-info", !active);
+            rulerBtn.classList.toggle("btn-info", active);
+        });
+    }
+
     // Click map to add waypoint
     map.on("click", function (e) {
+        if (typeof MapMeasure !== "undefined" && MapMeasure.isRulerActive()) {
+            MapMeasure.handleMapClick(e.latlng);
+            return;
+        }
         addWaypoint(e.latlng, {});
         updateRoute();
     });
@@ -178,6 +196,9 @@
 
     function updateRoute() {
         routeLayerGroup.clearLayers();
+        if (typeof MapMeasure !== "undefined") {
+            MapMeasure.renderStatsBar("route-stats", waypoints);
+        }
         if (waypoints.length < 2) return;
 
         var latlngs = waypoints.map(function (w) {
