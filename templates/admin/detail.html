@@ -22,6 +22,11 @@
             </option>
             {% endfor %}
         </select>
+        <select id="drone-model-select" class="form-select form-select-sm" style="width: auto;">
+            {% for value, name in drone_choices %}
+            <option value="{{ value }}" {{ 'selected' if fp.drone_model == value }}>{{ name }}</option>
+            {% endfor %}
+        </select>
         <a href="{{ url_for('admin.export_kmz', plan_id=fp.id) }}"
            class="btn btn-sm btn-success" id="btn-export">
             <i class="bi bi-download"></i> Export KMZ

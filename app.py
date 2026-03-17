@@ -124,6 +124,7 @@ def _run_migrations():
         ("video_duration", "VARCHAR(100)"),
         ("shot_types", "TEXT"),
         ("delivery_timeline", "VARCHAR(50)"),
+        ("drone_model", "VARCHAR(50) DEFAULT 'mini_4_pro'"),
     ]
 
     for col_name, col_type in new_columns:

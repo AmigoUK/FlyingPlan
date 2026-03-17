@@ -461,6 +461,25 @@
             });
     });
 
+    // Save drone model
+    var droneSelect = document.getElementById("drone-model-select");
+    if (droneSelect) {
+        droneSelect.addEventListener("change", function () {
+            fetch("/admin/" + planId + "/drone-model", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: JSON.stringify({ drone_model: droneSelect.value }),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) _toast("Drone model saved", "success");
+                });
+        });
+    }
+
     // Save notes
     document.getElementById("btn-save-notes").addEventListener("click", function () {
         var notes = document.getElementById("admin-notes").value;

@@ -1,27 +1,29 @@
 """
-KMZ generator for DJI Mini 4 Pro compatible waypoint missions.
+KMZ generator for DJI compatible waypoint missions.
 Produces a .kmz (ZIP) containing:
   wpmz/template.kml  - Mission template for DJI Fly UI
   wpmz/waylines.wpml - Executable flight instructions
+
+Supports multiple drone models via drone_profiles.
 """
 import io
 import zipfile
 import xml.etree.ElementTree as ET
 
-# DJI Mini 4 Pro constants
-DRONE_ENUM = 68
-DRONE_SUB_ENUM = 0
-PAYLOAD_ENUM = 52  # onboard camera
+from services.drone_profiles import get_profile, DEFAULT_DRONE
+
 WPML_NS = "http://www.dji.com/wpmz/1.0.6"
 KML_NS = "http://www.opengis.net/kml/2.2"
 
 
-def generate_kmz(flight_plan):
+def generate_kmz(flight_plan, drone_model=None):
     """Generate a KMZ file buffer from a FlightPlan with waypoints."""
+    model = drone_model or getattr(flight_plan, "drone_model", None) or DEFAULT_DRONE
+    profile = get_profile(model)
     waypoints = sorted(flight_plan.waypoints, key=lambda w: w.index)
 
-    template_kml = _build_template_kml(flight_plan, waypoints)
-    waylines_wpml = _build_waylines_wpml(flight_plan, waypoints)
+    template_kml = _build_template_kml(flight_plan, waypoints, profile)
+    waylines_wpml = _build_waylines_wpml(flight_plan, waypoints, profile)
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -32,9 +34,8 @@ def generate_kmz(flight_plan):
     return buf
 
 
-def _build_template_kml(flight_plan, waypoints):
+def _build_template_kml(flight_plan, waypoints, profile):
     """Build the template.kml for DJI Fly UI display."""
-    # Register namespaces
     ET.register_namespace("", KML_NS)
     ET.register_namespace("wpml", WPML_NS)
 
@@ -50,14 +51,14 @@ def _build_template_kml(flight_plan, waypoints):
     _add_wpml(mc, "executeRCLostAction", "goBack")
     _add_wpml(mc, "globalTransitionalSpeed", "5.0")
 
-    # Drone info
+    # Drone info from profile
     drone_info = ET.SubElement(mc, "{%s}droneInfo" % WPML_NS)
-    _add_wpml(drone_info, "droneEnumValue", str(DRONE_ENUM))
-    _add_wpml(drone_info, "droneSubEnumValue", str(DRONE_SUB_ENUM))
+    _add_wpml(drone_info, "droneEnumValue", str(profile["droneEnumValue"]))
+    _add_wpml(drone_info, "droneSubEnumValue", str(profile["droneSubEnumValue"]))
 
     # Payload info
     payload_info = ET.SubElement(mc, "{%s}payloadInfo" % WPML_NS)
-    _add_wpml(payload_info, "payloadEnumValue", str(PAYLOAD_ENUM))
+    _add_wpml(payload_info, "payloadEnumValue", str(profile["payloadEnumValue"]))
     _add_wpml(payload_info, "payloadSubEnumValue", "0")
     _add_wpml(payload_info, "payloadPositionIndex", "0")
 
@@ -75,7 +76,6 @@ def _build_template_kml(flight_plan, waypoints):
     for wp in waypoints:
         pm = ET.SubElement(folder, "{%s}Placemark" % KML_NS)
         point = ET.SubElement(pm, "{%s}Point" % KML_NS)
-        # KML uses lng,lat order
         coords = ET.SubElement(point, "{%s}coordinates" % KML_NS)
         coords.text = "%.7f,%.7f" % (wp.lng, wp.lat)
 
@@ -102,7 +102,7 @@ def _build_template_kml(flight_plan, waypoints):
     return buf.getvalue().decode("UTF-8")
 
 
-def _build_waylines_wpml(flight_plan, waypoints):
+def _build_waylines_wpml(flight_plan, waypoints, profile):
     """Build the waylines.wpml executable flight instructions."""
     ET.register_namespace("", KML_NS)
     ET.register_namespace("wpml", WPML_NS)
@@ -120,8 +120,8 @@ def _build_waylines_wpml(flight_plan, waypoints):
     _add_wpml(mc, "globalTransitionalSpeed", "5.0")
 
     drone_info = ET.SubElement(mc, "{%s}droneInfo" % WPML_NS)
-    _add_wpml(drone_info, "droneEnumValue", str(DRONE_ENUM))
-    _add_wpml(drone_info, "droneSubEnumValue", str(DRONE_SUB_ENUM))
+    _add_wpml(drone_info, "droneEnumValue", str(profile["droneEnumValue"]))
+    _add_wpml(drone_info, "droneSubEnumValue", str(profile["droneSubEnumValue"]))
 
     # Folder
     folder = ET.SubElement(document, "{%s}Folder" % KML_NS)

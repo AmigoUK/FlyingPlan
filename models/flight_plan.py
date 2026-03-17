@@ -55,6 +55,9 @@ class FlightPlan(db.Model):
     shot_types = db.Column(db.Text)  # JSON array
     delivery_timeline = db.Column(db.String(50))
 
+    # Drone selection
+    drone_model = db.Column(db.String(50), default="mini_4_pro", server_default="mini_4_pro")
+
     # Admin
     admin_notes = db.Column(db.Text)
     consent_given = db.Column(db.Boolean, nullable=False, default=False)
