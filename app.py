@@ -56,6 +56,7 @@ def create_app(config_class=None):
     from blueprints.orders import orders_bp
     from blueprints.pilot import pilot_bp
     from blueprints.shared import shared_bp
+    from blueprints.help import help_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(public_bp)
@@ -65,6 +66,7 @@ def create_app(config_class=None):
     app.register_blueprint(orders_bp, url_prefix="/admin/orders")
     app.register_blueprint(pilot_bp, url_prefix="/pilot")
     app.register_blueprint(shared_bp, url_prefix="/shared")
+    app.register_blueprint(help_bp, url_prefix="/help")
 
     # Context processor — inject settings and lookup data into all templates
     from models.app_settings import AppSettings

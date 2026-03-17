@@ -1,0 +1,1043 @@
+{% extends "base.html" %}
+{% block title %}Help &amp; Documentation - FlyingPlan{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/help.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Sidebar TOC -->
+    <div class="col-lg-3 mb-3">
+        <div class="help-sidebar" id="helpSidebar">
+            <h6 class="fw-bold mb-2"><i class="bi bi-list-ul"></i> Contents</h6>
+            <nav id="tocNav">
+                <div class="toc-group-label">Getting Started</div>
+                <a class="nav-link" href="#getting-started">Getting Started</a>
+                <a class="nav-link" href="#logging-in">Logging In</a>
+                <a class="nav-link" href="#user-roles">User Roles &amp; Permissions</a>
+
+                <div class="toc-group-label">Customer Request Form</div>
+                <a class="nav-link" href="#customer-form-overview">Customer Request Form</a>
+                <a class="nav-link" href="#form-step1-customer">Step 1: Customer Details</a>
+                <a class="nav-link" href="#form-step2-brief">Step 2: Job Brief</a>
+                <a class="nav-link" href="#form-step3-location">Step 3: Location &amp; Map</a>
+                <a class="nav-link" href="#form-step4-flight">Step 4: Flight Preferences</a>
+                <a class="nav-link" href="#form-step5-review">Step 5: Review &amp; Submit</a>
+
+                <div class="toc-group-label">Admin Dashboard</div>
+                <a class="nav-link" href="#admin-dashboard">Admin Dashboard</a>
+                <a class="nav-link" href="#dashboard-filters">Filters &amp; Search</a>
+                <a class="nav-link" href="#flight-plan-statuses">Flight Plan Statuses</a>
+
+                <div class="toc-group-label">Flight Plan Detail</div>
+                <a class="nav-link" href="#flight-plan-detail">Flight Plan Detail Page</a>
+                <a class="nav-link" href="#map-editor">Flight Route Editor</a>
+                <a class="nav-link" href="#waypoint-management">Waypoint Management</a>
+                <a class="nav-link" href="#drone-selection">Drone Model Selection</a>
+                <a class="nav-link" href="#grid-mission">Grid Mission Generator</a>
+                <a class="nav-link" href="#3d-mapping-grid">3D Mapping Grid</a>
+                <a class="nav-link" href="#facade-scanner">Facade Scanner</a>
+                <a class="nav-link" href="#mission-patterns">Mission Patterns</a>
+                <a class="nav-link" href="#gsd-calculator">GSD Calculator</a>
+                <a class="nav-link" href="#coverage-analysis">Coverage Analysis</a>
+                <a class="nav-link" href="#quality-report">Quality Report</a>
+                <a class="nav-link" href="#3d-preview">3D Mission Preview</a>
+                <a class="nav-link" href="#elevation-profile">Elevation &amp; Terrain Following</a>
+                <a class="nav-link" href="#weather-airspace">Weather &amp; Airspace</a>
+
+                <div class="toc-group-label">Exports &amp; Import</div>
+                <a class="nav-link" href="#exports">Export Formats</a>
+                <a class="nav-link" href="#import-kmz">Importing KMZ Files</a>
+
+                <div class="toc-group-label">Path Tools</div>
+                <a class="nav-link" href="#path-tools">Path Tools</a>
+                <a class="nav-link" href="#share-duplicate">Sharing &amp; Duplicating</a>
+
+                <div class="toc-group-label">Order Management</div>
+                <a class="nav-link" href="#orders-overview">Orders Overview</a>
+                <a class="nav-link" href="#creating-orders">Creating &amp; Assigning Orders</a>
+                <a class="nav-link" href="#order-statuses">Order Status Workflow</a>
+                <a class="nav-link" href="#deliverables">Deliverables</a>
+
+                <div class="toc-group-label">Pilot Guide</div>
+                <a class="nav-link" href="#pilot-dashboard">Pilot Dashboard</a>
+                <a class="nav-link" href="#pilot-order-detail">Pilot Order Detail</a>
+                <a class="nav-link" href="#risk-assessment">Pre-Flight Risk Assessment</a>
+                <a class="nav-link" href="#pilot-profile">Pilot Profile</a>
+                <a class="nav-link" href="#pilot-records">Certifications &amp; Equipment</a>
+
+                <div class="toc-group-label">Settings</div>
+                <a class="nav-link" href="#settings">Settings (Admin Only)</a>
+
+                <div class="toc-group-label">Reference</div>
+                <a class="nav-link" href="#supported-drones">Supported Drone Models</a>
+                <a class="nav-link" href="#tips-shortcuts">Tips &amp; Shortcuts</a>
+                <a class="nav-link" href="#glossary">Glossary</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="col-lg-9">
+        <h2 class="mb-1"><i class="bi bi-question-circle"></i> Help &amp; Documentation</h2>
+        <p class="text-muted mb-3">Everything you need to know about using FlyingPlan.</p>
+
+        <!-- Search & Filters -->
+        <div class="help-search-area mb-3">
+            <div class="input-group help-search-input">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" id="helpSearch" class="form-control" placeholder="Search help topics...">
+            </div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <div class="help-filters btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary active" data-filter="all">All</button>
+                <button type="button" class="btn btn-outline-secondary" data-filter="admin">Admin</button>
+                <button type="button" class="btn btn-outline-secondary" data-filter="pilot">Pilot</button>
+                <button type="button" class="btn btn-outline-secondary" data-filter="reference">Reference</button>
+            </div>
+            <span class="help-results-counter" id="resultsCounter">Showing 35 of 35 sections</span>
+        </div>
+
+        <!-- ======================== A. GETTING STARTED ======================== -->
+
+        <section id="getting-started" class="help-section" data-keywords="overview, introduction, navigation, roles" data-category="all">
+            <h3><i class="bi bi-rocket-takeoff"></i> Getting Started</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">overview</span>
+                <span class="keyword-badge">introduction</span>
+                <span class="keyword-badge">navigation</span>
+                <span class="keyword-badge">roles</span>
+            </div>
+            <p>FlyingPlan is a web-based drone flight planning and operations management platform. It supports the full lifecycle from customer enquiry through mission planning, pilot assignment, flight execution, and deliverable handoff.</p>
+            <p><strong>Key areas:</strong></p>
+            <ul>
+                <li><strong>Public Customer Form</strong> &mdash; a 5-step wizard for clients to submit drone survey requests.</li>
+                <li><strong>Admin Dashboard</strong> &mdash; manage flight plans, assign pilots, plan routes, and export missions.</li>
+                <li><strong>Pilot Portal</strong> &mdash; accept orders, complete pre-flight risk assessments, upload deliverables.</li>
+            </ul>
+            <p>Use the navigation bar at the top to move between sections. Admins and managers see the full menu; pilots see a streamlined view.</p>
+        </section>
+
+        <section id="logging-in" class="help-section" data-keywords="login, password, username, session" data-category="all">
+            <h3><i class="bi bi-box-arrow-in-right"></i> Logging In</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">login</span>
+                <span class="keyword-badge">password</span>
+                <span class="keyword-badge">username</span>
+                <span class="keyword-badge">session</span>
+            </div>
+            <p>Navigate to the login page and enter your username and password. After logging in you will be redirected to your role-specific dashboard.</p>
+            <ul>
+                <li><strong>Admin / Manager</strong> users land on the Admin Dashboard.</li>
+                <li><strong>Pilot</strong> users land on the Pilot Dashboard.</li>
+            </ul>
+            <p>Sessions persist until you log out or close your browser. Click <strong>Logout</strong> in the top-right corner to end your session.</p>
+        </section>
+
+        <section id="user-roles" class="help-section" data-keywords="roles, admin, manager, pilot, permissions" data-category="admin">
+            <h3><i class="bi bi-shield-lock"></i> User Roles &amp; Permissions</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">roles</span>
+                <span class="keyword-badge">admin</span>
+                <span class="keyword-badge">manager</span>
+                <span class="keyword-badge">pilot</span>
+                <span class="keyword-badge">permissions</span>
+            </div>
+            <p>FlyingPlan has three user roles with increasing levels of access:</p>
+            <ul>
+                <li><strong>Pilot</strong> &mdash; can view assigned orders, accept/decline work, complete risk assessments, manage their profile, and upload deliverables.</li>
+                <li><strong>Manager</strong> &mdash; everything a pilot can do, plus access to the admin dashboard, pilot management, and order assignment.</li>
+                <li><strong>Admin</strong> &mdash; full access, including application settings, branding, job type configuration, and user management.</li>
+            </ul>
+        </section>
+
+        <!-- ======================== B. CUSTOMER REQUEST FORM ======================== -->
+
+        <section id="customer-form-overview" class="help-section" data-keywords="form, wizard, request, enquiry, 5-step" data-category="all">
+            <h3><i class="bi bi-ui-checks-grid"></i> Customer Request Form</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">form</span>
+                <span class="keyword-badge">wizard</span>
+                <span class="keyword-badge">request</span>
+                <span class="keyword-badge">enquiry</span>
+                <span class="keyword-badge">5-step</span>
+            </div>
+            <p>The public customer request form is a 5-step wizard that guides clients through submitting a drone survey enquiry. No login is required &mdash; the form is publicly accessible.</p>
+            <p>Each step validates before allowing progression. A progress indicator at the top shows the current step. On submission, a unique reference number is generated and displayed.</p>
+        </section>
+
+        <section id="form-step1-customer" class="help-section" data-keywords="name, email, phone, company, business, ABN" data-category="all">
+            <h3><i class="bi bi-person-lines-fill"></i> Step 1: Customer Details</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">name</span>
+                <span class="keyword-badge">email</span>
+                <span class="keyword-badge">phone</span>
+                <span class="keyword-badge">company</span>
+                <span class="keyword-badge">business</span>
+                <span class="keyword-badge">ABN</span>
+            </div>
+            <p>Collect the customer's contact information. Fields include:</p>
+            <ul>
+                <li><strong>Full name</strong> (required)</li>
+                <li><strong>Email</strong> (required)</li>
+                <li><strong>Phone number</strong> (optional)</li>
+                <li><strong>Customer type</strong> &mdash; Private or Business</li>
+                <li><strong>Company name &amp; ABN</strong> (shown for business customers)</li>
+                <li><strong>Billing contact, email, and purchase order</strong> (business only)</li>
+            </ul>
+        </section>
+
+        <section id="form-step2-brief" class="help-section" data-keywords="job type, description, urgency, dates, survey" data-category="all">
+            <h3><i class="bi bi-card-text"></i> Step 2: Job Brief</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">job type</span>
+                <span class="keyword-badge">description</span>
+                <span class="keyword-badge">urgency</span>
+                <span class="keyword-badge">dates</span>
+                <span class="keyword-badge">survey</span>
+            </div>
+            <p>Define the scope of the requested work:</p>
+            <ul>
+                <li><strong>Job type</strong> &mdash; select from the configured list (e.g., Mapping, Inspection, Photography).</li>
+                <li><strong>Description</strong> &mdash; free-text field for detailed requirements.</li>
+                <li><strong>Urgency</strong> &mdash; Low, Normal, High, or Urgent.</li>
+                <li><strong>Preferred dates</strong> &mdash; when the customer would like the work done.</li>
+                <li><strong>Purpose &amp; how they heard about you</strong> &mdash; from admin-configured dropdown lists.</li>
+            </ul>
+        </section>
+
+        <section id="form-step3-location" class="help-section" data-keywords="map, address, pin, polygon, POI, area" data-category="all">
+            <h3><i class="bi bi-geo-alt"></i> Step 3: Location &amp; Map</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">map</span>
+                <span class="keyword-badge">address</span>
+                <span class="keyword-badge">pin</span>
+                <span class="keyword-badge">polygon</span>
+                <span class="keyword-badge">POI</span>
+                <span class="keyword-badge">area</span>
+            </div>
+            <p>Customers specify the job location using an interactive map:</p>
+            <ul>
+                <li><strong>Address field</strong> &mdash; type an address and select from suggestions to centre the map.</li>
+                <li><strong>Pin placement</strong> &mdash; click on the map to drop a pin at the exact location.</li>
+                <li><strong>Area of interest</strong> &mdash; optionally draw a polygon to outline the survey boundary.</li>
+                <li><strong>Points of interest</strong> &mdash; mark specific spots that need attention.</li>
+            </ul>
+        </section>
+
+        <section id="form-step4-flight" class="help-section" data-keywords="altitude, camera, resolution, photo mode" data-category="all">
+            <h3><i class="bi bi-camera"></i> Step 4: Flight Preferences</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">altitude</span>
+                <span class="keyword-badge">camera</span>
+                <span class="keyword-badge">resolution</span>
+                <span class="keyword-badge">photo mode</span>
+            </div>
+            <p>Optional technical preferences the customer can specify:</p>
+            <ul>
+                <li><strong>Output format</strong> &mdash; Photos, Video, or Both.</li>
+                <li><strong>Video duration</strong> preference (if video selected).</li>
+                <li><strong>Shot types</strong> &mdash; e.g., nadir, oblique, orbit.</li>
+                <li><strong>Delivery timeline</strong> &mdash; Standard, Express, or Rush.</li>
+            </ul>
+        </section>
+
+        <section id="form-step5-review" class="help-section" data-keywords="review, upload, consent, reference number" data-category="all">
+            <h3><i class="bi bi-check2-square"></i> Step 5: Review &amp; Submit</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">review</span>
+                <span class="keyword-badge">upload</span>
+                <span class="keyword-badge">consent</span>
+                <span class="keyword-badge">reference number</span>
+            </div>
+            <p>The final step shows a summary of all entered information. The customer can:</p>
+            <ul>
+                <li>Review all details across all steps.</li>
+                <li>Upload supporting files (site plans, photos, documents).</li>
+                <li>Accept terms and consent.</li>
+                <li>Submit the request &mdash; a unique reference number is generated immediately.</li>
+            </ul>
+        </section>
+
+        <!-- ======================== C. ADMIN DASHBOARD ======================== -->
+
+        <section id="admin-dashboard" class="help-section" data-keywords="dashboard, flight plans, list, overview" data-category="admin">
+            <h3><i class="bi bi-grid-3x3-gap"></i> Admin Dashboard</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">dashboard</span>
+                <span class="keyword-badge">flight plans</span>
+                <span class="keyword-badge">list</span>
+                <span class="keyword-badge">overview</span>
+            </div>
+            <p>The admin dashboard displays all flight plan requests in a sortable, filterable table. Each row shows:</p>
+            <ul>
+                <li>Reference number, customer name, job type, and urgency.</li>
+                <li>Status badge (colour-coded).</li>
+                <li>Submission date (with relative date label).</li>
+            </ul>
+            <p>Click any row to open the flight plan detail page for route planning, analysis, and export.</p>
+        </section>
+
+        <section id="dashboard-filters" class="help-section" data-keywords="filter, search, status, job type, query" data-category="admin">
+            <h3><i class="bi bi-funnel"></i> Filters &amp; Search</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">filter</span>
+                <span class="keyword-badge">search</span>
+                <span class="keyword-badge">status</span>
+                <span class="keyword-badge">job type</span>
+                <span class="keyword-badge">query</span>
+            </div>
+            <p>Use the filter controls at the top of the dashboard to narrow results:</p>
+            <ul>
+                <li><strong>Status filter</strong> &mdash; show only plans with a specific status.</li>
+                <li><strong>Job type filter</strong> &mdash; filter by the type of work requested.</li>
+                <li><strong>Text search</strong> &mdash; search across reference numbers, customer names, and descriptions.</li>
+            </ul>
+        </section>
+
+        <section id="flight-plan-statuses" class="help-section" data-keywords="status, new, in review, route planned, completed" data-category="admin">
+            <h3><i class="bi bi-tag"></i> Flight Plan Statuses</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">status</span>
+                <span class="keyword-badge">new</span>
+                <span class="keyword-badge">in review</span>
+                <span class="keyword-badge">route planned</span>
+                <span class="keyword-badge">completed</span>
+            </div>
+            <p>Flight plans progress through these statuses:</p>
+            <ul>
+                <li><span class="badge badge-new">New</span> &mdash; freshly submitted, not yet reviewed.</li>
+                <li><span class="badge badge-in_review">In Review</span> &mdash; being assessed by an admin or manager.</li>
+                <li><span class="badge badge-route_planned">Route Planned</span> &mdash; waypoints and mission configured.</li>
+                <li><span class="badge badge-completed">Completed</span> &mdash; mission finished.</li>
+                <li><span class="badge badge-cancelled">Cancelled</span> &mdash; request was cancelled.</li>
+            </ul>
+        </section>
+
+        <!-- ======================== D. FLIGHT PLAN DETAIL ======================== -->
+
+        <section id="flight-plan-detail" class="help-section" data-keywords="detail, editor, mission planning" data-category="admin">
+            <h3><i class="bi bi-journal-text"></i> Flight Plan Detail Page</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">detail</span>
+                <span class="keyword-badge">editor</span>
+                <span class="keyword-badge">mission planning</span>
+            </div>
+            <p>The flight plan detail page is the central workspace for mission planning. It combines:</p>
+            <ul>
+                <li>Customer request summary (contact, job brief, location).</li>
+                <li>Interactive map with route editor and analysis tools.</li>
+                <li>Waypoint management panel.</li>
+                <li>Drone model selection and GSD calculator.</li>
+                <li>Export buttons for multiple formats.</li>
+            </ul>
+            <p>All changes to waypoints and settings are saved automatically via AJAX &mdash; no manual save button needed.</p>
+        </section>
+
+        <section id="map-editor" class="help-section" data-keywords="map, waypoints, Leaflet, satellite, click, drag" data-category="admin">
+            <h3><i class="bi bi-map"></i> Flight Route Editor</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">map</span>
+                <span class="keyword-badge">waypoints</span>
+                <span class="keyword-badge">Leaflet</span>
+                <span class="keyword-badge">satellite</span>
+                <span class="keyword-badge">click</span>
+                <span class="keyword-badge">drag</span>
+            </div>
+            <p>The route editor uses a Leaflet-based interactive map. To create a flight route:</p>
+            <ul>
+                <li><strong>Click on the map</strong> to add waypoints sequentially.</li>
+                <li><strong>Drag waypoint markers</strong> to reposition them.</li>
+                <li><strong>Toggle map layers</strong> between street view and satellite imagery.</li>
+                <li>Waypoints are connected by lines showing the flight path.</li>
+            </ul>
+            <p>The waypoint panel on the side shows coordinates, altitude, and sequence for each point.</p>
+        </section>
+
+        <section id="waypoint-management" class="help-section" data-keywords="save, altitude, speed, heading, gimbal, action" data-category="admin">
+            <h3><i class="bi bi-pin-map"></i> Waypoint Management</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">save</span>
+                <span class="keyword-badge">altitude</span>
+                <span class="keyword-badge">speed</span>
+                <span class="keyword-badge">heading</span>
+                <span class="keyword-badge">gimbal</span>
+                <span class="keyword-badge">action</span>
+            </div>
+            <p>Each waypoint has configurable parameters:</p>
+            <ul>
+                <li><strong>Altitude</strong> (metres AGL) &mdash; height above ground level.</li>
+                <li><strong>Speed</strong> (m/s) &mdash; flight speed to this waypoint.</li>
+                <li><strong>Heading</strong> (degrees) &mdash; aircraft orientation.</li>
+                <li><strong>Gimbal pitch</strong> (degrees) &mdash; camera angle (-90&deg; = nadir, 0&deg; = horizon).</li>
+                <li><strong>Actions</strong> &mdash; take photo, start/stop recording, hover.</li>
+            </ul>
+            <p>Waypoints auto-save when modified. Use the delete button to remove individual waypoints, or clear all to start fresh.</p>
+        </section>
+
+        <section id="drone-selection" class="help-section" data-keywords="DJI, Mini 4 Pro, Mavic 3, Air 3, sensor" data-category="admin">
+            <h3><i class="bi bi-drone"></i> Drone Model Selection</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">DJI</span>
+                <span class="keyword-badge">Mini 4 Pro</span>
+                <span class="keyword-badge">Mavic 3</span>
+                <span class="keyword-badge">Air 3</span>
+                <span class="keyword-badge">sensor</span>
+            </div>
+            <p>Select the drone model from the dropdown on the flight plan detail page. The selected model determines:</p>
+            <ul>
+                <li>Sensor dimensions and focal length (used for GSD calculations).</li>
+                <li>Maximum flight altitude, speed, and duration.</li>
+                <li>Export format compatibility (e.g., Litchi, DJI waylines).</li>
+            </ul>
+            <p>The system supports DJI Mini 4 Pro, Air 3, Mavic 3, Mavic 3 Enterprise, and more. See the <a href="#supported-drones">Supported Drones</a> reference section for full specs.</p>
+        </section>
+
+        <section id="grid-mission" class="help-section" data-keywords="grid, parallel, crosshatch, survey, mapping" data-category="admin">
+            <h3><i class="bi bi-grid-3x3"></i> Grid Mission Generator</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">grid</span>
+                <span class="keyword-badge">parallel</span>
+                <span class="keyword-badge">crosshatch</span>
+                <span class="keyword-badge">survey</span>
+                <span class="keyword-badge">mapping</span>
+            </div>
+            <p>Generate automated grid survey patterns over a defined area:</p>
+            <ul>
+                <li>Draw a polygon on the map to define the survey boundary.</li>
+                <li>Set <strong>altitude</strong>, <strong>overlap</strong> (front &amp; side), and <strong>angle</strong>.</li>
+                <li>Choose <strong>parallel</strong> (single direction) or <strong>crosshatch</strong> (double perpendicular).</li>
+                <li>The generator calculates optimal line spacing based on the selected drone's sensor and desired GSD.</li>
+            </ul>
+            <p>Generated waypoints replace the current route. Use coverage analysis afterwards to verify overlap quality.</p>
+        </section>
+
+        <section id="3d-mapping-grid" class="help-section" data-keywords="oblique, double grid, multi-angle, photogrammetry" data-category="admin">
+            <h3><i class="bi bi-box"></i> 3D Mapping Grid</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">oblique</span>
+                <span class="keyword-badge">double grid</span>
+                <span class="keyword-badge">multi-angle</span>
+                <span class="keyword-badge">photogrammetry</span>
+            </div>
+            <p>For 3D photogrammetry, the oblique/double-grid generator creates multi-angle coverage:</p>
+            <ul>
+                <li>Combines a nadir (top-down) grid with oblique passes at configurable camera angles.</li>
+                <li>Supports double-grid patterns (0&deg; and 90&deg;) for comprehensive side coverage.</li>
+                <li>Set gimbal pitch for oblique passes (typically 45&deg;&ndash;60&deg;).</li>
+                <li>Ideal for building reconstruction, terrain modelling, and volumetric surveys.</li>
+            </ul>
+        </section>
+
+        <section id="facade-scanner" class="help-section" data-keywords="facade, building, inspection, standoff, vertical" data-category="admin">
+            <h3><i class="bi bi-building"></i> Facade Scanner</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">facade</span>
+                <span class="keyword-badge">building</span>
+                <span class="keyword-badge">inspection</span>
+                <span class="keyword-badge">standoff</span>
+                <span class="keyword-badge">vertical</span>
+            </div>
+            <p>Generate vertical scan patterns for building inspections:</p>
+            <ul>
+                <li>Define the facade line by clicking two points on the map (base of the wall).</li>
+                <li>Set <strong>standoff distance</strong> &mdash; how far the drone flies from the facade.</li>
+                <li>Set <strong>min/max altitude</strong> for the vertical scan range.</li>
+                <li>Configure <strong>overlap</strong> between scan rows.</li>
+                <li>The generator creates a serpentine pattern flying up and down along the facade.</li>
+            </ul>
+        </section>
+
+        <section id="mission-patterns" class="help-section" data-keywords="orbit, spiral, cable cam, multi-altitude orbit" data-category="admin">
+            <h3><i class="bi bi-arrow-repeat"></i> Mission Patterns</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">orbit</span>
+                <span class="keyword-badge">spiral</span>
+                <span class="keyword-badge">cable cam</span>
+                <span class="keyword-badge">multi-altitude orbit</span>
+            </div>
+            <p>Pre-built mission patterns for common scenarios:</p>
+            <ul>
+                <li><strong>Orbit</strong> &mdash; circular path around a point of interest at a set radius and altitude.</li>
+                <li><strong>Multi-altitude orbit</strong> &mdash; stacked orbits at different heights for full vertical coverage.</li>
+                <li><strong>Spiral</strong> &mdash; ascending/descending spiral for tower or chimney inspections.</li>
+                <li><strong>Cable cam</strong> &mdash; straight-line flight between two points at constant altitude.</li>
+            </ul>
+            <p>All patterns generate waypoints that can be edited individually after creation.</p>
+        </section>
+
+        <section id="gsd-calculator" class="help-section" data-keywords="GSD, resolution, cm/pixel, overlap, coverage" data-category="admin">
+            <h3><i class="bi bi-rulers"></i> GSD Calculator</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">GSD</span>
+                <span class="keyword-badge">resolution</span>
+                <span class="keyword-badge">cm/pixel</span>
+                <span class="keyword-badge">overlap</span>
+                <span class="keyword-badge">coverage</span>
+            </div>
+            <p>The Ground Sample Distance calculator shows the spatial resolution of imagery based on:</p>
+            <ul>
+                <li><strong>Drone model</strong> (sensor size and focal length).</li>
+                <li><strong>Flight altitude</strong> (AGL).</li>
+            </ul>
+            <p>Outputs include GSD in cm/pixel, single image footprint dimensions, and recommended photo interval for the desired overlap percentage. Lower altitude = finer detail but smaller coverage per image.</p>
+        </section>
+
+        <section id="coverage-analysis" class="help-section" data-keywords="overlap, heatmap, gaps, photo coverage" data-category="admin">
+            <h3><i class="bi bi-bounding-box"></i> Coverage Analysis</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">overlap</span>
+                <span class="keyword-badge">heatmap</span>
+                <span class="keyword-badge">gaps</span>
+                <span class="keyword-badge">photo coverage</span>
+            </div>
+            <p>After generating a grid or route, run coverage analysis to verify photo overlap:</p>
+            <ul>
+                <li>A colour-coded heatmap overlay shows overlap density across the survey area.</li>
+                <li><strong>Green</strong> = sufficient overlap (&ge;60%), <strong>Yellow</strong> = marginal, <strong>Red</strong> = insufficient.</li>
+                <li>Gap detection highlights areas with zero coverage.</li>
+                <li>Statistics panel shows min/max/average overlap percentages.</li>
+            </ul>
+            <p>Aim for at least 70% front overlap and 60% side overlap for reliable photogrammetry.</p>
+        </section>
+
+        <section id="quality-report" class="help-section" data-keywords="photogrammetry, 3D reconstruction, convergence" data-category="admin">
+            <h3><i class="bi bi-clipboard2-data"></i> Quality Report</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">photogrammetry</span>
+                <span class="keyword-badge">3D reconstruction</span>
+                <span class="keyword-badge">convergence</span>
+            </div>
+            <p>The quality report predicts photogrammetry reconstruction quality based on the planned mission:</p>
+            <ul>
+                <li>Convergence angle analysis between overlapping images.</li>
+                <li>Expected tie-point density estimation.</li>
+                <li>3D reconstruction confidence score.</li>
+                <li>Recommendations for improving mission parameters if quality is predicted to be low.</li>
+            </ul>
+        </section>
+
+        <section id="3d-preview" class="help-section" data-keywords="Three.js, terrain, mesh, visualisation" data-category="admin">
+            <h3><i class="bi bi-badge-3d"></i> 3D Mission Preview</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">Three.js</span>
+                <span class="keyword-badge">terrain</span>
+                <span class="keyword-badge">mesh</span>
+                <span class="keyword-badge">visualisation</span>
+            </div>
+            <p>Visualise the planned mission in 3D using the Three.js-powered preview:</p>
+            <ul>
+                <li>Terrain mesh rendered from elevation data.</li>
+                <li>Flight path shown as a 3D line with waypoint markers.</li>
+                <li>Camera frustums indicating photo footprints on the ground.</li>
+                <li>Orbit controls &mdash; drag to rotate, scroll to zoom, right-click to pan.</li>
+            </ul>
+        </section>
+
+        <section id="elevation-profile" class="help-section" data-keywords="elevation, AGL, terrain follow, chart" data-category="admin">
+            <h3><i class="bi bi-graph-up"></i> Elevation &amp; Terrain Following</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">elevation</span>
+                <span class="keyword-badge">AGL</span>
+                <span class="keyword-badge">terrain follow</span>
+                <span class="keyword-badge">chart</span>
+            </div>
+            <p>The elevation profile shows ground height along the flight path:</p>
+            <ul>
+                <li>Chart displays terrain elevation (AMSL) and planned flight altitude.</li>
+                <li>AGL (Above Ground Level) is calculated at each waypoint.</li>
+                <li><strong>Terrain following</strong> mode adjusts waypoint altitudes to maintain constant AGL over varying terrain.</li>
+                <li>Elevation data is fetched from the Open Elevation API.</li>
+            </ul>
+        </section>
+
+        <section id="weather-airspace" class="help-section" data-keywords="weather, wind, FRZ, airspace, restrictions" data-category="admin">
+            <h3><i class="bi bi-cloud-sun"></i> Weather &amp; Airspace</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">weather</span>
+                <span class="keyword-badge">wind</span>
+                <span class="keyword-badge">FRZ</span>
+                <span class="keyword-badge">airspace</span>
+                <span class="keyword-badge">restrictions</span>
+            </div>
+            <p>Check weather conditions and airspace restrictions for the flight location:</p>
+            <ul>
+                <li><strong>Weather</strong> &mdash; current temperature, wind speed/direction, visibility, cloud cover, and precipitation.</li>
+                <li><strong>Airspace</strong> &mdash; shows nearby Flight Restriction Zones (FRZs), controlled airspace, and NOTAMs.</li>
+                <li>Data is fetched for the centroid of the flight plan's location.</li>
+            </ul>
+            <p>Always verify conditions against your operations manual before flying.</p>
+        </section>
+
+        <!-- ======================== E. EXPORTS & IMPORT ======================== -->
+
+        <section id="exports" class="help-section" data-keywords="KMZ, KML, GeoJSON, CSV, GPX, Litchi, DJI" data-category="admin">
+            <h3><i class="bi bi-download"></i> Export Formats</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">KMZ</span>
+                <span class="keyword-badge">KML</span>
+                <span class="keyword-badge">GeoJSON</span>
+                <span class="keyword-badge">CSV</span>
+                <span class="keyword-badge">GPX</span>
+                <span class="keyword-badge">Litchi</span>
+                <span class="keyword-badge">DJI</span>
+            </div>
+            <p>Export your flight plan in multiple formats:</p>
+            <ul>
+                <li><strong>KMZ/KML</strong> &mdash; Google Earth compatible, includes waypoints and flight path.</li>
+                <li><strong>GeoJSON</strong> &mdash; standard geospatial format for GIS software.</li>
+                <li><strong>Enhanced GeoJSON</strong> &mdash; includes altitude, speed, heading, and gimbal data per waypoint.</li>
+                <li><strong>CSV</strong> &mdash; spreadsheet-compatible waypoint list.</li>
+                <li><strong>GPX</strong> &mdash; GPS exchange format for navigation apps.</li>
+                <li><strong>Litchi CSV</strong> &mdash; compatible with the Litchi flight app for DJI drones.</li>
+            </ul>
+        </section>
+
+        <section id="import-kmz" class="help-section" data-keywords="import, upload, DJI, waylines" data-category="admin">
+            <h3><i class="bi bi-upload"></i> Importing KMZ Files</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">import</span>
+                <span class="keyword-badge">upload</span>
+                <span class="keyword-badge">DJI</span>
+                <span class="keyword-badge">waylines</span>
+            </div>
+            <p>Import existing flight plans from KMZ files:</p>
+            <ul>
+                <li>Click the <strong>Import KMZ</strong> button on the flight plan detail page.</li>
+                <li>Select a .kmz file from your device.</li>
+                <li>The system extracts waypoints (coordinates, altitude) and loads them into the route editor.</li>
+                <li>Supports standard KMZ and DJI wayline formats.</li>
+            </ul>
+            <p>Imported waypoints replace the current route. Export first if you want to keep the existing plan.</p>
+        </section>
+
+        <!-- ======================== F. PATH TOOLS ======================== -->
+
+        <section id="path-tools" class="help-section" data-keywords="reverse, straighten, offset, route editing" data-category="admin">
+            <h3><i class="bi bi-bezier2"></i> Path Tools</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">reverse</span>
+                <span class="keyword-badge">straighten</span>
+                <span class="keyword-badge">offset</span>
+                <span class="keyword-badge">route editing</span>
+            </div>
+            <p>Quick-edit tools for modifying the flight path:</p>
+            <ul>
+                <li><strong>Reverse</strong> &mdash; flip the order of all waypoints (fly the route backwards).</li>
+                <li><strong>Straighten</strong> &mdash; remove intermediate waypoints, keeping only start and end.</li>
+                <li><strong>Offset</strong> &mdash; shift the entire route by a specified distance and bearing.</li>
+            </ul>
+        </section>
+
+        <section id="share-duplicate" class="help-section" data-keywords="share, link, duplicate, token, read-only" data-category="admin">
+            <h3><i class="bi bi-share"></i> Sharing &amp; Duplicating</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">share</span>
+                <span class="keyword-badge">link</span>
+                <span class="keyword-badge">duplicate</span>
+                <span class="keyword-badge">token</span>
+                <span class="keyword-badge">read-only</span>
+            </div>
+            <p>Share flight plans with external stakeholders:</p>
+            <ul>
+                <li><strong>Share link</strong> &mdash; generates a unique token-based URL that shows the mission map and waypoints in read-only mode. No login required.</li>
+                <li><strong>Duplicate</strong> &mdash; create a copy of the flight plan for variation planning or template reuse.</li>
+            </ul>
+            <p>Shared links can be revoked at any time by regenerating the token.</p>
+        </section>
+
+        <!-- ======================== G. ORDER MANAGEMENT ======================== -->
+
+        <section id="orders-overview" class="help-section" data-keywords="orders, assign, pilot, management" data-category="admin">
+            <h3><i class="bi bi-clipboard2-check"></i> Orders Overview</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">orders</span>
+                <span class="keyword-badge">assign</span>
+                <span class="keyword-badge">pilot</span>
+                <span class="keyword-badge">management</span>
+            </div>
+            <p>The Orders section (available to managers and admins) tracks the operational side of flight work:</p>
+            <ul>
+                <li>View all orders with status, assigned pilot, and linked flight plan.</li>
+                <li>Filter by status, pilot, or date range.</li>
+                <li>Each order is linked to a specific flight plan request.</li>
+            </ul>
+        </section>
+
+        <section id="creating-orders" class="help-section" data-keywords="create, assign pilot, schedule" data-category="admin">
+            <h3><i class="bi bi-plus-circle"></i> Creating &amp; Assigning Orders</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">create</span>
+                <span class="keyword-badge">assign pilot</span>
+                <span class="keyword-badge">schedule</span>
+            </div>
+            <p>To create an order from a flight plan:</p>
+            <ul>
+                <li>Open the flight plan detail page.</li>
+                <li>Click <strong>Create Order</strong> and select a pilot from the available list.</li>
+                <li>Set the scheduled date and any special instructions.</li>
+                <li>The pilot receives the assignment on their dashboard.</li>
+            </ul>
+            <p>Pilot availability status (Available / On Mission / Unavailable) helps you choose the right person.</p>
+        </section>
+
+        <section id="order-statuses" class="help-section" data-keywords="assigned, accepted, in progress, delivered" data-category="admin">
+            <h3><i class="bi bi-arrow-right-circle"></i> Order Status Workflow</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">assigned</span>
+                <span class="keyword-badge">accepted</span>
+                <span class="keyword-badge">in progress</span>
+                <span class="keyword-badge">delivered</span>
+            </div>
+            <p>Orders follow this lifecycle:</p>
+            <ul>
+                <li><span class="badge badge-pending_assignment">Pending Assignment</span> &mdash; order created, no pilot yet.</li>
+                <li><span class="badge badge-assigned">Assigned</span> &mdash; pilot selected, awaiting acceptance.</li>
+                <li><span class="badge badge-accepted">Accepted</span> &mdash; pilot confirmed the job.</li>
+                <li><span class="badge badge-in_progress">In Progress</span> &mdash; pilot is actively working (flight or post-processing).</li>
+                <li><span class="badge badge-flight_complete">Flight Complete</span> &mdash; flying done, awaiting deliverables.</li>
+                <li><span class="badge badge-delivered">Delivered</span> &mdash; files uploaded and handed off.</li>
+                <li><span class="badge badge-closed">Closed</span> &mdash; order finalised.</li>
+                <li><span class="badge badge-declined">Declined</span> &mdash; pilot declined the assignment.</li>
+            </ul>
+        </section>
+
+        <section id="deliverables" class="help-section" data-keywords="upload, files, photos, videos, download" data-category="admin">
+            <h3><i class="bi bi-cloud-upload"></i> Deliverables</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">upload</span>
+                <span class="keyword-badge">files</span>
+                <span class="keyword-badge">photos</span>
+                <span class="keyword-badge">videos</span>
+                <span class="keyword-badge">download</span>
+            </div>
+            <p>After completing a flight, pilots upload deliverables through the order detail page:</p>
+            <ul>
+                <li>Drag-and-drop or click to upload photos, videos, and processed files.</li>
+                <li>Add descriptions to each deliverable.</li>
+                <li>Admins can view and download all uploaded files.</li>
+                <li>Marking deliverables as complete advances the order to "Delivered" status.</li>
+            </ul>
+        </section>
+
+        <!-- ======================== H. PILOT GUIDE ======================== -->
+
+        <section id="pilot-dashboard" class="help-section" data-keywords="pilot, orders, assigned, active" data-category="pilot">
+            <h3><i class="bi bi-speedometer2"></i> Pilot Dashboard</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">pilot</span>
+                <span class="keyword-badge">orders</span>
+                <span class="keyword-badge">assigned</span>
+                <span class="keyword-badge">active</span>
+            </div>
+            <p>The pilot dashboard shows all orders assigned to you:</p>
+            <ul>
+                <li><strong>Active orders</strong> &mdash; jobs you've accepted that need action.</li>
+                <li><strong>Pending orders</strong> &mdash; new assignments waiting for your acceptance.</li>
+                <li><strong>Completed orders</strong> &mdash; past jobs for reference.</li>
+            </ul>
+            <p>Click any order to view its full details, flight plan, and customer requirements.</p>
+        </section>
+
+        <section id="pilot-order-detail" class="help-section" data-keywords="accept, decline, notes, export" data-category="pilot">
+            <h3><i class="bi bi-clipboard-check"></i> Pilot Order Detail</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">accept</span>
+                <span class="keyword-badge">decline</span>
+                <span class="keyword-badge">notes</span>
+                <span class="keyword-badge">export</span>
+            </div>
+            <p>From the order detail page, pilots can:</p>
+            <ul>
+                <li><strong>Accept or Decline</strong> the assignment.</li>
+                <li>View the full flight plan with map, waypoints, and route.</li>
+                <li>Export the mission in various formats for your flight controller.</li>
+                <li>Add <strong>notes</strong> visible to the admin team.</li>
+                <li>Update order status as work progresses.</li>
+                <li>Upload deliverables when the job is complete.</li>
+            </ul>
+        </section>
+
+        <section id="risk-assessment" class="help-section" data-keywords="safety, checklist, IMSAFE, pre-flight" data-category="pilot">
+            <h3><i class="bi bi-shield-check"></i> Pre-Flight Risk Assessment</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">safety</span>
+                <span class="keyword-badge">checklist</span>
+                <span class="keyword-badge">IMSAFE</span>
+                <span class="keyword-badge">pre-flight</span>
+            </div>
+            <p>Before each flight, complete the mandatory risk assessment:</p>
+            <ul>
+                <li><strong>IMSAFE checklist</strong> &mdash; Illness, Medication, Stress, Alcohol, Fatigue, Emotion (pilot fitness).</li>
+                <li><strong>Site assessment</strong> &mdash; obstacles, people, animals, electromagnetic interference.</li>
+                <li><strong>Weather check</strong> &mdash; wind, visibility, precipitation conditions.</li>
+                <li><strong>Airspace check</strong> &mdash; FRZ proximity, NOTAMs, controlled airspace.</li>
+                <li><strong>Equipment check</strong> &mdash; battery levels, propeller condition, firmware updates.</li>
+            </ul>
+            <p>The assessment must be completed before the order can progress to "In Progress".</p>
+        </section>
+
+        <section id="pilot-profile" class="help-section" data-keywords="qualifications, insurance, Flying ID, GVC" data-category="pilot">
+            <h3><i class="bi bi-person-badge"></i> Pilot Profile</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">qualifications</span>
+                <span class="keyword-badge">insurance</span>
+                <span class="keyword-badge">Flying ID</span>
+                <span class="keyword-badge">GVC</span>
+            </div>
+            <p>Manage your professional profile from the Profile page:</p>
+            <ul>
+                <li><strong>Personal details</strong> &mdash; name, email, phone, address.</li>
+                <li><strong>Flyer ID &amp; Operator ID</strong> &mdash; CAA registration numbers and expiry dates.</li>
+                <li><strong>Qualifications</strong> &mdash; A2 CofC, GVC (Multi-Rotor), GVC (Fixed-Wing), practical competency.</li>
+                <li><strong>Insurance</strong> &mdash; provider, policy number, and expiry date.</li>
+                <li><strong>Bio</strong> &mdash; brief description of your experience and specialisations.</li>
+            </ul>
+        </section>
+
+        <section id="pilot-records" class="help-section" data-keywords="certifications, equipment, documents, serial" data-category="pilot">
+            <h3><i class="bi bi-file-earmark-text"></i> Certifications &amp; Equipment</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">certifications</span>
+                <span class="keyword-badge">equipment</span>
+                <span class="keyword-badge">documents</span>
+                <span class="keyword-badge">serial</span>
+            </div>
+            <p>Track your certifications and equipment inventory:</p>
+            <ul>
+                <li><strong>Certifications</strong> &mdash; add qualification records with document uploads and expiry dates.</li>
+                <li><strong>Memberships</strong> &mdash; professional body memberships (e.g., ARPAS-UK).</li>
+                <li><strong>Equipment</strong> &mdash; register drones, batteries, and accessories with serial numbers and purchase dates.</li>
+                <li><strong>Documents</strong> &mdash; upload and manage operations manuals, insurance certificates, and other documentation.</li>
+            </ul>
+            <p>Expiry date warnings appear when certifications are approaching renewal.</p>
+        </section>
+
+        <!-- ======================== I. SETTINGS ======================== -->
+
+        <section id="settings" class="help-section" data-keywords="branding, business name, logo, job types, form" data-category="admin">
+            <h3><i class="bi bi-gear"></i> Settings (Admin Only)</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">branding</span>
+                <span class="keyword-badge">business name</span>
+                <span class="keyword-badge">logo</span>
+                <span class="keyword-badge">job types</span>
+                <span class="keyword-badge">form</span>
+            </div>
+            <p>Admins can customise the application from the Settings page:</p>
+            <ul>
+                <li><strong>Business name</strong> &mdash; displayed in the browser title and public form.</li>
+                <li><strong>Primary colour</strong> &mdash; theme accent colour used throughout the interface.</li>
+                <li><strong>Job types</strong> &mdash; add, edit, reorder, or deactivate the list of job types available on the customer form.</li>
+                <li><strong>Purpose options</strong> &mdash; configure the "Purpose of footage" dropdown.</li>
+                <li><strong>Heard about us</strong> &mdash; configure the "How did you hear about us?" dropdown.</li>
+            </ul>
+        </section>
+
+        <!-- ======================== J. REFERENCE ======================== -->
+
+        <section id="supported-drones" class="help-section" data-keywords="specs, Mini 4 Pro, Mavic 3, sensor, flight time" data-category="reference">
+            <h3><i class="bi bi-cpu"></i> Supported Drone Models</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">specs</span>
+                <span class="keyword-badge">Mini 4 Pro</span>
+                <span class="keyword-badge">Mavic 3</span>
+                <span class="keyword-badge">sensor</span>
+                <span class="keyword-badge">flight time</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Model</th>
+                            <th>Sensor</th>
+                            <th>Max Altitude</th>
+                            <th>Max Speed</th>
+                            <th>Flight Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>DJI Mini 4 Pro</td><td>1/1.3" CMOS, 48MP</td><td>120m</td><td>16 m/s</td><td>~34 min</td></tr>
+                        <tr><td>DJI Air 3</td><td>1/1.3" CMOS, 48MP</td><td>120m</td><td>21 m/s</td><td>~46 min</td></tr>
+                        <tr><td>DJI Mavic 3</td><td>4/3 CMOS, 20MP</td><td>120m</td><td>21 m/s</td><td>~46 min</td></tr>
+                        <tr><td>DJI Mavic 3 Enterprise</td><td>4/3 CMOS, 20MP</td><td>120m</td><td>21 m/s</td><td>~45 min</td></tr>
+                        <tr><td>DJI Mavic 3 Classic</td><td>4/3 CMOS, 20MP</td><td>120m</td><td>21 m/s</td><td>~46 min</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted mt-1" style="font-size: 0.8rem;">Specifications are approximate. Actual performance varies with conditions and payload.</p>
+        </section>
+
+        <section id="tips-shortcuts" class="help-section" data-keywords="tips, productivity, map controls, best practices" data-category="reference">
+            <h3><i class="bi bi-lightbulb"></i> Tips &amp; Shortcuts</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">tips</span>
+                <span class="keyword-badge">productivity</span>
+                <span class="keyword-badge">map controls</span>
+                <span class="keyword-badge">best practices</span>
+            </div>
+            <ul>
+                <li><strong>Double-click the map</strong> to add a waypoint quickly.</li>
+                <li><strong>Scroll wheel</strong> zooms the map; hold Shift + drag to zoom to a rectangle.</li>
+                <li>Use <strong>satellite view</strong> when planning over rural or vegetated areas for better context.</li>
+                <li>Export to <strong>Litchi CSV</strong> for the most feature-rich third-party flight execution.</li>
+                <li>Run <strong>coverage analysis</strong> before exporting to catch overlap gaps early.</li>
+                <li>Use <strong>terrain following</strong> for hilly sites to maintain consistent GSD.</li>
+                <li>Share read-only links with clients for pre-flight approval &mdash; no account needed.</li>
+                <li>Check <strong>weather &amp; airspace</strong> on the day of the flight, not just during planning.</li>
+            </ul>
+        </section>
+
+        <section id="glossary" class="help-section" data-keywords="GSD, AGL, FRZ, NOTAM, KMZ, nadir, oblique, gimbal" data-category="reference">
+            <h3><i class="bi bi-book"></i> Glossary</h3>
+            <div class="keyword-badges-row mb-2">
+                <span class="keyword-badge">GSD</span>
+                <span class="keyword-badge">AGL</span>
+                <span class="keyword-badge">FRZ</span>
+                <span class="keyword-badge">NOTAM</span>
+                <span class="keyword-badge">KMZ</span>
+                <span class="keyword-badge">nadir</span>
+                <span class="keyword-badge">oblique</span>
+                <span class="keyword-badge">gimbal</span>
+            </div>
+            <dl>
+                <dt>AGL (Above Ground Level)</dt>
+                <dd>Altitude measured from the terrain surface directly below the drone.</dd>
+
+                <dt>AMSL (Above Mean Sea Level)</dt>
+                <dd>Altitude measured from mean sea level &mdash; used for airspace and chart references.</dd>
+
+                <dt>CofC (Certificate of Competency)</dt>
+                <dd>CAA qualification (e.g., A2 CofC) allowing specific drone operations.</dd>
+
+                <dt>FRZ (Flight Restriction Zone)</dt>
+                <dd>Airspace around airports and other sensitive locations where drone flight is restricted or prohibited.</dd>
+
+                <dt>GSD (Ground Sample Distance)</dt>
+                <dd>The real-world size of one pixel in a drone photo, measured in cm/pixel. Lower = higher detail.</dd>
+
+                <dt>GVC (General VLOS Certificate)</dt>
+                <dd>UK CAA qualification for commercial drone operations within Visual Line of Sight.</dd>
+
+                <dt>Gimbal</dt>
+                <dd>The stabilised mount holding the drone's camera. Pitch angle controls whether the camera points down (nadir) or forward (oblique).</dd>
+
+                <dt>GPX (GPS Exchange Format)</dt>
+                <dd>XML-based format for GPS tracks and waypoints, compatible with most mapping and navigation software.</dd>
+
+                <dt>KML (Keyhole Markup Language)</dt>
+                <dd>XML format for geographic data, viewable in Google Earth and GIS applications.</dd>
+
+                <dt>KMZ</dt>
+                <dd>Compressed (zipped) KML file. Standard format for importing/exporting flight plans.</dd>
+
+                <dt>Nadir</dt>
+                <dd>Camera pointing straight down (gimbal pitch -90&deg;). Used for mapping and orthophoto generation.</dd>
+
+                <dt>NOTAM (Notice to Airmen)</dt>
+                <dd>Official notice of temporary airspace changes, hazards, or restrictions.</dd>
+
+                <dt>Oblique</dt>
+                <dd>Camera angled between horizontal and nadir (typically 30&deg;&ndash;60&deg; from vertical). Used for facade capture and 3D modelling.</dd>
+
+                <dt>Overlap (Front / Side)</dt>
+                <dd>Percentage of shared area between consecutive photos. Higher overlap improves photogrammetry quality but increases flight time.</dd>
+
+                <dt>Photogrammetry</dt>
+                <dd>Process of creating 3D models, maps, or measurements from overlapping photographs.</dd>
+            </dl>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const searchInput = document.getElementById('helpSearch');
+    const sections = document.querySelectorAll('.help-section');
+    const tocLinks = document.querySelectorAll('#tocNav .nav-link');
+    const tocGroups = document.querySelectorAll('#tocNav .toc-group-label');
+    const filterBtns = document.querySelectorAll('.help-filters .btn');
+    const counter = document.getElementById('resultsCounter');
+    const totalSections = sections.length;
+
+    let activeCategory = 'all';
+    let debounceTimer = null;
+
+    /* Category filter */
+    filterBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            activeCategory = btn.getAttribute('data-filter');
+            applyFilters();
+        });
+    });
+
+    /* Search with debounce */
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(applyFilters, 200);
+    });
+
+    function applyFilters() {
+        var query = searchInput.value.trim().toLowerCase();
+        var terms = query ? query.split(/\s+/) : [];
+        var visible = 0;
+
+        sections.forEach(function(section) {
+            var cat = section.getAttribute('data-category') || 'all';
+            var keywords = (section.getAttribute('data-keywords') || '').toLowerCase();
+            var heading = (section.querySelector('h3') ? section.querySelector('h3').textContent : '').toLowerCase();
+            var body = section.textContent.toLowerCase();
+            var searchable = keywords + ' ' + heading + ' ' + body;
+
+            /* Category check */
+            var catMatch = (activeCategory === 'all') || (cat === activeCategory) || (cat === 'all');
+
+            /* Term check */
+            var termMatch = true;
+            if (terms.length > 0) {
+                for (var i = 0; i < terms.length; i++) {
+                    if (searchable.indexOf(terms[i]) === -1) {
+                        termMatch = false;
+                        break;
+                    }
+                }
+            }
+
+            var show = catMatch && termMatch;
+            section.classList.toggle('d-none', !show);
+            if (show) visible++;
+
+            /* Sync TOC link */
+            var id = section.getAttribute('id');
+            var tocLink = document.querySelector('#tocNav a[href="#' + id + '"]');
+            if (tocLink) {
+                tocLink.style.display = show ? '' : 'none';
+            }
+        });
+
+        /* Hide empty TOC group labels */
+        tocGroups.forEach(function(label) {
+            var next = label.nextElementSibling;
+            var hasVisible = false;
+            while (next && !next.classList.contains('toc-group-label')) {
+                if (next.tagName === 'A' && next.style.display !== 'none') {
+                    hasVisible = true;
+                    break;
+                }
+                next = next.nextElementSibling;
+            }
+            label.style.display = hasVisible ? '' : 'none';
+        });
+
+        counter.textContent = 'Showing ' + visible + ' of ' + totalSections + ' sections';
+    }
+})();
+</script>
+{% endblock %}
