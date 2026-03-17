@@ -3,6 +3,10 @@ Pre-built mission pattern generators: orbit, spiral, cable cam.
 Each generates waypoints with computed headings facing the subject.
 """
 import math
+from services.geo_utils import (
+    offset_point as _offset_point,
+    heading_to as _heading_to,
+)
 
 
 def generate_orbit(center_lat, center_lng, radius_m=30, altitude_m=30,
@@ -123,21 +127,5 @@ def generate_cable_cam(start_lat, start_lng, end_lat, end_lng,
     return waypoints
 
 
-def _offset_point(lat, lng, distance_m, bearing_rad):
-    """Calculate a point at distance/bearing from origin (equirectangular)."""
-    dx = distance_m * math.sin(bearing_rad)
-    dy = distance_m * math.cos(bearing_rad)
-    new_lat = lat + dy / 110540
-    new_lng = lng + dx / (111320 * math.cos(math.radians(lat)))
-    return round(new_lat, 7), round(new_lng, 7)
 
-
-def _heading_to(from_lat, from_lng, to_lat, to_lng):
-    """Calculate heading in degrees from one point to another."""
-    dlng = math.radians(to_lng - from_lng)
-    lat1 = math.radians(from_lat)
-    lat2 = math.radians(to_lat)
-    x = math.sin(dlng) * math.cos(lat2)
-    y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlng)
-    heading = math.degrees(math.atan2(x, y))
-    return round(heading % 360, 1)
+# Local wrappers kept for backward compatibility — implementations in geo_utils

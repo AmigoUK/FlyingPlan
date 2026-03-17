@@ -22,6 +22,7 @@ var MissionPatterns = (function () {
             { v: "orbit", t: "Orbit (circle around point)" },
             { v: "spiral", t: "Spiral (ascending circle)" },
             { v: "cable_cam", t: "Cable Cam (linear path)" },
+            { v: "multi_orbit", t: "Multi-Altitude Orbit (stacked)" },
         ].forEach(function (o) {
             var opt = document.createElement("option");
             opt.value = o.v;
@@ -83,6 +84,16 @@ var MissionPatterns = (function () {
                 { id: "pat-speed", label: "Speed (m/s)", value: 4, min: 1, max: 15, step: 0.5 },
             ];
             if (info) info.textContent = "Click on the map to set the spiral center point.";
+        } else if (patternType === "multi_orbit") {
+            fields = [
+                { id: "pat-radius", label: "Radius (m)", value: 30, min: 5, max: 500 },
+                { id: "pat-start-alt", label: "Min Alt (m)", value: 15, min: 5, max: 120 },
+                { id: "pat-end-alt", label: "Max Alt (m)", value: 60, min: 10, max: 120 },
+                { id: "pat-alt-step", label: "Alt Step (m)", value: 15, min: 5, max: 50 },
+                { id: "pat-points", label: "Points/Orbit", value: 12, min: 4, max: 72 },
+                { id: "pat-speed", label: "Speed (m/s)", value: 5, min: 1, max: 15, step: 0.5 },
+            ];
+            if (info) info.textContent = "Click on the map to set center. Stacked orbits at multiple altitudes.";
         } else {
             fields = [
                 { id: "pat-altitude", label: "Altitude (m)", value: 30, min: 5, max: 120 },
@@ -131,6 +142,13 @@ var MissionPatterns = (function () {
             config.end_altitude_m = getValue("pat-end-alt", 60);
             config.num_revolutions = getValue("pat-revolutions", 3);
             config.speed_ms = getValue("pat-speed", 4);
+        } else if (type === "multi_orbit") {
+            config.radius_m = getValue("pat-radius", 30);
+            config.min_altitude_m = getValue("pat-start-alt", 15);
+            config.max_altitude_m = getValue("pat-end-alt", 60);
+            config.altitude_step_m = getValue("pat-alt-step", 15);
+            config.num_points = getValue("pat-points", 12);
+            config.speed_ms = getValue("pat-speed", 5);
         } else {
             config.altitude_m = getValue("pat-altitude", 30);
             config.num_points = getValue("pat-points", 10);

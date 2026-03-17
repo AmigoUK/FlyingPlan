@@ -614,6 +614,220 @@
         });
     }
 
+    // Oblique planner
+    if (typeof ObliquePlanner !== "undefined" && document.getElementById("oblique-planner-panel")) {
+        ObliquePlanner.buildPanel("oblique-planner-panel");
+        document.getElementById("oblique-planner-panel").addEventListener("click", function (e) {
+            var genBtn = e.target.closest("#btn-generate-oblique-grid");
+            if (!genBtn) return;
+            var config = ObliquePlanner.getConfig();
+            var polygon = document.getElementById("plan-polygon").value;
+            if (!polygon) {
+                _toast("No polygon area defined", "warning");
+                return;
+            }
+            fetch("/admin/" + planId + "/generate-oblique-grid", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({ polygon: polygon, config: config }),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) {
+                        _replaceWaypoints(resp.waypoints);
+                        _toast("Generated " + resp.count + " 3D grid waypoints", "success");
+                    } else {
+                        _toast("Error: " + (resp.error || "Unknown"), "danger");
+                    }
+                })
+                .catch(function () { _toast("3D grid generation failed", "danger"); });
+        });
+    }
+
+    // Facade planner
+    if (typeof FacadePlanner !== "undefined" && document.getElementById("facade-planner-panel")) {
+        FacadePlanner.buildPanel("facade-planner-panel");
+        var _facadePoints = [];
+        var _facadeMarkers = [];
+
+        document.getElementById("facade-planner-panel").addEventListener("click", function (e) {
+            var genBtn = e.target.closest("#btn-generate-facade");
+            if (!genBtn) return;
+            var config = FacadePlanner.getConfig();
+            var mode = FacadePlanner.getMode();
+            var body = { config: config };
+
+            if (mode === "multi") {
+                var polygon = document.getElementById("plan-polygon").value;
+                if (!polygon) {
+                    _toast("No polygon defined for multi-face scan", "warning");
+                    return;
+                }
+                body.polygon = polygon;
+                body.mode = "multi";
+            } else {
+                if (_facadePoints.length < 2) {
+                    _toast("Click two points on the map to define facade line", "warning");
+                    return;
+                }
+                body.face_start = [_facadePoints[0].lat, _facadePoints[0].lng];
+                body.face_end = [_facadePoints[1].lat, _facadePoints[1].lng];
+            }
+
+            fetch("/admin/" + planId + "/generate-facade-scan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify(body),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) {
+                        _replaceWaypoints(resp.waypoints);
+                        _clearFacadePoints();
+                        _toast("Generated " + resp.count + " facade waypoints", "success");
+                    } else {
+                        _toast("Error: " + (resp.error || "Unknown"), "danger");
+                    }
+                })
+                .catch(function () { _toast("Facade scan failed", "danger"); });
+        });
+
+        function _clearFacadePoints() {
+            _facadeMarkers.forEach(function (m) { map.removeLayer(m); });
+            _facadeMarkers.length = 0;
+            _facadePoints.length = 0;
+        }
+
+        // Allow adding facade points by holding Shift+click
+        map.on("click", function (e) {
+            if (!e.originalEvent.shiftKey) return;
+            if (_facadePoints.length >= 2) _clearFacadePoints();
+            _facadePoints.push(e.latlng);
+            var m = L.marker(e.latlng, {
+                icon: L.divIcon({
+                    className: "",
+                    html: '<div style="background:#dc3545;color:#fff;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;border:2px solid #fff;">F</div>',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                }),
+            }).addTo(map).bindTooltip("Facade " + _facadePoints.length, { direction: "top" });
+            _facadeMarkers.push(m);
+            if (_facadePoints.length === 2) {
+                L.polyline([_facadePoints[0], _facadePoints[1]], {
+                    color: "#dc3545", weight: 2, dashArray: "5,5",
+                }).addTo(map);
+            }
+        });
+    }
+
+    // Coverage analysis
+    if (typeof CoverageHeatmap !== "undefined") {
+        CoverageHeatmap.init(map);
+    }
+
+    var coverageBtn = document.getElementById("btn-run-coverage");
+    if (coverageBtn) {
+        coverageBtn.addEventListener("click", function () {
+            if (waypoints.length === 0) {
+                _toast("Add waypoints first", "warning");
+                return;
+            }
+            fetch("/admin/" + planId + "/coverage-analysis", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({}),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) {
+                        if (typeof CoverageHeatmap !== "undefined") {
+                            CoverageHeatmap.render(resp);
+                            if (!CoverageHeatmap.isVisible()) CoverageHeatmap.toggle();
+                            CoverageHeatmap.renderStats("coverage-panel", resp.stats);
+                        }
+                        _toast("Coverage analysis complete", "success");
+                    } else {
+                        _toast("Error: " + (resp.error || "Unknown"), "danger");
+                    }
+                })
+                .catch(function () { _toast("Coverage analysis failed", "danger"); });
+        });
+    }
+
+    // Coverage heatmap toggle
+    var coverageToggleBtn = document.getElementById("btn-coverage-toggle");
+    if (coverageToggleBtn) {
+        coverageToggleBtn.addEventListener("click", function () {
+            if (typeof CoverageHeatmap !== "undefined") {
+                var visible = CoverageHeatmap.toggle();
+                coverageToggleBtn.classList.toggle("active", visible);
+                coverageToggleBtn.classList.toggle("btn-outline-warning", !visible);
+                coverageToggleBtn.classList.toggle("btn-warning", visible);
+            }
+        });
+    }
+
+    // Quality report
+    var qualityBtn = document.getElementById("btn-run-quality");
+    if (qualityBtn) {
+        qualityBtn.addEventListener("click", function () {
+            if (waypoints.length === 0) {
+                _toast("Add waypoints first", "warning");
+                return;
+            }
+            fetch("/admin/" + planId + "/quality-report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({}),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success && typeof QualityReport !== "undefined") {
+                        QualityReport.render("quality-panel", resp);
+                    }
+                })
+                .catch(function () { _toast("Quality report failed", "danger"); });
+        });
+    }
+
+    // 3D Preview
+    var threeDBtn = document.getElementById("btn-load-3d");
+    if (threeDBtn) {
+        threeDBtn.addEventListener("click", function () {
+            if (waypoints.length === 0) {
+                _toast("Add waypoints first", "warning");
+                return;
+            }
+            var container = document.getElementById("three-preview-container");
+            if (container) container.style.display = "block";
+
+            fetch("/admin/" + planId + "/terrain-mesh")
+                .then(function (r) { return r.json(); })
+                .then(function (terrainData) {
+                    if (typeof ThreePreview !== "undefined") {
+                        ThreePreview.init("three-preview-canvas");
+                        ThreePreview.renderTerrain(terrainData);
+                        ThreePreview.renderFlightPath(waypoints);
+                        _toast("3D preview loaded", "success");
+                    }
+                })
+                .catch(function () { _toast("3D preview failed", "danger"); });
+        });
+    }
+
+    // Helper to replace all waypoints (used by new generators)
+    function _replaceWaypoints(newWps) {
+        waypointMarkers.forEach(function (m) { map.removeLayer(m); });
+        waypointMarkers.length = 0;
+        waypoints.length = 0;
+        routeLayerGroup.clearLayers();
+        selectedIndex = -1;
+        newWps.forEach(function (w) {
+            addWaypoint(L.latLng(w.lat, w.lng), w);
+        });
+        updateRoute();
+    }
+
     // Load elevation data
     var elevBtn = document.getElementById("btn-load-elevation");
     if (elevBtn) {

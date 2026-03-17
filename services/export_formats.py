@@ -1,10 +1,11 @@
 """
-Multi-format export: KML, GeoJSON, CSV, GPX.
+Multi-format export: KML, GeoJSON, CSV, GPX, Enhanced GeoJSON.
 Generates files from flight plan waypoints.
 """
 import io
 import json
 import xml.etree.ElementTree as ET
+from services.coverage_analyzer import compute_photo_footprint
 
 
 def generate_kml(flight_plan):
@@ -153,5 +154,87 @@ def generate_gpx(flight_plan):
     tree = ET.ElementTree(gpx)
     buf = io.BytesIO()
     tree.write(buf, xml_declaration=True, encoding="UTF-8")
+    buf.seek(0)
+    return buf
+
+
+def generate_enhanced_geojson(flight_plan, drone_model="mini_4_pro"):
+    """Generate enhanced GeoJSON with camera orientation and footprint polygons.
+
+    Each waypoint includes a camera frustum polygon showing the ground
+    area captured at that position/angle.
+    """
+    waypoints = sorted(flight_plan.waypoints, key=lambda w: w.index)
+
+    features = []
+
+    # Route line
+    if len(waypoints) >= 2:
+        features.append({
+            "type": "Feature",
+            "properties": {"name": "Flight Route", "type": "route"},
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [[w.lng, w.lat, w.altitude_m] for w in waypoints],
+            },
+        })
+
+    # Waypoints with camera data + footprint polygons
+    for w in waypoints:
+        # Waypoint point
+        features.append({
+            "type": "Feature",
+            "properties": {
+                "name": "WP %d" % w.index,
+                "type": "waypoint",
+                "altitude_m": w.altitude_m,
+                "speed_ms": w.speed_ms,
+                "heading_deg": w.heading_deg,
+                "gimbal_pitch_deg": w.gimbal_pitch_deg,
+                "action_type": w.action_type,
+                "poi_lat": w.poi_lat,
+                "poi_lng": w.poi_lng,
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [w.lng, w.lat, w.altitude_m],
+            },
+        })
+
+        # Photo footprint polygon
+        footprint = compute_photo_footprint(
+            w.lat, w.lng, w.altitude_m,
+            w.gimbal_pitch_deg or -90,
+            w.heading_deg or 0,
+            drone_model,
+        )
+        # Convert to GeoJSON [lng, lat] order
+        features.append({
+            "type": "Feature",
+            "properties": {
+                "name": "Footprint WP %d" % w.index,
+                "type": "footprint",
+                "waypoint_index": w.index,
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [[p[1], p[0]] for p in footprint] +
+                    [[footprint[0][1], footprint[0][0]]]  # close ring
+                ],
+            },
+        })
+
+    geojson = {
+        "type": "FeatureCollection",
+        "properties": {
+            "reference": flight_plan.reference,
+            "enhanced": True,
+            "drone_model": drone_model,
+        },
+        "features": features,
+    }
+
+    buf = io.BytesIO(json.dumps(geojson, indent=2).encode("utf-8"))
     buf.seek(0)
     return buf

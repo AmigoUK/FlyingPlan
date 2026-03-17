@@ -10,6 +10,11 @@ Algorithm:
 5. Rotate back to original orientation
 """
 import math
+from services.geo_utils import (
+    to_metres as _to_metres,
+    to_latlng as _to_latlng,
+    rotate as _rotate,
+)
 
 
 def generate_grid(polygon_coords, config):
@@ -161,22 +166,5 @@ def _line_polygon_intersections(x, polygon):
     return intersections
 
 
-def _rotate(x, y, angle_rad):
-    """Rotate point around origin."""
-    cos_a = math.cos(angle_rad)
-    sin_a = math.sin(angle_rad)
-    return x * cos_a - y * sin_a, x * sin_a + y * cos_a
 
-
-def _to_metres(lat, lng, center_lat, center_lng):
-    """Convert lat/lng to local metres (equirectangular projection)."""
-    x = (lng - center_lng) * math.cos(math.radians(center_lat)) * 111320
-    y = (lat - center_lat) * 110540
-    return x, y
-
-
-def _to_latlng(x, y, center_lat, center_lng):
-    """Convert local metres back to lat/lng."""
-    lat = center_lat + y / 110540
-    lng = center_lng + x / (math.cos(math.radians(center_lat)) * 111320)
-    return lat, lng
+# Local wrappers kept for backward compatibility — implementations in geo_utils
