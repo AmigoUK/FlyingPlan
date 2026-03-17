@@ -450,3 +450,66 @@ def export_kmz(plan_id):
         as_attachment=True,
         download_name=f"{fp.reference}.kmz",
     )
+
+
+@admin_bp.route("/<int:plan_id>/export-kml")
+@role_required("manager")
+def export_kml(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.export_formats import generate_kml
+    buf = generate_kml(fp)
+    return send_file(buf, mimetype="application/vnd.google-earth.kml",
+                     as_attachment=True, download_name=f"{fp.reference}.kml")
+
+
+@admin_bp.route("/<int:plan_id>/export-geojson")
+@role_required("manager")
+def export_geojson(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.export_formats import generate_geojson
+    buf = generate_geojson(fp)
+    return send_file(buf, mimetype="application/geo+json",
+                     as_attachment=True, download_name=f"{fp.reference}.geojson")
+
+
+@admin_bp.route("/<int:plan_id>/export-csv")
+@role_required("manager")
+def export_csv(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.export_formats import generate_csv
+    buf = generate_csv(fp)
+    return send_file(buf, mimetype="text/csv",
+                     as_attachment=True, download_name=f"{fp.reference}.csv")
+
+
+@admin_bp.route("/<int:plan_id>/export-gpx")
+@role_required("manager")
+def export_gpx(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from services.export_formats import generate_gpx
+    buf = generate_gpx(fp)
+    return send_file(buf, mimetype="application/gpx+xml",
+                     as_attachment=True, download_name=f"{fp.reference}.gpx")
+
+
+@admin_bp.route("/<int:plan_id>/share", methods=["POST"])
+@role_required("manager")
+def create_share_link(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    from models.shared_link import SharedLink
+    from datetime import timedelta
+
+    data = request.get_json() or {}
+    days = int(data.get("expires_days", 30))
+
+    link = SharedLink(flight_plan_id=fp.id)
+    link.generate_token()
+    if days > 0:
+        from datetime import datetime, timezone
+        link.expires_at = datetime.now(timezone.utc) + timedelta(days=days)
+
+    db.session.add(link)
+    db.session.commit()
+
+    share_url = url_for("shared.mission_view", token=link.token, _external=True)
+    return jsonify({"success": True, "url": share_url, "token": link.token})

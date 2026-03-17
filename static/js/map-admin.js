@@ -654,6 +654,31 @@
         });
     }
 
+    // Share link
+    var shareBtn = document.getElementById("btn-share");
+    if (shareBtn) {
+        shareBtn.addEventListener("click", function () {
+            fetch("/admin/" + planId + "/share", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({ expires_days: 30 }),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (resp.success) {
+                        var url = resp.url;
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(url);
+                            _toast("Share link copied to clipboard!", "success");
+                        } else {
+                            prompt("Share this link:", url);
+                        }
+                    }
+                })
+                .catch(function () { _toast("Failed to create share link", "danger"); });
+        });
+    }
+
     // Airspace layer
     if (typeof AirspaceLayer !== "undefined") {
         AirspaceLayer.init(map);

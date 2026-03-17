@@ -31,10 +31,23 @@
             <i class="bi bi-upload"></i> Import KMZ
         </label>
         <input type="file" id="import-kmz-file" accept=".kmz" class="d-none">
-        <a href="{{ url_for('admin.export_kmz', plan_id=fp.id) }}"
-           class="btn btn-sm btn-success" id="btn-export">
-            <i class="bi bi-download"></i> Export KMZ
-        </a>
+        <div class="btn-group">
+            <a href="{{ url_for('admin.export_kmz', plan_id=fp.id) }}"
+               class="btn btn-sm btn-success">
+                <i class="bi bi-download"></i> Export KMZ
+            </a>
+            <button type="button" class="btn btn-sm btn-success dropdown-toggle dropdown-toggle-split"
+                    data-bs-toggle="dropdown"></button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_kml', plan_id=fp.id) }}"><i class="bi bi-globe me-1"></i> KML (Google Earth)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_geojson', plan_id=fp.id) }}"><i class="bi bi-braces me-1"></i> GeoJSON (GIS)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_csv', plan_id=fp.id) }}"><i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV (Spreadsheet)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.export_gpx', plan_id=fp.id) }}"><i class="bi bi-pin-map me-1"></i> GPX (GPS)</a></li>
+            </ul>
+        </div>
+        <button class="btn btn-sm btn-outline-info" id="btn-share" title="Create shareable link">
+            <i class="bi bi-share"></i> Share
+        </button>
     </div>
 </div>
 
