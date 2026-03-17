@@ -127,6 +127,21 @@ def save_notes(plan_id):
     return jsonify({"success": True})
 
 
+@admin_bp.route("/<int:plan_id>/gsd", methods=["POST"])
+@role_required("manager")
+def calculate_gsd(plan_id):
+    fp = db.get_or_404(FlightPlan, plan_id)
+    data = request.get_json() or {}
+    from services.gsd_calculator import calculate_gsd as calc_gsd
+    result = calc_gsd(
+        drone_model=fp.drone_model or "mini_4_pro",
+        altitude_m=float(data.get("altitude_m", 30)),
+        overlap_pct=float(data.get("overlap_pct", 70)),
+        area_sqm=fp.estimated_area_sqm,
+    )
+    return jsonify(result)
+
+
 @admin_bp.route("/<int:plan_id>/generate-pattern", methods=["POST"])
 @role_required("manager")
 def generate_pattern(plan_id):

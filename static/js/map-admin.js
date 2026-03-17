@@ -482,6 +482,27 @@
             });
     });
 
+    // GSD Calculator
+    if (typeof GSDCalculator !== "undefined" && document.getElementById("gsd-panel")) {
+        GSDCalculator.buildPanel("gsd-panel");
+        document.getElementById("gsd-panel").addEventListener("click", function (e) {
+            var btn = e.target.closest("#btn-calc-gsd");
+            if (!btn) return;
+            var alt = parseFloat(document.getElementById("gsd-altitude").value) || 30;
+            var overlap = parseFloat(document.getElementById("gsd-overlap").value) || 70;
+            fetch("/admin/" + planId + "/gsd", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({ altitude_m: alt, overlap_pct: overlap }),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    GSDCalculator.renderResults("gsd-results", data);
+                })
+                .catch(function () { _toast("GSD calculation failed", "danger"); });
+        });
+    }
+
     // Mission patterns
     if (typeof MissionPatterns !== "undefined" && document.getElementById("mission-patterns-panel")) {
         MissionPatterns.buildPanel("mission-patterns-panel");
