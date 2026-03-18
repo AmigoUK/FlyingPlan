@@ -50,7 +50,7 @@ def dashboard():
 @admin_bp.route("/<int:plan_id>")
 @role_required("manager")
 def detail(plan_id):
-    from services.drone_profiles import get_choices
+    from services.drone_profiles import get_choices, DRONE_PROFILES
     fp = db.get_or_404(FlightPlan, plan_id)
     waypoints_json = json.dumps([w.to_dict() for w in fp.waypoints])
     pois_json = json.dumps(
@@ -66,6 +66,7 @@ def detail(plan_id):
         pois_json=pois_json,
         available_pilots=available_pilots,
         drone_choices=get_choices(),
+        drone_profiles_json=json.dumps(DRONE_PROFILES),
     )
 
 

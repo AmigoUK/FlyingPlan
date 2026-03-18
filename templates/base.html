@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en" data-bs-theme="{{ 'dark' if app_settings and app_settings.dark_mode else 'light' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,31 @@
     {% block head_extra %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% if app_settings %}
-    <style>:root { --fp-primary: {{ app_settings.primary_color }}; }</style>
+    <style>
+    :root {
+        --fp-primary: {{ app_settings.primary_color }};
+        --bs-primary: {{ app_settings.primary_color }};
+        --bs-primary-rgb: {{ app_settings.primary_color_rgb }};
+        --bs-link-color: {{ app_settings.primary_color }};
+        --bs-link-hover-color: {{ app_settings.primary_color }};
+    }
+    .btn-primary {
+        --bs-btn-bg: var(--fp-primary);
+        --bs-btn-border-color: var(--fp-primary);
+        --bs-btn-hover-bg: color-mix(in srgb, var(--fp-primary), black 15%);
+        --bs-btn-hover-border-color: color-mix(in srgb, var(--fp-primary), black 20%);
+        --bs-btn-active-bg: color-mix(in srgb, var(--fp-primary), black 20%);
+        --bs-btn-active-border-color: color-mix(in srgb, var(--fp-primary), black 25%);
+    }
+    .btn-outline-primary {
+        --bs-btn-color: var(--fp-primary);
+        --bs-btn-border-color: var(--fp-primary);
+        --bs-btn-hover-bg: var(--fp-primary);
+        --bs-btn-hover-border-color: var(--fp-primary);
+        --bs-btn-active-bg: var(--fp-primary);
+        --bs-btn-active-border-color: var(--fp-primary);
+    }
+    </style>
     {% endif %}
 </head>
 <body>

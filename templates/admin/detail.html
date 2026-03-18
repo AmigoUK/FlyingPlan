@@ -58,115 +58,166 @@
 <div class="row g-4">
     <!-- Left: Info -->
     <div class="col-lg-5">
+        <!-- Customer (collapsible info card) -->
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-person"></i> Customer</div>
-            <div class="card-body">
-                {% if fp.customer_type == 'business' %}
-                <span class="badge bg-info mb-2">Business</span>
-                {% else %}
-                <span class="badge bg-secondary mb-2">Private</span>
-                {% endif %}
-                <p class="mb-1"><strong>{{ fp.customer_name }}</strong></p>
-                <p class="mb-1"><a href="mailto:{{ fp.customer_email }}">{{ fp.customer_email }}</a></p>
-                {% if fp.customer_phone %}
-                <p class="mb-1"><a href="tel:{{ fp.customer_phone }}">{{ fp.customer_phone }}</a></p>
-                {% endif %}
-                {% if fp.customer_company %}
-                <p class="mb-1 text-muted">{{ fp.customer_company }}</p>
-                {% endif %}
-                {% if fp.customer_type == 'business' %}
-                    {% if fp.business_abn %}
-                    <p class="mb-1"><strong>ABN:</strong> {{ fp.business_abn }}</p>
-                    {% endif %}
-                    {% if fp.billing_contact %}
-                    <p class="mb-1"><strong>Billing Contact:</strong> {{ fp.billing_contact }}</p>
-                    {% endif %}
-                    {% if fp.billing_email %}
-                    <p class="mb-1"><strong>Billing Email:</strong> {{ fp.billing_email }}</p>
-                    {% endif %}
-                    {% if fp.purchase_order %}
-                    <p class="mb-0"><strong>PO #:</strong> {{ fp.purchase_order }}</p>
-                    {% endif %}
-                {% endif %}
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-customer" aria-expanded="false">
+                <span>
+                    <i class="bi bi-person"></i> Customer
+                    <span class="collapse-summary text-muted ms-2">&mdash; {{ fp.customer_name }}
+                        {% if fp.customer_type == 'business' %}
+                        <span class="badge bg-info ms-1" style="font-size:.65rem">Business</span>
+                        {% else %}
+                        <span class="badge bg-secondary ms-1" style="font-size:.65rem">Private</span>
+                        {% endif %}
+                    </span>
+                </span>
+                <i class="bi bi-chevron-right collapse-chevron"></i>
             </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-clipboard-check"></i> Job Brief</div>
-            <div class="card-body">
-                <p class="mb-1">
-                    <strong>Type:</strong> {{ fp.job_type|replace('_', ' ')|title }}
-                    <span class="ms-2 urgency-{{ fp.urgency }}">{{ fp.urgency|title }}</span>
-                </p>
-                <p class="mb-1"><strong>Description:</strong></p>
-                <p class="mb-2">{{ fp.job_description or '-' }}</p>
-                <p class="mb-1"><strong>Preferred Dates:</strong> {{ fp.preferred_dates or 'Flexible' }}</p>
-                <p class="mb-1"><strong>Time:</strong> {{ fp.time_window or 'Flexible' }}</p>
-                {% if fp.special_requirements %}
-                <p class="mb-0"><strong>Special:</strong> {{ fp.special_requirements }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-sliders"></i> Flight Preferences</div>
-            <div class="card-body">
-                <p class="mb-1"><strong>Altitude:</strong>
-                    {% if fp.altitude_preset == 'custom' %}
-                    Custom ({{ fp.altitude_custom_m }}m)
+            <div class="collapse info-card-collapse" id="collapse-customer">
+                <div class="card-body">
+                    {% if fp.customer_type == 'business' %}
+                    <span class="badge bg-info mb-2">Business</span>
                     {% else %}
-                    {{ fp.altitude_preset|title }}
+                    <span class="badge bg-secondary mb-2">Private</span>
                     {% endif %}
-                </p>
-                <p class="mb-1"><strong>Camera:</strong> {{ fp.camera_angle|replace('_', ' ')|title if fp.camera_angle else 'Pilot Decides' }}</p>
-                <p class="mb-1"><strong>Resolution:</strong> {{ fp.video_resolution or '4K' }}</p>
-                <p class="mb-1"><strong>Photo:</strong> {{ fp.photo_mode|title if fp.photo_mode else 'Single' }}</p>
-                {% if fp.no_fly_notes %}
-                <p class="mb-1"><strong>No-Fly Notes:</strong> {{ fp.no_fly_notes }}</p>
-                {% endif %}
-                {% if fp.privacy_notes %}
-                <p class="mb-1"><strong>Privacy:</strong> {{ fp.privacy_notes }}</p>
-                {% endif %}
-                {% if fp.footage_purpose %}
-                <hr class="my-2">
-                <p class="mb-1"><strong>Purpose:</strong> {{ fp.footage_purpose|replace('_', ' ')|title }}
-                    {% if fp.footage_purpose == 'other' and fp.footage_purpose_other %}
-                     &mdash; {{ fp.footage_purpose_other }}
+                    <p class="mb-1"><strong>{{ fp.customer_name }}</strong></p>
+                    <p class="mb-1"><a href="mailto:{{ fp.customer_email }}">{{ fp.customer_email }}</a></p>
+                    {% if fp.customer_phone %}
+                    <p class="mb-1"><a href="tel:{{ fp.customer_phone }}">{{ fp.customer_phone }}</a></p>
                     {% endif %}
-                </p>
-                {% endif %}
-                {% if fp.output_format %}
-                <p class="mb-1"><strong>Output Format:</strong> {{ fp.output_format|replace('_', ' ')|title }}</p>
-                {% endif %}
-                {% if fp.video_duration %}
-                <p class="mb-1"><strong>Video Duration:</strong> {{ fp.video_duration }}</p>
-                {% endif %}
-                {% if fp.shot_types %}
-                <p class="mb-1"><strong>Shot Types:</strong> {{ fp.shot_types|replace('[', '')|replace(']', '')|replace('"', '')|replace('_', ' ') }}</p>
-                {% endif %}
-                {% if fp.delivery_timeline %}
-                <p class="mb-0"><strong>Delivery Timeline:</strong> {{ fp.delivery_timeline|replace('_', ' ')|title }}</p>
-                {% endif %}
+                    {% if fp.customer_company %}
+                    <p class="mb-1 text-muted">{{ fp.customer_company }}</p>
+                    {% endif %}
+                    {% if fp.customer_type == 'business' %}
+                        {% if fp.business_abn %}
+                        <p class="mb-1"><strong>ABN:</strong> {{ fp.business_abn }}</p>
+                        {% endif %}
+                        {% if fp.billing_contact %}
+                        <p class="mb-1"><strong>Billing Contact:</strong> {{ fp.billing_contact }}</p>
+                        {% endif %}
+                        {% if fp.billing_email %}
+                        <p class="mb-1"><strong>Billing Email:</strong> {{ fp.billing_email }}</p>
+                        {% endif %}
+                        {% if fp.purchase_order %}
+                        <p class="mb-0"><strong>PO #:</strong> {{ fp.purchase_order }}</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
             </div>
+        </div>
+
+        <!-- Job Brief (collapsible info card) -->
+        <div class="card mb-3">
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-jobbr" aria-expanded="false">
+                <span>
+                    <i class="bi bi-clipboard-check"></i> Job Brief
+                    <span class="collapse-summary text-muted ms-2">&mdash; {{ fp.job_type|replace('_', ' ')|title }} &middot; {{ fp.urgency|title }}</span>
+                </span>
+                <i class="bi bi-chevron-right collapse-chevron"></i>
+            </div>
+            <div class="collapse info-card-collapse" id="collapse-jobbr">
+                <div class="card-body">
+                    <p class="mb-1">
+                        <strong>Type:</strong> {{ fp.job_type|replace('_', ' ')|title }}
+                        <span class="ms-2 urgency-{{ fp.urgency }}">{{ fp.urgency|title }}</span>
+                    </p>
+                    <p class="mb-1"><strong>Description:</strong></p>
+                    <p class="mb-2">{{ fp.job_description or '-' }}</p>
+                    <p class="mb-1"><strong>Preferred Dates:</strong> {{ fp.preferred_dates or 'Flexible' }}</p>
+                    <p class="mb-1"><strong>Time:</strong> {{ fp.time_window or 'Flexible' }}</p>
+                    {% if fp.special_requirements %}
+                    <p class="mb-0"><strong>Special:</strong> {{ fp.special_requirements }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Flight Preferences (collapsible info card) -->
+        <div class="card mb-3">
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-flpref" aria-expanded="false">
+                <span>
+                    <i class="bi bi-sliders"></i> Flight Preferences
+                    <span class="collapse-summary text-muted ms-2">&mdash;
+                        {% if fp.altitude_preset == 'custom' %}{{ fp.altitude_custom_m }}m{% else %}{{ fp.altitude_preset|title }}{% endif %}
+                        &middot; {{ fp.camera_angle|replace('_', ' ')|title if fp.camera_angle else 'Auto' }}
+                        &middot; {{ fp.video_resolution or '4K' }}
+                    </span>
+                </span>
+                <i class="bi bi-chevron-right collapse-chevron"></i>
+            </div>
+            <div class="collapse info-card-collapse" id="collapse-flpref">
+                <div class="card-body">
+                    <p class="mb-1"><strong>Altitude:</strong>
+                        {% if fp.altitude_preset == 'custom' %}
+                        Custom ({{ fp.altitude_custom_m }}m)
+                        {% else %}
+                        {{ fp.altitude_preset|title }}
+                        {% endif %}
+                    </p>
+                    <p class="mb-1"><strong>Camera:</strong> {{ fp.camera_angle|replace('_', ' ')|title if fp.camera_angle else 'Pilot Decides' }}</p>
+                    <p class="mb-1"><strong>Resolution:</strong> {{ fp.video_resolution or '4K' }}</p>
+                    <p class="mb-1"><strong>Photo:</strong> {{ fp.photo_mode|title if fp.photo_mode else 'Single' }}</p>
+                    {% if fp.no_fly_notes %}
+                    <p class="mb-1"><strong>No-Fly Notes:</strong> {{ fp.no_fly_notes }}</p>
+                    {% endif %}
+                    {% if fp.privacy_notes %}
+                    <p class="mb-1"><strong>Privacy:</strong> {{ fp.privacy_notes }}</p>
+                    {% endif %}
+                    {% if fp.footage_purpose %}
+                    <hr class="my-2">
+                    <p class="mb-1"><strong>Purpose:</strong> {{ fp.footage_purpose|replace('_', ' ')|title }}
+                        {% if fp.footage_purpose == 'other' and fp.footage_purpose_other %}
+                         &mdash; {{ fp.footage_purpose_other }}
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    {% if fp.output_format %}
+                    <p class="mb-1"><strong>Output Format:</strong> {{ fp.output_format|replace('_', ' ')|title }}</p>
+                    {% endif %}
+                    {% if fp.video_duration %}
+                    <p class="mb-1"><strong>Video Duration:</strong> {{ fp.video_duration }}</p>
+                    {% endif %}
+                    {% if fp.shot_types %}
+                    <p class="mb-1"><strong>Shot Types:</strong> {{ fp.shot_types|replace('[', '')|replace(']', '')|replace('"', '')|replace('_', ' ') }}</p>
+                    {% endif %}
+                    {% if fp.delivery_timeline %}
+                    <p class="mb-0"><strong>Delivery Timeline:</strong> {{ fp.delivery_timeline|replace('_', ' ')|title }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Workflow Selector + Stepper -->
+        <div class="card mb-3">
+            <div class="card-body py-2" id="workflow-bar"></div>
         </div>
 
         <!-- Route Stats -->
-        <div class="card mb-3">
+        <div class="card mb-3" data-card-key="route_stats">
             <div class="card-body py-2" id="route-stats"></div>
         </div>
 
         <!-- Path Tools -->
-        <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-tools"></i> Path Tools</div>
-            <div class="card-body py-2" id="path-tools-bar"></div>
+        <div class="card mb-3" data-card-key="path_tools">
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-pathtools" aria-expanded="true">
+                <span><i class="bi bi-tools"></i> Path Tools</span>
+                <i class="bi bi-chevron-down collapse-chevron"></i>
+            </div>
+            <div class="collapse show" id="collapse-pathtools">
+                <div class="card-body py-2" id="path-tools-bar"></div>
+            </div>
         </div>
 
         <!-- GSD Calculator -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <i class="bi bi-aspect-ratio"></i> GSD Calculator
-                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Calculates photo resolution (ground sampling distance) based on your drone and altitude. Use this first to choose the right altitude for your mission."></i>
+        <div class="card mb-3" data-card-key="gsd">
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-gsd" aria-expanded="true">
+                <span>
+                    <i class="bi bi-aspect-ratio"></i> GSD Calculator
+                    <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Calculates photo resolution (ground sampling distance) based on your drone and altitude. Use this first to choose the right altitude for your mission."></i>
+                </span>
+                <i class="bi bi-chevron-down collapse-chevron"></i>
             </div>
+            <div class="collapse show" id="collapse-gsd">
             <div class="card-body">
                 {% if app_settings.guide_mode %}
                 <div class="guide-block mb-2">
@@ -193,14 +244,19 @@
                 {% endif %}
                 <div id="gsd-panel"></div>
             </div>
+            </div>
         </div>
 
         <!-- Mission Patterns -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <i class="bi bi-bullseye"></i> Mission Patterns
-                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Pre-built circular and linear flight paths for inspections and cinematic shots."></i>
+        <div class="card mb-3" data-card-key="patterns">
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-patterns" aria-expanded="true">
+                <span>
+                    <i class="bi bi-bullseye"></i> Mission Patterns
+                    <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Pre-built circular and linear flight paths for inspections and cinematic shots."></i>
+                </span>
+                <i class="bi bi-chevron-down collapse-chevron"></i>
             </div>
+            <div class="collapse show" id="collapse-patterns">
             <div class="card-body">
                 {% if app_settings.guide_mode %}
                 <div class="guide-block mb-2">
@@ -225,15 +281,18 @@
                 {% endif %}
                 <div id="mission-patterns-panel"></div>
             </div>
-        </div>
-
-        {% if fp.area_polygon %}
-        <!-- Grid Mission -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <i class="bi bi-grid-3x3"></i> Grid Mission
-                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Generates an automated lawn-mower flight pattern over your survey area. Best for flat terrain mapping and aerial photography."></i>
             </div>
+        </div>
+        <!-- Grid Mission -->
+        <div class="card mb-3" data-card-key="grid">
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-grid" aria-expanded="true">
+                <span>
+                    <i class="bi bi-grid-3x3"></i> Grid Mission
+                    <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Generates an automated lawn-mower flight pattern over your survey area. Best for flat terrain mapping and aerial photography."></i>
+                </span>
+                <i class="bi bi-chevron-down collapse-chevron"></i>
+            </div>
+            <div class="collapse show" id="collapse-grid">
             <div class="card-body">
                 {% if app_settings.guide_mode %}
                 <div class="guide-block mb-2">
@@ -269,14 +328,19 @@
                 {% endif %}
                 <div id="grid-planner-panel"></div>
             </div>
+            </div>
         </div>
 
         <!-- Oblique Grid / 3D Mapping -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <i class="bi bi-grid-3x3-gap"></i> 3D Mapping Grid
-                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Creates 3D photogrammetry missions. Use Double Grid for professional 3D models of areas, Multi-Angle for highest quality."></i>
+        <div class="card mb-3" data-card-key="oblique">
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-oblique" aria-expanded="true">
+                <span>
+                    <i class="bi bi-grid-3x3-gap"></i> 3D Mapping Grid
+                    <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Creates 3D photogrammetry missions. Use Double Grid for professional 3D models of areas, Multi-Angle for highest quality."></i>
+                </span>
+                <i class="bi bi-chevron-down collapse-chevron"></i>
             </div>
+            <div class="collapse show" id="collapse-oblique">
             <div class="card-body">
                 {% if app_settings.guide_mode %}
                 <div class="guide-block mb-2">
@@ -306,15 +370,19 @@
                 {% endif %}
                 <div id="oblique-planner-panel"></div>
             </div>
+            </div>
         </div>
-        {% endif %}
 
         <!-- Facade Scanner -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <i class="bi bi-building"></i> Facade Scanner
-                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Scans building walls and structures vertically. Use for building inspections, facade surveys, and structural assessments."></i>
+        <div class="card mb-3" data-card-key="facade">
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-facade" aria-expanded="true">
+                <span>
+                    <i class="bi bi-building"></i> Facade Scanner
+                    <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Scans building walls and structures vertically. Use for building inspections, facade surveys, and structural assessments."></i>
+                </span>
+                <i class="bi bi-chevron-down collapse-chevron"></i>
             </div>
+            <div class="collapse show" id="collapse-facade">
             <div class="card-body">
                 {% if app_settings.guide_mode %}
                 <div class="guide-block mb-2">
@@ -350,19 +418,24 @@
                 {% endif %}
                 <div id="facade-planner-panel"></div>
             </div>
+            </div>
         </div>
 
         <!-- Coverage Analysis -->
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card mb-3" data-card-key="coverage">
+            <div class="card-header card-header-collapse d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-coverage" aria-expanded="true">
                 <span>
                     <i class="bi bi-grid-fill"></i> Coverage Analysis
                     <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Shows a heatmap of photo overlap across your mission area — helps verify no gaps before you fly."></i>
                 </span>
-                <button class="btn btn-sm btn-outline-secondary" id="btn-run-coverage">
-                    <i class="bi bi-play"></i> Analyse
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="btn-run-coverage" onclick="event.stopPropagation()">
+                        <i class="bi bi-play"></i> Analyse
+                    </button>
+                    <i class="bi bi-chevron-down collapse-chevron"></i>
+                </div>
             </div>
+            <div class="collapse show" id="collapse-coverage">
             <div class="card-body" id="coverage-panel">
                 {% if app_settings.guide_mode %}
                 <div class="guide-block mb-2">
@@ -386,19 +459,24 @@
                 {% endif %}
                 <p class="text-muted small mb-0">Click "Analyse" to compute photo overlap coverage.</p>
             </div>
+            </div>
         </div>
 
         <!-- Quality Report -->
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card mb-3" data-card-key="quality">
+            <div class="card-header card-header-collapse d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-quality" aria-expanded="true">
                 <span>
                     <i class="bi bi-award"></i> Quality Report
                     <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Predicts how good your 3D reconstruction will be before you fly — saving time and battery."></i>
                 </span>
-                <button class="btn btn-sm btn-outline-secondary" id="btn-run-quality">
-                    <i class="bi bi-play"></i> Analyse
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="btn-run-quality" onclick="event.stopPropagation()">
+                        <i class="bi bi-play"></i> Analyse
+                    </button>
+                    <i class="bi bi-chevron-down collapse-chevron"></i>
+                </div>
             </div>
+            <div class="collapse show" id="collapse-quality">
             <div class="card-body" id="quality-panel">
                 {% if app_settings.guide_mode %}
                 <div class="guide-block mb-2">
@@ -425,10 +503,11 @@
                 {% endif %}
                 <p class="text-muted small mb-0">Click "Analyse" to estimate 3D reconstruction quality.</p>
             </div>
+            </div>
         </div>
 
-        <!-- Waypoint panel -->
-        <div class="card mb-3">
+        <!-- Waypoint panel (always expanded) -->
+        <div class="card mb-3" data-card-key="waypoints">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-signpost-2"></i> Waypoints</span>
                 <div>
@@ -445,61 +524,76 @@
             </div>
         </div>
 
-        <!-- Order Info -->
+        <!-- Order Info (collapsible, starts collapsed) -->
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-clipboard2-check"></i> Order</div>
-            <div class="card-body">
-                {% if fp.order %}
-                <p class="mb-1">
-                    <strong>Status:</strong>
-                    <span class="badge badge-{{ fp.order.status }}">
-                        {{ fp.order.status|replace('_', ' ')|title }}
-                    </span>
-                </p>
-                {% if fp.order.pilot %}
-                <p class="mb-1"><strong>Pilot:</strong> {{ fp.order.pilot.display_name }}</p>
-                {% endif %}
-                {% if fp.order.scheduled_date %}
-                <p class="mb-1"><strong>Scheduled:</strong> {{ fp.order.scheduled_date.strftime('%d %b %Y') }}
-                    {% if fp.order.scheduled_time %} at {{ fp.order.scheduled_time }}{% endif %}
-                </p>
-                {% endif %}
-                <a href="{{ url_for('orders.detail', order_id=fp.order.id) }}" class="btn btn-sm btn-outline-primary mt-1">
-                    <i class="bi bi-eye"></i> View Order
-                </a>
-                {% else %}
-                <p class="text-muted mb-2">No order created yet.</p>
-                <button class="btn btn-sm btn-outline-success"
-                        data-bs-toggle="modal" data-bs-target="#assignModal"
-                        onclick="document.getElementById('assignForm').action='{{ url_for('orders.create_order', plan_id=fp.id) }}'">
-                    <i class="bi bi-person-plus"></i> Create Order & Assign Pilot
-                </button>
-                {% endif %}
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-order" aria-expanded="false">
+                <span><i class="bi bi-clipboard2-check"></i> Order</span>
+                <i class="bi bi-chevron-right collapse-chevron"></i>
+            </div>
+            <div class="collapse" id="collapse-order">
+                <div class="card-body">
+                    {% if fp.order %}
+                    <p class="mb-1">
+                        <strong>Status:</strong>
+                        <span class="badge badge-{{ fp.order.status }}">
+                            {{ fp.order.status|replace('_', ' ')|title }}
+                        </span>
+                    </p>
+                    {% if fp.order.pilot %}
+                    <p class="mb-1"><strong>Pilot:</strong> {{ fp.order.pilot.display_name }}</p>
+                    {% endif %}
+                    {% if fp.order.scheduled_date %}
+                    <p class="mb-1"><strong>Scheduled:</strong> {{ fp.order.scheduled_date.strftime('%d %b %Y') }}
+                        {% if fp.order.scheduled_time %} at {{ fp.order.scheduled_time }}{% endif %}
+                    </p>
+                    {% endif %}
+                    <a href="{{ url_for('orders.detail', order_id=fp.order.id) }}" class="btn btn-sm btn-outline-primary mt-1">
+                        <i class="bi bi-eye"></i> View Order
+                    </a>
+                    {% else %}
+                    <p class="text-muted mb-2">No order created yet.</p>
+                    <button class="btn btn-sm btn-outline-success"
+                            data-bs-toggle="modal" data-bs-target="#assignModal"
+                            onclick="document.getElementById('assignForm').action='{{ url_for('orders.create_order', plan_id=fp.id) }}'">
+                        <i class="bi bi-person-plus"></i> Create Order & Assign Pilot
+                    </button>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <!-- Weather -->
+        <!-- Weather (collapsible, starts collapsed) -->
         <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header card-header-collapse d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-weather" aria-expanded="false">
                 <span><i class="bi bi-cloud-sun"></i> Weather</span>
-                <button class="btn btn-sm btn-outline-secondary" id="btn-load-weather">
-                    <i class="bi bi-arrow-repeat"></i> Refresh
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="btn-load-weather" onclick="event.stopPropagation()">
+                        <i class="bi bi-arrow-repeat"></i> Refresh
+                    </button>
+                    <i class="bi bi-chevron-right collapse-chevron"></i>
+                </div>
             </div>
-            <div class="card-body" id="weather-panel">
-                <p class="text-muted small mb-0">Click "Refresh" to load live weather.</p>
+            <div class="collapse" id="collapse-weather">
+                <div class="card-body" id="weather-panel">
+                    <p class="text-muted small mb-0">Click "Refresh" to load live weather.</p>
+                </div>
             </div>
         </div>
 
-        <!-- Admin notes -->
+        <!-- Admin notes (collapsible, starts collapsed) -->
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-journal-text"></i> Pilot Notes</div>
-            <div class="card-body">
-                <textarea class="form-control" id="admin-notes" rows="3"
-                          placeholder="Internal notes...">{{ fp.admin_notes or '' }}</textarea>
-                <button class="btn btn-sm btn-outline-primary mt-2" id="btn-save-notes">
-                    <i class="bi bi-save"></i> Save Notes
-                </button>
+            <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-notes" aria-expanded="false">
+                <span><i class="bi bi-journal-text"></i> Pilot Notes</span>
+                <i class="bi bi-chevron-right collapse-chevron"></i>
+            </div>
+            <div class="collapse" id="collapse-notes">
+                <div class="card-body">
+                    <textarea class="form-control" id="admin-notes" rows="3"
+                              placeholder="Internal notes...">{{ fp.admin_notes or '' }}</textarea>
+                    <button class="btn btn-sm btn-outline-primary mt-2" id="btn-save-notes">
+                        <i class="bi bi-save"></i> Save Notes
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -572,6 +666,8 @@
 <input type="hidden" id="plan-polygon" value="{{ fp.area_polygon or '' }}">
 <input type="hidden" id="plan-pois" value='{{ pois_json }}'>
 <input type="hidden" id="plan-waypoints" value='{{ waypoints_json }}'>
+<input type="hidden" id="plan-job-type" value="{{ fp.job_type or '' }}">
+<input type="hidden" id="drone-profiles" value='{{ drone_profiles_json }}'>
 {% endblock %}
 
 {% block scripts %}
@@ -591,6 +687,9 @@
 <script src="{{ url_for('static', filename='js/coverage-heatmap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/three-preview.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quality-report.js') }}"></script>
+<script src="{{ url_for('static', filename='js/workflow-manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/map-toolbox.js') }}"></script>
+<script src="{{ url_for('static', filename='js/camera-viz.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map-admin.js') }}"></script>
 <script>
 // Initialize Bootstrap tooltips (including those added dynamically by JS panels)

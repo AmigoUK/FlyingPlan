@@ -53,6 +53,8 @@ def update_branding():
     if _validate_color(color):
         settings.primary_color = color
 
+    settings.dark_mode = "dark_mode" in request.form
+
     db.session.commit()
     flash("Branding settings updated.", "success")
     return redirect(url_for("settings.settings_page"))

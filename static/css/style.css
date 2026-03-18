@@ -40,7 +40,7 @@
 }
 
 .step-progress .step.active::before {
-    background: #0d6efd;
+    background: var(--fp-primary, #0d6efd);
     color: #fff;
 }
 
@@ -76,7 +76,7 @@
 }
 
 /* Status badges */
-.badge-new { background-color: #0d6efd; }
+.badge-new { background-color: var(--fp-primary, #0d6efd); }
 .badge-in_review { background-color: #ffc107; color: #000; }
 .badge-route_planned { background-color: #6f42c1; }
 .badge-completed { background-color: #198754; }
@@ -89,7 +89,7 @@
 }
 
 .waypoint-item {
-    border-left: 3px solid #0d6efd;
+    border-left: 3px solid var(--fp-primary, #0d6efd);
     padding: 0.5rem 0.75rem;
     margin-bottom: 0.5rem;
     background: #f8f9fa;
@@ -104,20 +104,20 @@
 
 /* Urgency colors */
 .urgency-low { color: #198754; }
-.urgency-normal { color: #0d6efd; }
+.urgency-normal { color: var(--fp-primary, #0d6efd); }
 .urgency-high { color: #fd7e14; }
 .urgency-urgent { color: #dc3545; font-weight: 600; }
 
 /* Review summary */
 .review-section {
-    border-left: 3px solid #0d6efd;
+    border-left: 3px solid var(--fp-primary, #0d6efd);
     padding-left: 1rem;
     margin-bottom: 1rem;
 }
 
 /* Order status badges */
 .badge-pending_assignment { background-color: #6c757d; color: #fff; }
-.badge-assigned { background-color: #0d6efd; color: #fff; }
+.badge-assigned { background-color: var(--fp-primary, #0d6efd); color: #fff; }
 .badge-accepted { background-color: #0dcaf0; color: #000; }
 .badge-in_progress { background-color: #ffc107; color: #000; }
 .badge-flight_complete { background-color: #6f42c1; color: #fff; }
@@ -171,6 +171,172 @@
     font-size: 0.78rem;
     padding: 0.15rem 0.5rem;
 }
+
+/* Collapsible card headers */
+.card-header-collapse {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+.card-header-collapse:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Collapse chevron rotation */
+.collapse-chevron {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+.card-header-collapse[aria-expanded="true"] .collapse-chevron {
+    transform: rotate(90deg);
+}
+.card-header-collapse[aria-expanded="false"] .collapse-chevron {
+    transform: rotate(0deg);
+}
+
+/* Collapse summary text (shown in header when collapsed) */
+.collapse-summary {
+    font-size: 0.8rem;
+    font-weight: normal;
+}
+
+/* Workflow stepper */
+.workflow-stepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 0.25rem 0;
+}
+.wf-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+    padding-top: 30px;
+    font-size: 0.78rem;
+    color: #6c757d;
+}
+.wf-step:hover {
+    color: var(--fp-primary, #0d6efd);
+}
+.wf-step-circle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #dee2e6;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.75rem;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.wf-step.completed .wf-step-circle {
+    background: #198754;
+    color: #fff;
+}
+.wf-step-label {
+    display: block;
+}
+/* Connecting lines between steps */
+.wf-step::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    left: calc(50% + 18px);
+    right: calc(-50% + 18px);
+    height: 2px;
+    background: #dee2e6;
+}
+.wf-step:last-child::after {
+    display: none;
+}
+.wf-step.completed::after {
+    background: #198754;
+}
+
+/* Polygon-needed message */
+.card-needs-polygon {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.82rem;
+    color: #664d03;
+}
+
+/* Map toolbox */
+.map-toolbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.map-toolbox-btn {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #495057;
+    box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    transition: background 0.15s, color 0.15s;
+}
+.map-toolbox-btn:hover {
+    background: #e9ecef;
+}
+.map-toolbox-btn.active {
+    background: var(--fp-primary, #0d6efd);
+    color: #fff;
+    border-color: var(--fp-primary, #0d6efd);
+}
+
+/* Mode cursors */
+#admin-map.map-mode-add    { cursor: crosshair; }
+#admin-map.map-mode-delete { cursor: pointer; }
+#admin-map.map-mode-insert { cursor: copy; }
+#admin-map.map-mode-pointer { cursor: default; }
+
+/* Camera viz drag handle */
+.camera-drag-handle {
+    width: 12px;
+    height: 12px;
+    background: var(--fp-primary, #0d6efd);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,.4);
+    cursor: grab;
+}
+.camera-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Dark mode overrides */
+[data-bs-theme="dark"] .waypoint-item { background: #2b3035; }
+[data-bs-theme="dark"] .waypoint-item.active { border-left-color: #198754; background: #1a3a2a; }
+[data-bs-theme="dark"] .guide-block { background: #1a2a3a; border-left-color: #0dcaf0; }
+[data-bs-theme="dark"] .guide-block h6 { color: #6edff6; }
+[data-bs-theme="dark"] .card-needs-polygon { background: #332701; border-color: #664d03; color: #ffc107; }
+[data-bs-theme="dark"] #customer-map, [data-bs-theme="dark"] #admin-map { border-color: #495057; }
+[data-bs-theme="dark"] .map-toolbox-btn { background: #2b3035; border-color: #495057; color: #dee2e6; }
+[data-bs-theme="dark"] .map-toolbox-btn:hover { background: #343a40; }
 
 /* Responsive map */
 @media (max-width: 768px) {

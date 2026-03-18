@@ -22,6 +22,17 @@ class AppSettings(db.Model):
     # Guide mode (newbie tooltips / step-by-step instructions)
     guide_mode = db.Column(db.Boolean, nullable=False, default=True)
 
+    # Dark mode
+    dark_mode = db.Column(db.Boolean, nullable=False, default=False)
+
+    @property
+    def primary_color_rgb(self):
+        c = self.primary_color or "#0d6efd"
+        try:
+            return f"{int(c[1:3],16)}, {int(c[3:5],16)}, {int(c[5:7],16)}"
+        except (ValueError, IndexError):
+            return "13, 110, 253"
+
     @staticmethod
     def get():
         """Return the singleton settings row, auto-creating if missing."""

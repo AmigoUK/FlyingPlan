@@ -250,6 +250,12 @@ def _run_migrations():
                 text("UPDATE risk_assessments SET category_version = 1 WHERE category_version IS NULL OR category_version = 2")
             )
 
+    # App settings table
+    if inspector.has_table("app_settings"):
+        settings_cols = {col["name"] for col in inspector.get_columns("app_settings")}
+        if "dark_mode" not in settings_cols:
+            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN dark_mode BOOLEAN NOT NULL DEFAULT 0"))
+
     # Users table — new cert fields
     user_cert_columns = [
         ("a2_cofc_number", "VARCHAR(100)"),
@@ -338,4 +344,5 @@ def seed_demo_command():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5002, debug=True)
+    app.run(host="0.0.0.0", port=5002, debug=True,
+            ssl_context=('certs/cert.pem', 'certs/key.pem'))

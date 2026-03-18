@@ -80,6 +80,9 @@
     var waypointMarkers = [];
     var routeLayerGroup = L.layerGroup().addTo(map);
     var selectedIndex = -1;
+    var _editorMode = "add";
+    var _insertHighlight = null;
+    mapEl.classList.add("map-mode-add");
 
     // Load existing waypoints
     try {
@@ -104,14 +107,54 @@
         });
     }
 
-    // Click map to add waypoint
+    // Click map to add waypoint (mode-dispatched)
     map.on("click", function (e) {
         if (typeof MapMeasure !== "undefined" && MapMeasure.isRulerActive()) {
             MapMeasure.handleMapClick(e.latlng);
             return;
         }
-        addWaypoint(e.latlng, {});
-        updateRoute();
+        if (e.originalEvent.shiftKey) return; // Facade Shift+click handled separately
+        if (_editorMode === "add") {
+            addWaypoint(e.latlng, {});
+            updateRoute();
+        } else if (_editorMode === "insert") {
+            _handleInsertClick(e.latlng);
+        }
+        // pointer and delete modes: no-op on empty map click
+    });
+
+    // Insert mode: highlight nearest segment on mousemove
+    map.on("mousemove", function (e) {
+        if (_editorMode !== "insert" || waypoints.length < 2) {
+            if (_insertHighlight) {
+                map.removeLayer(_insertHighlight);
+                _insertHighlight = null;
+            }
+            return;
+        }
+        var pt = map.latLngToContainerPoint(e.latlng);
+        var bestDist = Infinity;
+        var bestIdx = -1;
+        for (var si = 0; si < waypoints.length - 1; si++) {
+            var a = map.latLngToContainerPoint(L.latLng(waypoints[si].lat, waypoints[si].lng));
+            var b = map.latLngToContainerPoint(L.latLng(waypoints[si + 1].lat, waypoints[si + 1].lng));
+            var proj = _projectPointOnSegment(pt, a, b);
+            if (proj.dist < bestDist) {
+                bestDist = proj.dist;
+                bestIdx = si;
+            }
+        }
+        if (_insertHighlight) {
+            map.removeLayer(_insertHighlight);
+            _insertHighlight = null;
+        }
+        if (bestDist <= 20 && bestIdx >= 0) {
+            _insertHighlight = L.polyline(
+                [[waypoints[bestIdx].lat, waypoints[bestIdx].lng],
+                 [waypoints[bestIdx + 1].lat, waypoints[bestIdx + 1].lng]],
+                { color: "#0d6efd", weight: 6, opacity: 0.6 }
+            ).addTo(map);
+        }
     });
 
     function addWaypoint(latlng, data) {
@@ -135,7 +178,7 @@
 
         var marker = L.marker(latlng, {
             draggable: true,
-            icon: _waypointIcon(idx, wp.altitude_m),
+            icon: _waypointIcon(idx, wp),
         }).addTo(map);
 
         marker.bindTooltip("WP " + idx, { direction: "top", offset: [0, -15] });
@@ -146,33 +189,159 @@
             wp.lng = pos.lng;
             updateRoute();
             updateWaypointList();
+            mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
         });
 
         marker.on("click", function (e) {
             L.DomEvent.stopPropagation(e);
-            selectWaypoint(wp.index);
+            if (_editorMode === "delete") {
+                deleteWaypoint(wp.index);
+            } else {
+                selectWaypoint(wp.index);
+            }
         });
 
         waypointMarkers.push(marker);
         updateWaypointList();
+        mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
     }
 
-    function _waypointIcon(idx, altitude) {
+    function _waypointIcon(idx, wp) {
+        var altitude = (typeof wp === "object") ? (wp.altitude_m || 30) : wp;
+        var actionType = (typeof wp === "object") ? wp.action_type : null;
         // Color by altitude: green (low) to red (high)
         var ratio = Math.min(altitude / 120, 1);
         var r = Math.round(ratio * 220);
         var g = Math.round((1 - ratio) * 180);
         var color = "rgb(" + r + "," + g + ",50)";
 
+        var badge = "";
+        if (actionType === "takePhoto") {
+            badge = '<div style="position:absolute;top:-4px;right:-4px;background:#0d6efd;color:#fff;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;border:1px solid #fff;"><i class="bi bi-camera-fill"></i></div>';
+        } else if (actionType === "startRecord") {
+            badge = '<div style="position:absolute;top:-4px;right:-4px;background:#dc3545;width:12px;height:12px;border-radius:50%;border:1px solid #fff;"></div>';
+        } else if (actionType === "stopRecord") {
+            badge = '<div style="position:absolute;top:-4px;right:-4px;background:#6c757d;width:12px;height:12px;border-radius:2px;border:1px solid #fff;"></div>';
+        }
+
         return L.divIcon({
             className: "",
             html:
+                '<div style="position:relative;width:24px;height:24px;">' +
                 '<div style="background:' + color +
                 ';color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);">' +
-                idx + "</div>",
+                idx + "</div>" + badge + "</div>",
             iconSize: [24, 24],
             iconAnchor: [12, 12],
         });
+    }
+
+    function _projectPointOnSegment(point, segA, segB) {
+        var dx = segB.x - segA.x;
+        var dy = segB.y - segA.y;
+        var lenSq = dx * dx + dy * dy;
+        if (lenSq === 0) return { dist: point.distanceTo(segA), point: segA, t: 0 };
+        var t = Math.max(0, Math.min(1, ((point.x - segA.x) * dx + (point.y - segA.y) * dy) / lenSq));
+        var proj = L.point(segA.x + t * dx, segA.y + t * dy);
+        return { dist: point.distanceTo(proj), point: proj, t: t };
+    }
+
+    function insertWaypoint(atIndex, latlng, data) {
+        var wp = {
+            index: atIndex,
+            lat: latlng.lat,
+            lng: latlng.lng,
+            altitude_m: data.altitude_m || 30.0,
+            speed_ms: data.speed_ms || 5.0,
+            heading_deg: data.heading_deg !== undefined ? data.heading_deg : null,
+            gimbal_pitch_deg: data.gimbal_pitch_deg !== undefined ? data.gimbal_pitch_deg : -90.0,
+            turn_mode: data.turn_mode || "toPointAndStopWithDiscontinuityCurvature",
+            turn_damping_dist: data.turn_damping_dist || 0.0,
+            hover_time_s: data.hover_time_s || 0.0,
+            action_type: data.action_type || null,
+            poi_lat: data.poi_lat || null,
+            poi_lng: data.poi_lng || null,
+        };
+        waypoints.splice(atIndex, 0, wp);
+
+        var marker = L.marker(latlng, {
+            draggable: true,
+            icon: _waypointIcon(atIndex, wp),
+        }).addTo(map);
+
+        marker.bindTooltip("WP " + atIndex, { direction: "top", offset: [0, -15] });
+
+        marker.on("dragend", function () {
+            var pos = marker.getLatLng();
+            wp.lat = pos.lat;
+            wp.lng = pos.lng;
+            updateRoute();
+            updateWaypointList();
+            mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
+        });
+
+        marker.on("click", function (e) {
+            L.DomEvent.stopPropagation(e);
+            if (_editorMode === "delete") {
+                deleteWaypoint(wp.index);
+            } else {
+                selectWaypoint(wp.index);
+            }
+        });
+
+        waypointMarkers.splice(atIndex, 0, marker);
+
+        // Reindex all subsequent waypoints
+        for (var i = atIndex + 1; i < waypoints.length; i++) {
+            waypoints[i].index = i;
+            waypointMarkers[i].setIcon(_waypointIcon(i, waypoints[i]));
+            waypointMarkers[i].setTooltipContent("WP " + i);
+        }
+
+        selectedIndex = atIndex;
+        updateRoute();
+        updateWaypointList();
+        mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
+    }
+
+    function _handleInsertClick(latlng) {
+        if (waypoints.length < 2) {
+            addWaypoint(latlng, {});
+            updateRoute();
+            return;
+        }
+
+        var clickPt = map.latLngToContainerPoint(latlng);
+        var bestDist = Infinity;
+        var bestIdx = -1;
+        var bestPoint = null;
+        var bestT = 0;
+
+        for (var i = 0; i < waypoints.length - 1; i++) {
+            var segA = map.latLngToContainerPoint(L.latLng(waypoints[i].lat, waypoints[i].lng));
+            var segB = map.latLngToContainerPoint(L.latLng(waypoints[i + 1].lat, waypoints[i + 1].lng));
+            var proj = _projectPointOnSegment(clickPt, segA, segB);
+            if (proj.dist < bestDist) {
+                bestDist = proj.dist;
+                bestIdx = i;
+                bestPoint = proj.point;
+                bestT = proj.t;
+            }
+        }
+
+        if (bestDist > 20) return; // Too far from any segment (20 screen pixels)
+
+        var insertLatlng = map.containerPointToLatLng(bestPoint);
+        var wpA = waypoints[bestIdx];
+        var wpB = waypoints[bestIdx + 1];
+        var interpolatedData = {
+            altitude_m: wpA.altitude_m + (wpB.altitude_m - wpA.altitude_m) * bestT,
+            speed_ms: wpA.speed_ms + (wpB.speed_ms - wpA.speed_ms) * bestT,
+            gimbal_pitch_deg: wpA.gimbal_pitch_deg,
+            heading_deg: null,
+        };
+
+        insertWaypoint(bestIdx + 1, insertLatlng, interpolatedData);
     }
 
     function updateRoute() {
@@ -216,6 +385,7 @@
     function selectWaypoint(idx) {
         selectedIndex = idx;
         updateWaypointList();
+        mapEl.dispatchEvent(new CustomEvent("waypoint-selected", { detail: { index: idx } }));
     }
 
     function updateWaypointList() {
@@ -289,10 +459,11 @@
                 }
                 if (val === "") val = null;
                 waypoints[idx][field] = val;
-                // Update marker icon if altitude changed
-                if (field === "altitude_m" && waypointMarkers[idx]) {
-                    waypointMarkers[idx].setIcon(_waypointIcon(idx, waypoints[idx].altitude_m));
+                // Update marker icon if altitude or action changed
+                if ((field === "altitude_m" || field === "action_type") && waypointMarkers[idx]) {
+                    waypointMarkers[idx].setIcon(_waypointIcon(idx, waypoints[idx]));
                 }
+                mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
             });
         });
     }
@@ -388,7 +559,7 @@
     }
 
     function deleteWaypoint(idx) {
-        if (!confirm("Delete waypoint " + idx + "?")) return;
+        if (_editorMode !== "delete" && !confirm("Delete waypoint " + idx + "?")) return;
         // Remove marker
         map.removeLayer(waypointMarkers[idx]);
         waypointMarkers.splice(idx, 1);
@@ -397,13 +568,14 @@
         waypoints.forEach(function (w, i) {
             w.index = i;
             if (waypointMarkers[i]) {
-                waypointMarkers[i].setIcon(_waypointIcon(i, w.altitude_m));
+                waypointMarkers[i].setIcon(_waypointIcon(i, w));
                 waypointMarkers[i].setTooltipContent("WP " + i);
             }
         });
         if (selectedIndex >= waypoints.length) selectedIndex = waypoints.length - 1;
         updateRoute();
         updateWaypointList();
+        mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
     }
 
     // Save waypoints
@@ -437,6 +609,7 @@
             .then(function (resp) {
                 if (resp.success) {
                     _toast("Waypoints saved (" + resp.count + " points)", "success");
+                    if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("waypoints");
                 } else {
                     _toast("Error: " + (resp.error || "Unknown"), "danger");
                 }
@@ -455,6 +628,8 @@
         routeLayerGroup.clearLayers();
         selectedIndex = -1;
         updateWaypointList();
+        mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
+        if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepIncomplete("waypoints");
     });
 
     // Status change
@@ -494,6 +669,7 @@
             selectedIndex = -1;
             newWps.forEach(function (w) { addWaypoint(L.latLng(w.lat, w.lng), w); });
             updateRoute();
+            mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
         }
 
         document.getElementById("path-tools-bar").addEventListener("click", function (e) {
@@ -534,6 +710,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     GSDCalculator.renderResults("gsd-results", data);
+                    if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("gsd");
                 })
                 .catch(function () { _toast("GSD calculation failed", "danger"); });
         });
@@ -568,6 +745,7 @@
                         });
                         updateRoute();
                         _toast("Generated " + resp.count + " pattern waypoints", "success");
+                        if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("patterns");
                     } else {
                         _toast("Pattern error: " + (resp.error || "Unknown"), "danger");
                     }
@@ -606,6 +784,7 @@
                         });
                         updateRoute();
                         _toast("Generated " + resp.count + " grid waypoints", "success");
+                        if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("grid");
                     } else {
                         _toast("Grid error: " + (resp.error || "Unknown"), "danger");
                     }
@@ -636,6 +815,7 @@
                     if (resp.success) {
                         _replaceWaypoints(resp.waypoints);
                         _toast("Generated " + resp.count + " 3D grid waypoints", "success");
+                        if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("oblique");
                     } else {
                         _toast("Error: " + (resp.error || "Unknown"), "danger");
                     }
@@ -685,6 +865,7 @@
                         _replaceWaypoints(resp.waypoints);
                         _clearFacadePoints();
                         _toast("Generated " + resp.count + " facade waypoints", "success");
+                        if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("facade");
                     } else {
                         _toast("Error: " + (resp.error || "Unknown"), "danger");
                     }
@@ -746,6 +927,7 @@
                             CoverageHeatmap.renderStats("coverage-panel", resp.stats);
                         }
                         _toast("Coverage analysis complete", "success");
+                        if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("coverage");
                     } else {
                         _toast("Error: " + (resp.error || "Unknown"), "danger");
                     }
@@ -784,6 +966,7 @@
                 .then(function (resp) {
                     if (resp.success && typeof QualityReport !== "undefined") {
                         QualityReport.render("quality-panel", resp);
+                        if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("quality");
                     }
                 })
                 .catch(function () { _toast("Quality report failed", "danger"); });
@@ -826,6 +1009,7 @@
             addWaypoint(L.latLng(w.lat, w.lng), w);
         });
         updateRoute();
+        mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
     }
 
     // Load elevation data
@@ -1027,6 +1211,13 @@
         });
     }
 
+    // Workflow Manager init
+    if (typeof WorkflowManager !== "undefined") {
+        var jobType = (document.getElementById("plan-job-type") || {}).value || "";
+        var hasPolygon = !!document.getElementById("plan-polygon").value;
+        WorkflowManager.init(planId, jobType, hasPolygon);
+    }
+
     // Save notes
     document.getElementById("btn-save-notes").addEventListener("click", function () {
         var notes = document.getElementById("admin-notes").value;
@@ -1058,4 +1249,42 @@
         container.prepend(div);
         setTimeout(function () { div.remove(); }, 3000);
     }
+
+    // Init toolbox and camera viz
+    if (typeof MapToolbox !== "undefined") {
+        MapToolbox.init(mapEl);
+    }
+    if (typeof CameraViz !== "undefined") {
+        CameraViz.init(map);
+    }
+
+    window.WaypointEditor = {
+        getMap:             function() { return map; },
+        getWaypoints:       function() { return waypoints; },
+        getMarkers:         function() { return waypointMarkers; },
+        getSelectedIndex:   function() { return selectedIndex; },
+        addWaypoint:        function(ll, d) { addWaypoint(ll, d); updateRoute(); },
+        deleteWaypoint:     deleteWaypoint,
+        insertWaypoint:     insertWaypoint,
+        updateWaypointField: function(idx, field, val) {
+            waypoints[idx][field] = val;
+            if (field === "altitude_m" || field === "action_type") {
+                waypointMarkers[idx].setIcon(_waypointIcon(idx, waypoints[idx]));
+            }
+            updateRoute(); updateWaypointList();
+            mapEl.dispatchEvent(new CustomEvent("waypoints-changed"));
+        },
+        selectWaypoint:     selectWaypoint,
+        updateRoute:        updateRoute,
+        setMode:            function(m) {
+            _editorMode = m;
+            mapEl.className = mapEl.className.replace(/map-mode-\w+/g, "").trim();
+            mapEl.classList.add("map-mode-" + m);
+            if (m !== "insert" && _insertHighlight) {
+                map.removeLayer(_insertHighlight);
+                _insertHighlight = null;
+            }
+        },
+        getMode:            function() { return _editorMode; },
+    };
 })();
