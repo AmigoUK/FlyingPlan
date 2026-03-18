@@ -4,6 +4,32 @@
 var MissionPatterns = (function () {
     "use strict";
 
+    var _tooltips = {
+        "pattern-type": {
+            "orbit": "Circles around a point \u2014 ideal for inspecting towers, buildings, or points of interest.",
+            "spiral": "Ascending circular path \u2014 great for tall structure inspection from bottom to top.",
+            "cable_cam": "Smooth straight-line flight between two points \u2014 cinematic shots and corridor surveys.",
+            "multi_orbit": "Stacked orbits at different heights \u2014 complete 360\u00b0 coverage of a structure at every level.",
+        },
+        "pat-radius": "Distance from center point to the flight path. Larger = wider circle.",
+        "pat-altitude": "Flight height above ground level.",
+        "pat-points": "Number of waypoints around the circle. More points = smoother path but more waypoints to process.",
+        "pat-speed": "Drone ground speed during the pattern.",
+        "pat-start-alt": "Starting altitude for the pattern.",
+        "pat-end-alt": "Ending altitude for the pattern.",
+        "pat-revolutions": "Number of complete circles the drone will fly.",
+        "pat-alt-step": "Vertical distance between each orbit level.",
+    };
+
+    function _addTooltip(label, tipText) {
+        var icon = document.createElement("i");
+        icon.className = "bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon";
+        icon.setAttribute("data-bs-toggle", "tooltip");
+        icon.setAttribute("data-bs-placement", "top");
+        icon.title = tipText;
+        label.appendChild(icon);
+    }
+
     function buildPanel(containerId) {
         var el = document.getElementById(containerId);
         if (!el) return;
@@ -109,6 +135,7 @@ var MissionPatterns = (function () {
             var label = document.createElement("label");
             label.className = "form-label small mb-0";
             label.textContent = f.label;
+            if (_tooltips[f.id]) _addTooltip(label, _tooltips[f.id]);
             var input = document.createElement("input");
             input.type = "number";
             input.className = "form-control form-control-sm";

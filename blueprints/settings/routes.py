@@ -68,6 +68,7 @@ def update_form_visibility():
     settings.show_customer_type_toggle = "show_customer_type_toggle" in request.form
     settings.show_purpose_fields = "show_purpose_fields" in request.form
     settings.show_output_format = "show_output_format" in request.form
+    settings.guide_mode = "guide_mode" in request.form
     db.session.commit()
     flash("Form visibility settings updated.", "success")
     return redirect(url_for("settings.settings_page"))

@@ -19,6 +19,9 @@ class AppSettings(db.Model):
     show_purpose_fields = db.Column(db.Boolean, nullable=False, default=True)
     show_output_format = db.Column(db.Boolean, nullable=False, default=True)
 
+    # Guide mode (newbie tooltips / step-by-step instructions)
+    guide_mode = db.Column(db.Boolean, nullable=False, default=True)
+
     @staticmethod
     def get():
         """Return the singleton settings row, auto-creating if missing."""

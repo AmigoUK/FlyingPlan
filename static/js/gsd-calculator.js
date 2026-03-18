@@ -4,6 +4,20 @@
 var GSDCalculator = (function () {
     "use strict";
 
+    var _tooltips = {
+        "gsd-altitude": "Height above ground. Lower = more detail but smaller area covered. 30m is a good starting point.",
+        "gsd-overlap": "How much each photo overlaps the next. 70% for standard surveys, 80%+ for 3D reconstruction.",
+    };
+
+    function _addTooltip(label, tipText) {
+        var icon = document.createElement("i");
+        icon.className = "bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon";
+        icon.setAttribute("data-bs-toggle", "tooltip");
+        icon.setAttribute("data-bs-placement", "top");
+        icon.title = tipText;
+        label.appendChild(icon);
+    }
+
     function buildPanel(containerId) {
         var el = document.getElementById(containerId);
         if (!el) return;
@@ -20,6 +34,7 @@ var GSDCalculator = (function () {
             var label = document.createElement("label");
             label.className = "form-label small mb-0";
             label.textContent = f.label;
+            if (_tooltips[f.id]) _addTooltip(label, _tooltips[f.id]);
             var input = document.createElement("input");
             input.type = "number";
             input.className = "form-control form-control-sm";

@@ -165,16 +165,66 @@
         <div class="card mb-3">
             <div class="card-header">
                 <i class="bi bi-aspect-ratio"></i> GSD Calculator
+                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Calculates photo resolution (ground sampling distance) based on your drone and altitude. Use this first to choose the right altitude for your mission."></i>
             </div>
-            <div class="card-body" id="gsd-panel"></div>
+            <div class="card-body">
+                {% if app_settings.guide_mode %}
+                <div class="guide-block mb-2">
+                    <a class="text-decoration-none guide-toggle-btn" data-bs-toggle="collapse" href="#guide-gsd" role="button" aria-expanded="false"><i class="bi bi-mortarboard me-1"></i>How to use this</a>
+                    <div class="collapse mt-1" id="guide-gsd">
+                        <h6>What is GSD?</h6>
+                        <p>Ground Sampling Distance — the real-world size of one pixel in your photo.</p>
+                        <h6>Steps</h6>
+                        <ol>
+                            <li>Set your flight altitude (start with 30m for general use)</li>
+                            <li>Set overlap percentage (70% for photos, 80% for 3D mapping)</li>
+                            <li>Click "Calculate GSD" to see results</li>
+                        </ol>
+                        <h6>Reading Results</h6>
+                        <ul>
+                            <li><strong>GSD (cm/px):</strong> Lower = more detail. Under 2cm is high quality.</li>
+                            <li><strong>Quality Tier:</strong> Ultra High (&lt;1cm), High (1-2cm), Standard (2-5cm), Low (&gt;5cm)</li>
+                            <li><strong>Footprint:</strong> Ground area covered by a single photo</li>
+                            <li><strong>Line Spacing:</strong> Recommended distance between flight lines for your overlap</li>
+                            <li><strong>Est. Photos/Time/Battery:</strong> Mission planning estimates</li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                <div id="gsd-panel"></div>
+            </div>
         </div>
 
         <!-- Mission Patterns -->
         <div class="card mb-3">
             <div class="card-header">
                 <i class="bi bi-bullseye"></i> Mission Patterns
+                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Pre-built circular and linear flight paths for inspections and cinematic shots."></i>
             </div>
-            <div class="card-body" id="mission-patterns-panel"></div>
+            <div class="card-body">
+                {% if app_settings.guide_mode %}
+                <div class="guide-block mb-2">
+                    <a class="text-decoration-none guide-toggle-btn" data-bs-toggle="collapse" href="#guide-patterns" role="button" aria-expanded="false"><i class="bi bi-mortarboard me-1"></i>How to use this</a>
+                    <div class="collapse mt-1" id="guide-patterns">
+                        <h6>Pattern Guide</h6>
+                        <ul>
+                            <li><strong>Orbit:</strong> Fly in a circle around a point — camera always faces center. Use for tower inspections, monument documentation, real estate.</li>
+                            <li><strong>Spiral:</strong> Ascending circle — starts low, climbs each revolution. Use for tall structure inspection (chimneys, masts, wind turbines).</li>
+                            <li><strong>Cable Cam:</strong> Straight-line smooth flight between two points. Use for cinematic shots, corridor inspections, power lines.</li>
+                            <li><strong>Multi-Altitude Orbit:</strong> Multiple orbits stacked at different heights. Use for complete 360° coverage at every level.</li>
+                        </ul>
+                        <h6>Steps</h6>
+                        <ol>
+                            <li>Select a pattern type from the dropdown</li>
+                            <li>Set radius, altitude, speed and other parameters</li>
+                            <li>Click on the map to set the center/start point</li>
+                            <li>Click "Generate Pattern"</li>
+                        </ol>
+                    </div>
+                </div>
+                {% endif %}
+                <div id="mission-patterns-panel"></div>
+            </div>
         </div>
 
         {% if fp.area_polygon %}
@@ -182,16 +232,80 @@
         <div class="card mb-3">
             <div class="card-header">
                 <i class="bi bi-grid-3x3"></i> Grid Mission
+                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Generates an automated lawn-mower flight pattern over your survey area. Best for flat terrain mapping and aerial photography."></i>
             </div>
-            <div class="card-body" id="grid-planner-panel"></div>
+            <div class="card-body">
+                {% if app_settings.guide_mode %}
+                <div class="guide-block mb-2">
+                    <a class="text-decoration-none guide-toggle-btn" data-bs-toggle="collapse" href="#guide-grid" role="button" aria-expanded="false"><i class="bi bi-mortarboard me-1"></i>How to use this</a>
+                    <div class="collapse mt-1" id="guide-grid">
+                        <h6>What is a Grid Mission?</h6>
+                        <p>An automated lawn-mower flight pattern that systematically covers a survey area with parallel flight lines.</p>
+                        <h6>When to use</h6>
+                        <ul>
+                            <li>2D mapping / orthomosaic generation</li>
+                            <li>Agricultural surveys</li>
+                            <li>Large area aerial photography</li>
+                            <li>Any time you need consistent coverage of a defined area</li>
+                        </ul>
+                        <h6>Steps</h6>
+                        <ol>
+                            <li>First, draw an area polygon on the map (click corners, double-click to finish)</li>
+                            <li>Use GSD Calculator to find ideal altitude and line spacing</li>
+                            <li>Set Line Spacing — use the GSD calculator's "Line Spacing" result</li>
+                            <li>Set Direction — align with the longest edge of your area for efficiency</li>
+                            <li>Choose Pattern: Parallel (fast) or Crosshatch (better for 3D)</li>
+                            <li>Click "Generate Grid" — waypoints appear on the map</li>
+                            <li>Run Coverage Analysis to verify sufficient overlap</li>
+                        </ol>
+                        <h6>Tips</h6>
+                        <ul>
+                            <li>Always run GSD Calculator first to determine optimal spacing</li>
+                            <li>Crosshatch doubles flight time but greatly improves 3D results</li>
+                            <li>Check weather before flying — wind direction affects efficiency</li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                <div id="grid-planner-panel"></div>
+            </div>
         </div>
 
         <!-- Oblique Grid / 3D Mapping -->
         <div class="card mb-3">
             <div class="card-header">
                 <i class="bi bi-grid-3x3-gap"></i> 3D Mapping Grid
+                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Creates 3D photogrammetry missions. Use Double Grid for professional 3D models of areas, Multi-Angle for highest quality."></i>
             </div>
-            <div class="card-body" id="oblique-planner-panel"></div>
+            <div class="card-body">
+                {% if app_settings.guide_mode %}
+                <div class="guide-block mb-2">
+                    <a class="text-decoration-none guide-toggle-btn" data-bs-toggle="collapse" href="#guide-3d" role="button" aria-expanded="false"><i class="bi bi-mortarboard me-1"></i>How to use this</a>
+                    <div class="collapse mt-1" id="guide-3d">
+                        <h6>What is 3D Mapping?</h6>
+                        <p>Creates multi-pass flight patterns for photogrammetry — building 3D models from overlapping photos.</p>
+                        <h6>Capture Modes Explained</h6>
+                        <ul>
+                            <li><strong>Nadir:</strong> Camera points straight down. Good for flat 2D maps only.</li>
+                            <li><strong>Oblique:</strong> Camera at an angle. Captures building sides and depth.</li>
+                            <li><strong>Double Grid:</strong> Industry standard — one nadir pass + one angled pass at 90°. Best balance of quality and flight time.</li>
+                            <li><strong>Multi-Angle:</strong> 5 passes (1 nadir + 4 oblique at N/E/S/W). Highest 3D quality but longest flight time.</li>
+                        </ul>
+                        <h6>Steps</h6>
+                        <ol>
+                            <li>Draw your area polygon on the map</li>
+                            <li>Select capture mode (start with "Double Grid" for most jobs)</li>
+                            <li>Set altitude (50m typical for 3D mapping)</li>
+                            <li>Set line spacing (15-25m depending on detail needed)</li>
+                            <li>Click "Generate 3D Grid"</li>
+                            <li>Run Quality Report to check reconstruction quality</li>
+                            <li>If quality is "Poor", try Multi-Angle or decrease spacing</li>
+                        </ol>
+                    </div>
+                </div>
+                {% endif %}
+                <div id="oblique-planner-panel"></div>
+            </div>
         </div>
         {% endif %}
 
@@ -199,19 +313,77 @@
         <div class="card mb-3">
             <div class="card-header">
                 <i class="bi bi-building"></i> Facade Scanner
+                <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Scans building walls and structures vertically. Use for building inspections, facade surveys, and structural assessments."></i>
             </div>
-            <div class="card-body" id="facade-planner-panel"></div>
+            <div class="card-body">
+                {% if app_settings.guide_mode %}
+                <div class="guide-block mb-2">
+                    <a class="text-decoration-none guide-toggle-btn" data-bs-toggle="collapse" href="#guide-facade" role="button" aria-expanded="false"><i class="bi bi-mortarboard me-1"></i>How to use this</a>
+                    <div class="collapse mt-1" id="guide-facade">
+                        <h6>What is Facade Scanning?</h6>
+                        <p>Automated flight pattern for inspecting building walls — the drone flies vertical columns at a set distance from the facade.</p>
+                        <h6>When to use</h6>
+                        <ul>
+                            <li>Building inspections (cracks, damage, weathering)</li>
+                            <li>Facade documentation and measurement</li>
+                            <li>Structural assessment surveys</li>
+                            <li>Heritage building recording</li>
+                        </ul>
+                        <h6>Steps</h6>
+                        <ol>
+                            <li>Choose Scan Mode: Single Face (click 2 points) or Multi-Face (from polygon)</li>
+                            <li>Set Standoff Distance (how far from the wall — 10m is safe default)</li>
+                            <li>Set Column Spacing (5m typical — closer for more detail)</li>
+                            <li>Set Min/Max Altitude to match the building height</li>
+                            <li>Set Altitude Step (5m gives good vertical overlap)</li>
+                            <li>Click "Generate Facade Scan"</li>
+                            <li>Review waypoints — drone will fly vertical zigzag columns</li>
+                        </ol>
+                        <h6>Safety</h6>
+                        <ul>
+                            <li>Always check for obstacles (aerials, wires, overhangs)</li>
+                            <li>Standoff must account for GPS drift (minimum 5m from structure)</li>
+                            <li>Check wind — gusts near buildings can be unpredictable</li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                <div id="facade-planner-panel"></div>
+            </div>
         </div>
 
         <!-- Coverage Analysis -->
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-grid-fill"></i> Coverage Analysis</span>
+                <span>
+                    <i class="bi bi-grid-fill"></i> Coverage Analysis
+                    <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Shows a heatmap of photo overlap across your mission area — helps verify no gaps before you fly."></i>
+                </span>
                 <button class="btn btn-sm btn-outline-secondary" id="btn-run-coverage">
                     <i class="bi bi-play"></i> Analyse
                 </button>
             </div>
             <div class="card-body" id="coverage-panel">
+                {% if app_settings.guide_mode %}
+                <div class="guide-block mb-2">
+                    <a class="text-decoration-none guide-toggle-btn" data-bs-toggle="collapse" href="#guide-coverage" role="button" aria-expanded="false"><i class="bi bi-mortarboard me-1"></i>How to use this</a>
+                    <div class="collapse mt-1" id="guide-coverage">
+                        <h6>How to read</h6>
+                        <ul>
+                            <li><strong>Red/Orange:</strong> Low overlap (0-2 images). May have gaps in final output.</li>
+                            <li><strong>Yellow:</strong> Moderate overlap (2-3 images). Acceptable for 2D maps.</li>
+                            <li><strong>Green:</strong> Good overlap (4+ images). Required for quality 3D models.</li>
+                        </ul>
+                        <h6>Steps</h6>
+                        <ol>
+                            <li>Generate your mission waypoints first (Grid, 3D Grid, etc.)</li>
+                            <li>Click "Analyse" to compute the heatmap</li>
+                            <li>Check statistics: Avg Overlap, Coverage Area, Sufficient %</li>
+                            <li>If coverage is poor, decrease line spacing or increase overlap %</li>
+                        </ol>
+                    </div>
+                </div>
+                {% endif %}
                 <p class="text-muted small mb-0">Click "Analyse" to compute photo overlap coverage.</p>
             </div>
         </div>
@@ -219,12 +391,38 @@
         <!-- Quality Report -->
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-award"></i> Quality Report</span>
+                <span>
+                    <i class="bi bi-award"></i> Quality Report
+                    <i class="bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon" data-bs-toggle="tooltip" title="Predicts how good your 3D reconstruction will be before you fly — saving time and battery."></i>
+                </span>
                 <button class="btn btn-sm btn-outline-secondary" id="btn-run-quality">
                     <i class="bi bi-play"></i> Analyse
                 </button>
             </div>
             <div class="card-body" id="quality-panel">
+                {% if app_settings.guide_mode %}
+                <div class="guide-block mb-2">
+                    <a class="text-decoration-none guide-toggle-btn" data-bs-toggle="collapse" href="#guide-quality" role="button" aria-expanded="false"><i class="bi bi-mortarboard me-1"></i>How to use this</a>
+                    <div class="collapse mt-1" id="guide-quality">
+                        <h6>Steps</h6>
+                        <ol>
+                            <li>Generate mission waypoints first</li>
+                            <li>Click "Analyse" to run the report</li>
+                            <li>Review the traffic-light metrics</li>
+                        </ol>
+                        <h6>Metrics Explained</h6>
+                        <ul>
+                            <li><strong>Image Overlap:</strong> How many photos cover each area (green: 5+)</li>
+                            <li><strong>Coverage:</strong> Percentage of area captured (green: 90%+)</li>
+                            <li><strong>GSD:</strong> Photo resolution (green: under 2cm/pixel)</li>
+                            <li><strong>Convergence:</strong> Angle between overlapping views (green: 45°+ — critical for 3D depth)</li>
+                            <li><strong>Point Density:</strong> Expected 3D points per square metre</li>
+                            <li><strong>Capture Mode:</strong> Double Grid or Multi-Angle are best for 3D</li>
+                        </ul>
+                        <p>If you see red metrics, follow the recommendations at the bottom of the report.</p>
+                    </div>
+                </div>
+                {% endif %}
                 <p class="text-muted small mb-0">Click "Analyse" to estimate 3D reconstruction quality.</p>
             </div>
         </div>
@@ -312,13 +510,13 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-map"></i> Flight Route Editor</span>
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-sm btn-outline-info" id="btn-ruler" title="Measure distance">
+                    <button class="btn btn-sm btn-outline-info" id="btn-ruler" data-bs-toggle="tooltip" title="Measure distance between points on the map">
                         <i class="bi bi-rulers"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" id="btn-coverage-toggle" title="Toggle coverage heatmap">
+                    <button class="btn btn-sm btn-outline-warning" id="btn-coverage-toggle" data-bs-toggle="tooltip" title="Show/hide photo overlap heatmap on the map">
                         <i class="bi bi-grid-fill"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" id="btn-airspace" title="Toggle airspace">
+                    <button class="btn btn-sm btn-outline-danger" id="btn-airspace" data-bs-toggle="tooltip" title="Show/hide controlled airspace zones and restrictions">
                         <i class="bi bi-broadcast"></i>
                     </button>
                     <div class="form-check form-switch mb-0">
@@ -335,7 +533,7 @@
         <div class="card mt-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-box"></i> 3D Mission Preview</span>
-                <button class="btn btn-sm btn-outline-secondary" id="btn-load-3d">
+                <button class="btn btn-sm btn-outline-secondary" id="btn-load-3d" data-bs-toggle="tooltip" title="Load a 3D visualisation of your mission waypoints and flight path">
                     <i class="bi bi-play"></i> Load 3D
                 </button>
             </div>
@@ -349,10 +547,10 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-graph-up"></i> Elevation Profile</span>
                 <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-outline-secondary" id="btn-load-elevation">
+                    <button class="btn btn-sm btn-outline-secondary" id="btn-load-elevation" data-bs-toggle="tooltip" title="Fetch ground elevation data for all waypoints to see terrain height changes">
                         <i class="bi bi-arrow-repeat"></i> Load Terrain
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" id="btn-terrain-follow" title="Adjust altitudes to follow terrain">
+                    <button class="btn btn-sm btn-outline-warning" id="btn-terrain-follow" data-bs-toggle="tooltip" title="Automatically adjust waypoint altitudes to maintain consistent height above ground level">
                         <i class="bi bi-bezier2"></i> Terrain Follow
                     </button>
                 </div>
@@ -394,4 +592,18 @@
 <script src="{{ url_for('static', filename='js/three-preview.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quality-report.js') }}"></script>
 <script src="{{ url_for('static', filename='js/map-admin.js') }}"></script>
+<script>
+// Initialize Bootstrap tooltips (including those added dynamically by JS panels)
+function initTooltips() {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+        if (!bootstrap.Tooltip.getInstance(el)) {
+            new bootstrap.Tooltip(el);
+        }
+    });
+}
+// Run on page load, and again after panels build (slight delay for JS panel rendering)
+document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(initTooltips, 500);
+});
+</script>
 {% endblock %}

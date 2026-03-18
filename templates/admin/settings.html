@@ -53,12 +53,38 @@
     </div>
 </div>
 
+<!-- Guide Mode -->
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-mortarboard"></i> Guide Mode</div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('settings.update_form_visibility') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- carry current visibility values so they aren't wiped -->
+            {% if settings.show_heard_about %}<input type="hidden" name="show_heard_about" value="on">{% endif %}
+            {% if settings.show_customer_type_toggle %}<input type="hidden" name="show_customer_type_toggle" value="on">{% endif %}
+            {% if settings.show_purpose_fields %}<input type="hidden" name="show_purpose_fields" value="on">{% endif %}
+            {% if settings.show_output_format %}<input type="hidden" name="show_output_format" value="on">{% endif %}
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" name="guide_mode"
+                       id="sw-guide" {{ 'checked' if settings.guide_mode }}>
+                <label class="form-check-label" for="sw-guide">Enable Guide Mode</label>
+            </div>
+            <p class="text-muted small mb-2">When enabled, shows step-by-step instructions inside each flight planning tool to help new pilots learn the workflow.</p>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Save
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- Form Visibility -->
 <div class="card mb-4">
     <div class="card-header"><i class="bi bi-eye"></i> Form Visibility</div>
     <div class="card-body">
         <form method="POST" action="{{ url_for('settings.update_form_visibility') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- carry guide_mode so it isn't wiped -->
+            {% if settings.guide_mode %}<input type="hidden" name="guide_mode" value="on">{% endif %}
             <div class="row g-3">
                 <div class="col-md-3">
                     <div class="form-check form-switch">

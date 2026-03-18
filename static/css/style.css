@@ -130,6 +130,48 @@
 .avail-on_mission { background-color: #fd7e14; color: #fff; }
 .avail-unavailable { background-color: #dc3545; color: #fff; }
 
+/* Tooltip help icons */
+.fp-tooltip-icon {
+    font-size: 0.75rem;
+    cursor: help;
+    opacity: 0.6;
+}
+.fp-tooltip-icon:hover {
+    opacity: 1;
+}
+
+/* Guide mode blocks */
+.guide-block {
+    background: #e8f4fd;
+    border-left: 3px solid #0dcaf0;
+    border-radius: 0 6px 6px 0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+.guide-block h6 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: #055160;
+}
+.guide-block ol,
+.guide-block ul {
+    padding-left: 1.2rem;
+    margin-bottom: 0.4rem;
+}
+.guide-block li {
+    margin-bottom: 0.2rem;
+}
+.guide-block p {
+    margin-bottom: 0.3rem;
+}
+.guide-block .guide-toggle-btn {
+    font-size: 0.78rem;
+    padding: 0.15rem 0.5rem;
+}
+
 /* Responsive map */
 @media (max-width: 768px) {
     #customer-map, #admin-map {

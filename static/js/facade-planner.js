@@ -5,6 +5,25 @@
 var FacadePlanner = (function () {
     "use strict";
 
+    var _tooltips = {
+        "facade-standoff": "How far the drone flies from the building face. 10m is typical. Closer = more detail but narrower field of view.",
+        "facade-col-spacing": "Horizontal distance between vertical scan passes along the facade.",
+        "facade-min-alt": "Lowest point of the scan. Set to match the bottom of the building.",
+        "facade-max-alt": "Highest point of the scan. Set to match the top of the building.",
+        "facade-alt-step": "Vertical distance between photo rows. Smaller = more overlap.",
+        "facade-speed": "Drone ground speed during the scan. Slower = sharper photos.",
+        "facade-mode": "Single Face: click 2 points to define one wall. Multi-Face: scan all sides of a building polygon.",
+    };
+
+    function _addTooltip(label, tipText) {
+        var icon = document.createElement("i");
+        icon.className = "bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon";
+        icon.setAttribute("data-bs-toggle", "tooltip");
+        icon.setAttribute("data-bs-placement", "top");
+        icon.title = tipText;
+        label.appendChild(icon);
+    }
+
     function buildPanel(containerId) {
         var el = document.getElementById(containerId);
         if (!el) return;
@@ -30,6 +49,7 @@ var FacadePlanner = (function () {
             var label = document.createElement("label");
             label.className = "form-label small mb-0";
             label.textContent = f.label;
+            if (_tooltips[f.id]) _addTooltip(label, _tooltips[f.id]);
             var input = document.createElement("input");
             input.type = "number";
             input.className = "form-control form-control-sm";
@@ -49,6 +69,7 @@ var FacadePlanner = (function () {
         var modeLabel = document.createElement("label");
         modeLabel.className = "form-label small mb-0";
         modeLabel.textContent = "Scan Mode";
+        if (_tooltips["facade-mode"]) _addTooltip(modeLabel, _tooltips["facade-mode"]);
         var modeSel = document.createElement("select");
         modeSel.className = "form-select form-select-sm";
         modeSel.id = "facade-mode";

@@ -7,6 +7,23 @@ var GridPlanner = (function () {
 
     var _panelEl = null;
 
+    var _tooltips = {
+        "grid-spacing": "Distance between parallel flight lines. Smaller spacing = more overlap but longer flight time. Use GSD calculator to find ideal spacing.",
+        "grid-angle": "Compass direction of flight lines. 0\u00b0 = North-South, 90\u00b0 = East-West. Align with the longest edge of your survey area.",
+        "grid-altitude": "Flight altitude in metres above ground.",
+        "grid-speed": "Drone ground speed during the mission. Slower = sharper photos but longer battery use.",
+        "grid-pattern": "Parallel: single-direction passes (fast). Crosshatch: two perpendicular passes (better coverage for mapping).",
+    };
+
+    function _addTooltip(label, tipText) {
+        var icon = document.createElement("i");
+        icon.className = "bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon";
+        icon.setAttribute("data-bs-toggle", "tooltip");
+        icon.setAttribute("data-bs-placement", "top");
+        icon.title = tipText;
+        label.appendChild(icon);
+    }
+
     function init(panelId) {
         _panelEl = document.getElementById(panelId);
     }
@@ -29,6 +46,7 @@ var GridPlanner = (function () {
             label.className = "form-label small mb-0";
             label.textContent = f.label;
             label.setAttribute("for", f.id);
+            if (_tooltips[f.id]) _addTooltip(label, _tooltips[f.id]);
             var input = document.createElement("input");
             input.type = f.type;
             input.className = "form-control form-control-sm";
@@ -48,6 +66,7 @@ var GridPlanner = (function () {
         var patLabel = document.createElement("label");
         patLabel.className = "form-label small mb-0";
         patLabel.textContent = "Pattern";
+        if (_tooltips["grid-pattern"]) _addTooltip(patLabel, _tooltips["grid-pattern"]);
         var patSelect = document.createElement("select");
         patSelect.className = "form-select form-select-sm";
         patSelect.id = "grid-pattern";

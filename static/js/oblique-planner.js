@@ -5,6 +5,25 @@
 var ObliquePlanner = (function () {
     "use strict";
 
+    var _tooltips = {
+        "oblique-capture-mode": "Nadir = camera straight down (2D maps). Oblique = angled camera (adds depth). Double Grid = industry standard for 3D models. Multi-Angle = highest quality 3D (5 passes).",
+        "oblique-spacing": "Distance between parallel flight lines. Smaller spacing = more overlap but longer flight time. Use GSD calculator to find ideal spacing.",
+        "oblique-angle": "Compass direction of flight lines. 0\u00b0 = North-South, 90\u00b0 = East-West. Align with the longest edge of your survey area.",
+        "oblique-altitude": "Flight altitude in metres above ground.",
+        "oblique-speed": "Drone ground speed during the mission. Slower = sharper photos but longer battery use.",
+        "oblique-gimbal": "Camera angle from horizontal. -45\u00b0 is standard for oblique capture. More negative = looking more downward.",
+        "oblique-heading-mode": "Along Track: camera faces flight direction. Fixed: camera maintains constant compass heading.",
+    };
+
+    function _addTooltip(label, tipText) {
+        var icon = document.createElement("i");
+        icon.className = "bi bi-question-circle-fill text-muted ms-1 fp-tooltip-icon";
+        icon.setAttribute("data-bs-toggle", "tooltip");
+        icon.setAttribute("data-bs-placement", "top");
+        icon.title = tipText;
+        label.appendChild(icon);
+    }
+
     function buildPanel(containerId) {
         var el = document.getElementById(containerId);
         if (!el) return;
@@ -16,6 +35,7 @@ var ObliquePlanner = (function () {
         var modeLabel = document.createElement("label");
         modeLabel.className = "form-label small mb-0";
         modeLabel.textContent = "Capture Mode";
+        if (_tooltips["oblique-capture-mode"]) _addTooltip(modeLabel, _tooltips["oblique-capture-mode"]);
         var modeSel = document.createElement("select");
         modeSel.className = "form-select form-select-sm";
         modeSel.id = "oblique-capture-mode";
@@ -78,6 +98,7 @@ var ObliquePlanner = (function () {
             var headLabel = document.createElement("label");
             headLabel.className = "form-label small mb-0";
             headLabel.textContent = "Heading Mode";
+            if (_tooltips["oblique-heading-mode"]) _addTooltip(headLabel, _tooltips["oblique-heading-mode"]);
             var headSel = document.createElement("select");
             headSel.className = "form-select form-select-sm";
             headSel.id = "oblique-heading-mode";
@@ -112,6 +133,7 @@ var ObliquePlanner = (function () {
         var label = document.createElement("label");
         label.className = "form-label small mb-0";
         label.textContent = f.label;
+        if (_tooltips[f.id]) _addTooltip(label, _tooltips[f.id]);
         var input = document.createElement("input");
         input.type = "number";
         input.className = "form-control form-control-sm";
