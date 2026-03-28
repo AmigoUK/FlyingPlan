@@ -7,6 +7,10 @@ class Config:
         "DATABASE_URL", "sqlite:///flyingplan.db"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_recycle": 3600,
+        "pool_pre_ping": True,
+    }
     UPLOAD_FOLDER = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "instance", "uploads"
     )
