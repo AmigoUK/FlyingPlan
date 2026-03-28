@@ -115,6 +115,7 @@ def _run_migrations():
     """Add new columns to tables if missing (CRM ALTER TABLE pattern)."""
     from sqlalchemy import inspect, text
     inspector = inspect(db.engine)
+    dialect = db.engine.dialect.name  # 'sqlite' or 'mysql'
 
     # Flight plans table
     existing = {col["name"] for col in inspector.get_columns("flight_plans")}
@@ -181,7 +182,7 @@ def _run_migrations():
         order_cols = {col["name"] for col in inspector.get_columns("orders")}
         order_new_columns = [
             ("risk_assessment_completed", "BOOLEAN NOT NULL DEFAULT 0"),
-            ("equipment_id", "INTEGER REFERENCES pilot_equipment(id)"),
+            ("equipment_id", "INTEGER"),
             ("time_of_day", "VARCHAR(20)"),
             ("proximity_to_people", "VARCHAR(30)"),
             ("environment_type", "VARCHAR(30)"),

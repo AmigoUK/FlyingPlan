@@ -22,6 +22,7 @@ from models.job_type import JobType, DEFAULT_JOB_TYPES
 from models.purpose_option import PurposeOption, DEFAULT_PURPOSE_OPTIONS
 from models.heard_about_option import HeardAboutOption, DEFAULT_HEARD_ABOUT_OPTIONS
 from models.app_settings import AppSettings
+from models.shared_link import SharedLink
 
 
 def _now():
@@ -50,13 +51,17 @@ def _date_future(**kw):
 # ---------------------------------------------------------------------------
 def _wipe_all():
     """Delete all rows respecting FK order."""
+    from sqlalchemy import text
     print("  Wiping existing data...")
+    if db.engine.dialect.name == "mysql":
+        db.session.execute(text("SET FOREIGN_KEY_CHECKS=0"))
     OrderActivity.query.delete()
     OrderDeliverable.query.delete()
     RiskAssessment.query.delete()
     Waypoint.query.delete()
     POI.query.delete()
     Upload.query.delete()
+    SharedLink.query.delete()
     Order.query.delete()
     FlightPlan.query.delete()
     PilotCertification.query.delete()
@@ -68,6 +73,8 @@ def _wipe_all():
     PurposeOption.query.delete()
     HeardAboutOption.query.delete()
     AppSettings.query.delete()
+    if db.engine.dialect.name == "mysql":
+        db.session.execute(text("SET FOREIGN_KEY_CHECKS=1"))
     db.session.commit()
 
 
