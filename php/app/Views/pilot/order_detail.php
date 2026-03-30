@@ -288,7 +288,7 @@
                 <input type="hidden" id="plan-polygon" value="<?= esc($flight_plan->area_polygon ?? '') ?>">
                 <input type="hidden" id="plan-pois" value='<?= $pois_json ?>'>
                 <input type="hidden" id="plan-waypoints" value='<?= $waypoints_json ?>'>
-                <input type="hidden" id="waypoints-save-url" value="<?= site_url('pilot/orders/' . $order->id . '/save-waypoints') ?>">
+                <input type="hidden" id="waypoints-save-url" value="<?= site_url('pilot/orders/' . $order->id . '/waypoints') ?>">
                 <div id="pilot-map" style="height: 350px; border-radius: 0 0 8px 8px;"></div>
             </div>
             <?php if (in_array($order->status, ['accepted', 'in_progress'])): ?>
