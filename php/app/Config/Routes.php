@@ -7,9 +7,9 @@ use CodeIgniter\Router\RouteCollection;
  */
 
 // Public routes (no auth required)
-$routes->get('/', 'Public::form');
-$routes->post('/submit', 'Public::submit');
-$routes->get('/confirmation', 'Public::confirmation');
+$routes->get('/', 'PublicForm::form');
+$routes->post('/submit', 'PublicForm::submit');
+$routes->get('/confirmation', 'PublicForm::confirmation');
 $routes->get('/login', 'Auth::login');
 $routes->post('/login', 'Auth::login');
 $routes->post('/logout', 'Auth::logout');
