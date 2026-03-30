@@ -226,9 +226,16 @@ class Orders extends BaseController
 
     public function reportPdf($orderId)
     {
-        // PDF generation placeholder — requires mPDF (Phase 8)
-        return redirect()->to('/orders/' . $orderId)
-            ->with('flash_warning', 'PDF generation not yet available in PHP version.');
+        $db = \Config\Database::connect();
+        $order = $db->table('orders')->where('id', $orderId)->get()->getRow();
+        if (!$order) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+
+        $fp = $db->table('flight_plans')->where('id', $order->flight_plan_id)->get()->getRow();
+
+        $pdf = \App\Services\PdfReport::generateReportPdf($orderId, true);
+        return $this->response->setContentType('application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $fp->reference . '.pdf"')
+            ->setBody($pdf);
     }
 
     // ── Helper ──────────────────────────────────────────────────

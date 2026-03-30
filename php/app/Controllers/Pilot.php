@@ -666,8 +666,13 @@ class Pilot extends BaseController
 
     public function reportPdf($orderId)
     {
-        return redirect()->to('/pilot/orders/' . $orderId)
-            ->with('flash_warning', 'PDF generation not yet available in PHP version.');
+        $order = $this->getPilotOrder($orderId);
+        $fp = \Config\Database::connect()->table('flight_plans')->where('id', $order->flight_plan_id)->get()->getRow();
+
+        $pdf = \App\Services\PdfReport::generateReportPdf($orderId, false);
+        return $this->response->setContentType('application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $fp->reference . '.pdf"')
+            ->setBody($pdf);
     }
 
     // ── Helpers ─────────────────────────────────────────────────
