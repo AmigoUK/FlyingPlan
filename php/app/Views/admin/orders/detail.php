@@ -128,16 +128,23 @@
 
     <div class="col-lg-7">
         <?php if ($flight_plan->location_lat && $flight_plan->location_lng): ?>
-        <div class="card">
-            <div class="card-header"><i class="bi bi-map"></i> Flight Route</div>
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-map"></i> Location</span>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="toggle-satellite">
+                    <label class="form-check-label small" for="toggle-satellite">Satellite</label>
+                </div>
+            </div>
             <div class="card-body p-0">
-                <div id="order-map" style="height: 500px;"></div>
+                <input type="hidden" id="plan-lat" value="<?= $flight_plan->location_lat ?>">
+                <input type="hidden" id="plan-lng" value="<?= $flight_plan->location_lng ?>">
+                <input type="hidden" id="plan-polygon" value="<?= esc($flight_plan->area_polygon ?? '') ?>">
+                <input type="hidden" id="plan-pois" value='<?= $pois_json ?>'>
+                <input type="hidden" id="plan-waypoints" value='<?= $waypoints_json ?>'>
+                <div id="pilot-map" style="height: 300px; border-radius: 0 0 8px 8px;"></div>
             </div>
         </div>
-        <input type="hidden" id="plan-lat" value="<?= $flight_plan->location_lat ?>">
-        <input type="hidden" id="plan-lng" value="<?= $flight_plan->location_lng ?>">
-        <input type="hidden" id="plan-polygon" value="<?= esc($flight_plan->area_polygon ?? '') ?>">
-        <input type="hidden" id="plan-waypoints" value='<?= $waypoints_json ?>'>
         <?php endif; ?>
     </div>
 </div>

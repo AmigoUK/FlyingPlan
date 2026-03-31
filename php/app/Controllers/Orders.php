@@ -118,6 +118,7 @@ class Orders extends BaseController
             'deliverables'     => $deliverables,
             'risk_assessment'  => $riskAssessment,
             'waypoints_json'   => json_encode(array_map(fn($w) => WaypointModel::toArray($w), $waypoints)),
+            'pois_json'        => json_encode(array_map(fn($p) => ['lat' => $p->lat, 'lng' => $p->lng, 'label' => $p->label], $pois)),
             'valid_transitions' => self::ADMIN_VALID_TRANSITIONS[$order->status] ?? [],
         ]);
     }

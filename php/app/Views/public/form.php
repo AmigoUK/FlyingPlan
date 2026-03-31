@@ -1,8 +1,9 @@
 <?= $this->extend('layouts/base') ?>
-<?= $this->section('title') ?>Request a Drone Flight<?= $this->endSection() ?>
+<?= $this->section('title') ?>Drone Flight Brief - FlyingPlan<?= $this->endSection() ?>
 
 <?= $this->section('head_extra') ?>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -10,155 +11,437 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
-        <h2 class="text-center mb-4"><i class="bi bi-send"></i> Request a Drone Flight</h2>
+        <h2 class="mb-2"><i class="bi bi-airplane"></i> Drone Flight Brief</h2>
+        <p class="text-muted mb-4">Fill out the details for your drone flight or inspection request.</p>
 
         <!-- Progress -->
-        <div class="d-flex justify-content-between mb-4" id="wizard-progress">
-            <div class="text-center flex-fill wizard-step active" data-step="1"><span class="badge bg-primary rounded-pill">1</span><br><small>Customer</small></div>
-            <div class="text-center flex-fill wizard-step" data-step="2"><span class="badge bg-secondary rounded-pill">2</span><br><small>Brief</small></div>
-            <div class="text-center flex-fill wizard-step" data-step="3"><span class="badge bg-secondary rounded-pill">3</span><br><small>Location</small></div>
-            <div class="text-center flex-fill wizard-step" data-step="4"><span class="badge bg-secondary rounded-pill">4</span><br><small>Preferences</small></div>
-            <div class="text-center flex-fill wizard-step" data-step="5"><span class="badge bg-secondary rounded-pill">5</span><br><small>Review</small></div>
+        <div class="step-progress mb-4">
+            <div class="step active" data-step="1">Your Details</div>
+            <div class="step" data-step="2">Job Brief</div>
+            <div class="step" data-step="3">Location</div>
+            <div class="step" data-step="4">Flight Prefs</div>
+            <div class="step" data-step="5">Review</div>
         </div>
 
-        <form method="POST" action="<?= site_url('submit') ?>" enctype="multipart/form-data" id="flight-form">
+        <form id="flightPlanForm" method="POST" action="<?= site_url('submit') ?>"
+              enctype="multipart/form-data" novalidate>
             <?= csrf_field() ?>
 
             <!-- Step 1: Customer Details -->
-            <div class="wizard-panel" data-step="1">
-                <div class="card"><div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-person"></i> Customer Details</h5>
-                    <div class="mb-3"><label class="form-label">Full Name *</label><input type="text" name="customer_name" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Email *</label><input type="email" name="customer_email" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Phone</label><input type="tel" name="customer_phone" class="form-control"></div>
-                    <div class="mb-3"><label class="form-label">Company</label><input type="text" name="customer_company" class="form-control"></div>
-                    <?php if ($settings->show_customer_type_toggle): ?>
-                    <div class="mb-3"><label class="form-label">Customer Type</label>
-                        <select name="customer_type" class="form-select" id="customer-type-select">
-                            <option value="private">Private</option><option value="business">Business</option>
-                        </select>
+            <div class="form-step active" data-step="1">
+                <h4 class="mb-3"><i class="bi bi-person"></i> Your Details</h4>
+
+                <?php if ($settings->show_customer_type_toggle): ?>
+                <div class="mb-3">
+                    <label class="form-label">Customer Type</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="customer_type" id="ct-private"
+                               value="private" checked autocomplete="off">
+                        <label class="btn btn-outline-primary" for="ct-private">
+                            <i class="bi bi-person"></i> Private
+                        </label>
+                        <input type="radio" class="btn-check" name="customer_type" id="ct-business"
+                               value="business" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="ct-business">
+                            <i class="bi bi-building"></i> Business
+                        </label>
                     </div>
-                    <div id="business-fields" style="display:none;">
-                        <div class="mb-3"><label class="form-label">ABN/Company Number</label><input type="text" name="business_abn" class="form-control"></div>
-                        <div class="mb-3"><label class="form-label">Billing Contact</label><input type="text" name="billing_contact" class="form-control"></div>
-                        <div class="mb-3"><label class="form-label">Billing Email</label><input type="email" name="billing_email" class="form-control"></div>
-                        <div class="mb-3"><label class="form-label">Purchase Order #</label><input type="text" name="purchase_order" class="form-control"></div>
+                </div>
+                <?php else: ?>
+                <input type="hidden" name="customer_type" value="private">
+                <?php endif; ?>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="customer_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                        <div class="invalid-feedback">Please enter your name.</div>
                     </div>
-                    <?php else: ?>
-                    <input type="hidden" name="customer_type" value="private">
-                    <?php endif; ?>
-                    <?php if ($settings->show_heard_about): ?>
-                    <div class="mb-3"><label class="form-label">How did you hear about us?</label>
-                        <select name="heard_about" class="form-select">
-                            <option value="">Select...</option>
+                    <div class="col-md-6">
+                        <label for="customer_email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+                        <div class="invalid-feedback">Please enter a valid email.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="customer_phone" class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="customer_phone" name="customer_phone">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="customer_company" class="form-label">
+                            Company <span id="company-required-star" class="text-danger" style="display: none;">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="customer_company" name="customer_company">
+                        <div class="invalid-feedback">Company name is required for business customers.</div>
+                    </div>
+                </div>
+
+                <!-- Business-only fields -->
+                <div id="business-fields" style="display: none;">
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label for="business_abn" class="form-label">ABN / Registration</label>
+                            <input type="text" class="form-control" id="business_abn" name="business_abn">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="billing_contact" class="form-label">Billing Contact</label>
+                            <input type="text" class="form-control" id="billing_contact" name="billing_contact">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="billing_email" class="form-label">Billing Email</label>
+                            <input type="email" class="form-control" id="billing_email" name="billing_email">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="purchase_order" class="form-label">Purchase Order #</label>
+                            <input type="text" class="form-control" id="purchase_order" name="purchase_order">
+                        </div>
+                    </div>
+                </div>
+
+                <?php if ($settings->show_heard_about): ?>
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <label for="heard_about" class="form-label">How did you hear about us?</label>
+                        <select class="form-select" id="heard_about" name="heard_about">
+                            <option value="">-- Select --</option>
                             <?php foreach ((new \App\Models\HeardAboutOptionModel())->getActive() as $ha): ?>
                             <option value="<?= $ha->value ?>"><?= esc($ha->label) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <?php endif; ?>
-                    <div class="text-end"><button type="button" class="btn btn-primary btn-next">Next <i class="bi bi-arrow-right"></i></button></div>
-                </div></div>
+                </div>
+                <?php endif; ?>
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="button" class="btn btn-primary btn-next">
+                        Next: Job Brief <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Step 2: Job Brief -->
-            <div class="wizard-panel" data-step="2" style="display:none;">
-                <div class="card"><div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-clipboard"></i> Job Brief</h5>
-                    <div class="mb-3"><label class="form-label">Job Type *</label>
-                        <select name="job_type" class="form-select" required>
-                            <option value="">Select...</option>
-                            <?php foreach ((new \App\Models\JobTypeModel())->getActive() as $jt): ?>
-                            <option value="<?= $jt->value ?>"><?= esc($jt->label) ?></option>
-                            <?php endforeach; ?>
+            <div class="form-step" data-step="2">
+                <h4 class="mb-3"><i class="bi bi-clipboard-check"></i> Job Brief</h4>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="job_type" class="form-label">Job Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="job_type" name="job_type" required>
+                            <option value="">-- Select --</option>
+                            <?php
+                            $jobTypes = (new \App\Models\JobTypeModel())->getActive();
+                            $categories = ['technical' => 'Technical', 'creative' => 'Creative & Events', 'other' => 'Other'];
+                            foreach ($categories as $catKey => $catLabel):
+                                $catTypes = array_filter($jobTypes, fn($jt) => ($jt->category ?? 'other') === $catKey);
+                                if (!empty($catTypes)):
+                            ?>
+                            <optgroup label="<?= $catLabel ?>">
+                                <?php foreach ($catTypes as $jt): ?>
+                                <option value="<?= $jt->value ?>"><?= esc($jt->label) ?></option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                            <?php endif; endforeach; ?>
+                        </select>
+                        <div class="invalid-feedback">Please select a job type.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="urgency" class="form-label">Urgency</label>
+                        <select class="form-select" id="urgency" name="urgency">
+                            <option value="low">Low</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
                         </select>
                     </div>
-                    <div class="mb-3"><label class="form-label">Job Description *</label><textarea name="job_description" class="form-control" rows="4" required></textarea></div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Preferred Dates</label><input type="text" name="preferred_dates" class="form-control" placeholder="e.g. Next week, 15-20 March"></div>
-                        <div class="col-md-3 mb-3"><label class="form-label">Time Window</label><input type="text" name="time_window" class="form-control" placeholder="e.g. Morning"></div>
-                        <div class="col-md-3 mb-3"><label class="form-label">Urgency</label>
-                            <select name="urgency" class="form-select"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select>
-                        </div>
+                    <div class="col-12">
+                        <label for="job_description" class="form-label">Job Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="job_description" name="job_description"
+                                  rows="4" required placeholder="Describe what you need..."></textarea>
+                        <div class="invalid-feedback">Please describe the job.</div>
                     </div>
-                    <div class="mb-3"><label class="form-label">Special Requirements</label><textarea name="special_requirements" class="form-control" rows="2"></textarea></div>
-                    <div class="mb-3"><label class="form-label">Attachments</label><input type="file" name="attachments[]" class="form-control" multiple accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx"></div>
-                    <div class="d-flex justify-content-between"><button type="button" class="btn btn-outline-secondary btn-prev"><i class="bi bi-arrow-left"></i> Back</button><button type="button" class="btn btn-primary btn-next">Next <i class="bi bi-arrow-right"></i></button></div>
-                </div></div>
+                    <div class="col-md-6">
+                        <label for="preferred_dates" class="form-label">Preferred Dates</label>
+                        <input type="text" class="form-control" id="preferred_dates" name="preferred_dates"
+                               placeholder="e.g. Next week, March 20-25">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="time_window" class="form-label">Time Window</label>
+                        <select class="form-select" id="time_window" name="time_window">
+                            <option value="morning">Morning</option>
+                            <option value="afternoon">Afternoon</option>
+                            <option value="flexible" selected>Flexible</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label for="special_requirements" class="form-label">Special Requirements</label>
+                        <textarea class="form-control" id="special_requirements" name="special_requirements"
+                                  rows="2" placeholder="Any special instructions or requirements..."></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label for="attachments" class="form-label">Reference Files</label>
+                        <input type="file" class="form-control" id="attachments" name="attachments[]"
+                               multiple accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx">
+                        <div class="form-text">Upload images, PDFs, or documents (max 32 MB total).</div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary btn-prev">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button type="button" class="btn btn-primary btn-next">
+                        Next: Location <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Step 3: Location -->
-            <div class="wizard-panel" data-step="3" style="display:none;">
-                <div class="card"><div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-geo-alt"></i> Location</h5>
-                    <div class="mb-3"><label class="form-label">Address</label><input type="text" name="location_address" class="form-control" placeholder="Street address or description"></div>
-                    <p class="small text-muted">Click on the map to set the location pin. Draw a polygon for the survey area.</p>
-                    <div id="customer-map" style="height: 400px; border-radius: 8px; border: 1px solid #ddd;"></div>
-                    <input type="hidden" id="location_lat" name="location_lat">
-                    <input type="hidden" id="location_lng" name="location_lng">
-                    <input type="hidden" id="area_polygon" name="area_polygon">
-                    <input type="hidden" id="pois_json" name="pois_json">
-                    <div class="d-flex justify-content-between mt-3"><button type="button" class="btn btn-outline-secondary btn-prev"><i class="bi bi-arrow-left"></i> Back</button><button type="button" class="btn btn-primary btn-next">Next <i class="bi bi-arrow-right"></i></button></div>
-                </div></div>
+            <div class="form-step" data-step="3">
+                <h4 class="mb-3"><i class="bi bi-geo-alt"></i> Location</h4>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="address-search" class="form-label">Search Address</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="address-search"
+                                   placeholder="Type an address and press Enter...">
+                            <button type="button" class="btn btn-outline-primary" id="btn-search-address">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div id="customer-map"></div>
+                        <div class="form-text mt-1">
+                            <i class="bi bi-pin-map"></i> <strong>Click</strong> to place pin |
+                            <i class="bi bi-bounding-box"></i> Use draw tools for area |
+                            <i class="bi bi-star"></i> Right-click to add POI
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label for="location_address" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="location_address" name="location_address"
+                               placeholder="Will auto-fill from map or type manually">
+                    </div>
+                </div>
+
+                <!-- Hidden map data fields -->
+                <input type="hidden" id="location_lat" name="location_lat">
+                <input type="hidden" id="location_lng" name="location_lng">
+                <input type="hidden" id="area_polygon" name="area_polygon">
+                <input type="hidden" id="pois_json" name="pois_json">
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary btn-prev">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button type="button" class="btn btn-primary btn-next">
+                        Next: Flight Prefs <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Step 4: Flight Preferences -->
-            <div class="wizard-panel" data-step="4" style="display:none;">
-                <div class="card"><div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-sliders"></i> Flight Preferences</h5>
-                    <div class="row">
-                        <div class="col-md-4 mb-3"><label class="form-label">Altitude</label>
-                            <select name="altitude_preset" class="form-select" id="altitude-select"><option value="low">Low (15-30m)</option><option value="medium" selected>Medium (30-60m)</option><option value="high">High (60-120m)</option><option value="custom">Custom</option></select>
-                        </div>
-                        <div class="col-md-4 mb-3" id="custom-altitude-group" style="display:none;"><label class="form-label">Custom Altitude (m)</label><input type="number" name="altitude_custom_m" class="form-control" min="5" max="120"></div>
-                        <div class="col-md-4 mb-3"><label class="form-label">Camera Angle</label>
-                            <select name="camera_angle" class="form-select"><option value="">Pilot Decides</option><option value="nadir">Nadir (Straight Down)</option><option value="oblique">Oblique (45°)</option><option value="horizontal">Horizontal</option></select>
-                        </div>
+            <div class="form-step" data-step="4">
+                <h4 class="mb-3"><i class="bi bi-sliders"></i> Flight Preferences</h4>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Altitude</label>
+                        <select class="form-select" id="altitude_preset" name="altitude_preset">
+                            <option value="low">Low (15-30m) - Detail shots</option>
+                            <option value="medium" selected>Medium (30-60m) - Standard</option>
+                            <option value="high">High (60-120m) - Wide coverage</option>
+                            <option value="custom">Custom</option>
+                        </select>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3"><label class="form-label">Video Resolution</label>
-                            <select name="video_resolution" class="form-select"><option value="4K">4K</option><option value="1080p">1080p</option><option value="2.7K">2.7K</option></select>
-                        </div>
-                        <div class="col-md-4 mb-3"><label class="form-label">Photo Mode</label>
-                            <select name="photo_mode" class="form-select"><option value="single">Single</option><option value="burst">Burst</option><option value="interval">Interval</option><option value="hdr">HDR</option></select>
-                        </div>
+                    <div class="col-md-6" id="custom-altitude-group" style="display: none;">
+                        <label for="altitude_custom_m" class="form-label">Custom Altitude (meters)</label>
+                        <input type="number" class="form-control" id="altitude_custom_m"
+                               name="altitude_custom_m" min="5" max="120" value="30">
                     </div>
-                    <?php if ($settings->show_purpose_fields): ?>
-                    <div class="mb-3"><label class="form-label">Footage Purpose</label>
-                        <select name="footage_purpose" class="form-select">
-                            <option value="">Select...</option>
+                    <div class="col-md-6">
+                        <label class="form-label">Camera Angle</label>
+                        <select class="form-select" name="camera_angle">
+                            <option value="straight_down">Straight Down (90&deg;)</option>
+                            <option value="45deg">45&deg; Angle</option>
+                            <option value="horizontal">Horizontal (0&deg;)</option>
+                            <option value="pilot_decides" selected>Pilot Decides</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Video Resolution</label>
+                        <select class="form-select" name="video_resolution">
+                            <option value="4k" selected>4K</option>
+                            <option value="1080p">1080p</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Photo Mode</label>
+                        <select class="form-select" name="photo_mode">
+                            <option value="single" selected>Single Shot</option>
+                            <option value="interval">Interval (Timelapse)</option>
+                            <option value="panorama">Panorama</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label for="no_fly_notes" class="form-label">No-Fly Zone Notes</label>
+                        <textarea class="form-control" id="no_fly_notes" name="no_fly_notes" rows="2"
+                                  placeholder="Any nearby airports, restricted areas, or obstacles?"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label for="privacy_notes" class="form-label">Privacy Considerations</label>
+                        <textarea class="form-control" id="privacy_notes" name="privacy_notes" rows="2"
+                                  placeholder="Neighbouring properties, people, or sensitive areas?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Footage Purpose & Output section -->
+                <?php if ($settings->show_purpose_fields): ?>
+                <hr class="my-4">
+                <h5 class="mb-3"><i class="bi bi-bullseye"></i> Footage Purpose & Output</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="footage_purpose" class="form-label">What is the footage for?</label>
+                        <select class="form-select" id="footage_purpose" name="footage_purpose">
+                            <option value="">-- Select --</option>
                             <?php foreach ((new \App\Models\PurposeOptionModel())->getActive() as $po): ?>
                             <option value="<?= $po->value ?>"><?= esc($po->label) ?></option>
                             <?php endforeach; ?>
-                            <option value="other">Other</option>
                         </select>
                     </div>
-                    <div class="mb-3" id="purpose-other-group" style="display:none;"><input type="text" name="footage_purpose_other" class="form-control" placeholder="Describe purpose"></div>
+                    <div class="col-md-6" id="purpose-other-group" style="display: none;">
+                        <label for="footage_purpose_other" class="form-label">Please specify</label>
+                        <input type="text" class="form-control" id="footage_purpose_other" name="footage_purpose_other"
+                               placeholder="Describe the purpose...">
+                    </div>
+                    <?php if ($settings->show_output_format): ?>
+                    <div class="col-md-6">
+                        <label for="output_format" class="form-label">Output Format</label>
+                        <select class="form-select" id="output_format" name="output_format">
+                            <option value="">-- Select --</option>
+                            <option value="raw">Raw Footage</option>
+                            <option value="edited_video">Edited Video</option>
+                            <option value="photos_only">Photos Only</option>
+                            <option value="photos_video">Photos + Video</option>
+                            <option value="livestream">Live Stream</option>
+                        </select>
+                    </div>
                     <?php endif; ?>
-                    <div class="mb-3"><label class="form-label">No-Fly Zone Notes</label><textarea name="no_fly_notes" class="form-control" rows="2" placeholder="Any areas to avoid?"></textarea></div>
-                    <div class="mb-3"><label class="form-label">Privacy Concerns</label><textarea name="privacy_notes" class="form-control" rows="2" placeholder="Neighbours, restricted views, etc."></textarea></div>
-                    <input type="hidden" name="shot_types_json" id="shot_types_json">
-                    <input type="hidden" name="delivery_timeline" value="standard">
-                    <div class="d-flex justify-content-between"><button type="button" class="btn btn-outline-secondary btn-prev"><i class="bi bi-arrow-left"></i> Back</button><button type="button" class="btn btn-primary btn-next">Next <i class="bi bi-arrow-right"></i></button></div>
-                </div></div>
+                    <div class="col-md-6">
+                        <label for="video_duration" class="form-label">Video Duration Expectation</label>
+                        <input type="text" class="form-control" id="video_duration" name="video_duration"
+                               placeholder='e.g. "2-3 minutes", "full event"'>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Specific Shots Needed</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input shot-type-check" type="checkbox" value="overview" id="shot-overview">
+                                <label class="form-check-label" for="shot-overview">Overview / Wide</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input shot-type-check" type="checkbox" value="close_up" id="shot-closeup">
+                                <label class="form-check-label" for="shot-closeup">Close-up Detail</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input shot-type-check" type="checkbox" value="orbit" id="shot-orbit">
+                                <label class="form-check-label" for="shot-orbit">Orbiting</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input shot-type-check" type="checkbox" value="tracking" id="shot-tracking">
+                                <label class="form-check-label" for="shot-tracking">Tracking / Follow</label>
+                            </div>
+                        </div>
+                        <input type="hidden" id="shot_types_json" name="shot_types_json" value="[]">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="delivery_timeline" class="form-label">Delivery Timeline</label>
+                        <select class="form-select" id="delivery_timeline" name="delivery_timeline">
+                            <option value="">-- Select --</option>
+                            <option value="asap">ASAP</option>
+                            <option value="1_week">1 Week</option>
+                            <option value="2_weeks">2 Weeks</option>
+                            <option value="1_month">1 Month</option>
+                            <option value="flexible">Flexible</option>
+                        </select>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary btn-prev">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button type="button" class="btn btn-primary btn-next">
+                        Next: Review <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Step 5: Review & Submit -->
-            <div class="wizard-panel" data-step="5" style="display:none;">
-                <div class="card"><div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-check2-square"></i> Review & Submit</h5>
-                    <p class="text-muted">Please review your submission details before sending.</p>
-                    <div id="review-summary" class="mb-3">
-                        <p><strong>Name:</strong> <span id="rev-name"></span></p>
-                        <p><strong>Email:</strong> <span id="rev-email"></span></p>
-                        <p><strong>Job Type:</strong> <span id="rev-job-type"></span></p>
+            <div class="form-step" data-step="5">
+                <h4 class="mb-3"><i class="bi bi-check2-square"></i> Review & Submit</h4>
+
+                <div class="review-section">
+                    <h6>Your Details</h6>
+                    <p class="mb-1"><strong>Name:</strong> <span id="rev-name"></span></p>
+                    <p class="mb-1"><strong>Email:</strong> <span id="rev-email"></span></p>
+                    <p class="mb-1"><strong>Phone:</strong> <span id="rev-phone"></span></p>
+                    <p class="mb-1"><strong>Type:</strong> <span id="rev-customer-type"></span></p>
+                    <p class="mb-1"><strong>Company:</strong> <span id="rev-company"></span></p>
+                    <div id="rev-business-fields" style="display: none;">
+                        <p class="mb-1"><strong>ABN:</strong> <span id="rev-abn"></span></p>
+                        <p class="mb-1"><strong>Billing Contact:</strong> <span id="rev-billing-contact"></span></p>
+                        <p class="mb-1"><strong>Billing Email:</strong> <span id="rev-billing-email"></span></p>
+                        <p class="mb-1"><strong>PO #:</strong> <span id="rev-po"></span></p>
                     </div>
-                    <div class="form-check mb-3">
-                        <input type="checkbox" class="form-check-input" name="consent_given" id="consent" value="1" required>
-                        <label class="form-check-label" for="consent">I confirm the information provided is accurate and I consent to the collection of aerial imagery at the specified location.</label>
-                    </div>
-                    <div class="d-flex justify-content-between"><button type="button" class="btn btn-outline-secondary btn-prev"><i class="bi bi-arrow-left"></i> Back</button><button type="submit" class="btn btn-success"><i class="bi bi-send"></i> Submit Flight Brief</button></div>
-                </div></div>
+                </div>
+
+                <div class="review-section">
+                    <h6>Job Brief</h6>
+                    <p class="mb-1"><strong>Type:</strong> <span id="rev-job-type"></span></p>
+                    <p class="mb-1"><strong>Urgency:</strong> <span id="rev-urgency"></span></p>
+                    <p class="mb-1"><strong>Description:</strong> <span id="rev-description"></span></p>
+                    <p class="mb-1"><strong>Preferred Dates:</strong> <span id="rev-dates"></span></p>
+                    <p class="mb-0"><strong>Time Window:</strong> <span id="rev-time"></span></p>
+                </div>
+
+                <div class="review-section">
+                    <h6>Location</h6>
+                    <p class="mb-1"><strong>Address:</strong> <span id="rev-address"></span></p>
+                    <p class="mb-1"><strong>Coordinates:</strong> <span id="rev-coords"></span></p>
+                    <div id="review-map" style="height: 200px; border-radius: 8px; border: 1px solid #dee2e6;" class="mb-2"></div>
+                </div>
+
+                <div class="review-section">
+                    <h6>Flight Preferences</h6>
+                    <p class="mb-1"><strong>Altitude:</strong> <span id="rev-altitude"></span></p>
+                    <p class="mb-1"><strong>Camera Angle:</strong> <span id="rev-camera"></span></p>
+                    <p class="mb-1"><strong>Resolution:</strong> <span id="rev-resolution"></span></p>
+                    <p class="mb-1" id="rev-purpose-row" style="display: none;"><strong>Purpose:</strong> <span id="rev-purpose"></span></p>
+                    <p class="mb-1" id="rev-output-row" style="display: none;"><strong>Output Format:</strong> <span id="rev-output-format"></span></p>
+                    <p class="mb-1" id="rev-duration-row" style="display: none;"><strong>Video Duration:</strong> <span id="rev-video-duration"></span></p>
+                    <p class="mb-1" id="rev-shots-row" style="display: none;"><strong>Shot Types:</strong> <span id="rev-shot-types"></span></p>
+                    <p class="mb-0" id="rev-timeline-row" style="display: none;"><strong>Delivery Timeline:</strong> <span id="rev-delivery-timeline"></span></p>
+                </div>
+
+                <div class="form-check mt-3 mb-3">
+                    <input class="form-check-input" type="checkbox" id="consent_given" name="consent_given" value="1" required>
+                    <label class="form-check-label" for="consent_given">
+                        I confirm the information above is correct and I consent to drone flight operations
+                        at the specified location. <span class="text-danger">*</span>
+                    </label>
+                    <div class="invalid-feedback">You must give consent to submit.</div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary btn-prev">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button type="submit" class="btn btn-success btn-lg" id="btn-submit">
+                        <i class="bi bi-send"></i> Submit Flight Brief
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -167,14 +450,7 @@
 
 <?= $this->section('scripts') ?>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script src="<?= base_url('static/js/map-customer.js') ?>"></script>
 <script src="<?= base_url('static/js/form-wizard.js') ?>"></script>
-<script>
-document.getElementById('customer-type-select')?.addEventListener('change', function() {
-    document.getElementById('business-fields').style.display = this.value === 'business' ? 'block' : 'none';
-});
-document.getElementById('altitude-select')?.addEventListener('change', function() {
-    document.getElementById('custom-altitude-group').style.display = this.value === 'custom' ? 'block' : 'none';
-});
-</script>
 <?= $this->endSection() ?>

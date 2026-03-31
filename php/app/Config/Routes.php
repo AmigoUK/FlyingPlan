@@ -6,6 +6,13 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
+// Redirect to installer if not yet set up
+if (!file_exists(WRITEPATH . '.installed') && file_exists(FCPATH . 'install.php')) {
+    $routes->get('/', static fn() => redirect()->to('/install.php'));
+    $routes->get('(:any)', static fn() => redirect()->to('/install.php'));
+    return;
+}
+
 // Public routes (no auth required)
 $routes->get('/', 'PublicForm::form');
 $routes->post('/submit', 'PublicForm::submit');
