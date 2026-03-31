@@ -5,6 +5,8 @@
  * Handles: requirements check, DB setup, branding, admin account, config.
  * Deletes itself after successful installation.
  */
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
 
 // Prevent running if already installed
 $writablePath = dirname(__DIR__) . '/writable';
@@ -13,6 +15,11 @@ if (file_exists($writablePath . '/.installed')) {
     exit;
 }
 
+// Session config — use writable dir if possible
+$sessionPath = $writablePath . '/session';
+if (is_writable($sessionPath)) {
+    ini_set('session.save_path', $sessionPath);
+}
 session_start();
 $step = (int) ($_POST['step'] ?? $_GET['step'] ?? 1);
 $error = '';
@@ -100,12 +107,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (strlen($pass) < 8) { $error = 'Password must be at least 8 characters.'; $step = 4; }
             elseif ($pass !== $pass2) { $error = 'Passwords do not match.'; $step = 4; }
             else {
+                mysqli_report(MYSQLI_REPORT_OFF);
                 $db = new mysqli($dbc['host'], $dbc['user'], $dbc['pass'], $dbc['name'], $dbc['port']);
                 $hash = password_hash($pass, PASSWORD_BCRYPT);
-                $stmt = $db->prepare("INSERT INTO users (username, display_name, password_hash, is_active_user, role, email, created_at) VALUES (?, ?, ?, 1, 'admin', ?, NOW())");
                 $uname = $_POST['admin_user'] ?: 'admin';
                 $dname = $_POST['admin_display'] ?: 'Administrator';
                 $uemail = $_POST['admin_email'] ?: '';
+                $stmt = $db->prepare("INSERT INTO users (username, display_name, password_hash, is_active_user, role, email, created_at) VALUES (?, ?, ?, 1, 'admin', ?, NOW()) ON DUPLICATE KEY UPDATE display_name=VALUES(display_name), password_hash=VALUES(password_hash), email=VALUES(email)");
                 $stmt->bind_param('ssss', $uname, $dname, $hash, $uemail);
                 if (!$stmt->execute()) {
                     $error = 'Could not create user: ' . htmlspecialchars($stmt->error);
