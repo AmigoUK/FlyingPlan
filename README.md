@@ -761,7 +761,7 @@ FlyingPlan is available in two versions: a **PHP version** for shared hosting (r
 
 The PHP version runs on any standard shared hosting with PHP 8.1+ and MySQL. No command line access required -- everything is configured through a web-based installer.
 
-**[Download the PHP installer package (zip)](https://github.com/AmigoUK/FlyingPlan/raw/feature/php-rewrite/php/public/install.php)** -- or clone the repo and use the `php/` directory.
+**[Download the PHP installer package (zip)](https://github.com/AmigoUK/FlyingPlan/archive/refs/heads/feature/php-rewrite.zip)** -- or clone the repo and use the `php/` + `static/` directories.
 
 #### Requirements
 
