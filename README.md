@@ -48,6 +48,8 @@ Built for UK drone operators who need to manage jobs, stay legally compliant, an
 - [Order Status Reference](#order-status-reference)
 - [Who Can Do What -- User Roles](#who-can-do-what----user-roles)
 - [Installation](#installation)
+  - [PHP Version (Shared Hosting)](#php-version-shared-hosting)
+  - [Python Version (Original)](#python-version-original)
 - [Running Tests](#running-tests)
 - [Demo Data](#demo-data)
 - [Default Login Credentials](#default-login-credentials)
@@ -753,23 +755,71 @@ FlyingPlan has three roles. Each higher role can do everything the lower roles c
 
 ## Installation
 
-### Prerequisites
+FlyingPlan is available in two versions: a **PHP version** for shared hosting (recommended for production) and the original **Python version** for development or VPS deployment.
+
+### PHP Version (Shared Hosting)
+
+The PHP version runs on any standard shared hosting with PHP 8.1+ and MySQL. No command line access required -- everything is configured through a web-based installer.
+
+**[Download the PHP installer package (zip)](https://github.com/AmigoUK/FlyingPlan/raw/feature/php-rewrite/php/public/install.php)** -- or clone the repo and use the `php/` directory.
+
+#### Requirements
+
+- PHP 8.1 or newer
+- MySQL 5.7+ or MariaDB 10.3+
+- Required PHP extensions: mysqli, intl, mbstring, json, xml, gd, curl, zip
+
+#### Quick Start
+
+1. **Upload** the `FlyingPlan/` folder to your hosting (e.g. into `public_html/`)
+2. **Point** your domain's document root to `FlyingPlan/public/`
+3. **Open** your site in a browser -- the installer launches automatically
+4. **Walk through** 5 setup steps:
+   - **Requirements** -- checks PHP version and extensions
+   - **Database** -- enter your MySQL credentials, tables are created automatically
+   - **Branding** -- set business name, primary colour, dark mode
+   - **Admin Account** -- create your login
+   - **Finalize** -- writes config and completes setup
+5. **Log in** at `/login` with the admin account you created
+6. **Delete the installer** file when prompted (for security)
+
+#### PHP Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Backend | CodeIgniter 4.6, PHP 8.1+ |
+| Database | MySQL / MariaDB |
+| PDF Reports | mPDF 8.3 |
+| Frontend | Bootstrap 5.3, Leaflet.js, Three.js |
+| Maps | OpenStreetMap tiles |
+| Weather & Elevation | Open-Meteo API (free, no key) |
+| Mission Export | KMZ (DJI), KML, GeoJSON, CSV, GPX, Litchi |
+
+#### PHP Security Checklist
+
+- [ ] Delete `install.php` after setup (the installer prompts you to do this)
+- [ ] Change the default admin password to something strong
+- [ ] Ensure `writable/` directory is not publicly accessible (`.htaccess` handles this)
+- [ ] Use HTTPS (most shared hosts offer free SSL via Let's Encrypt)
+- [ ] Set up regular database backups
+
+---
+
+### Python Version (Original)
+
+The original Python/Flask version is suitable for VPS or local development.
+
+#### Prerequisites
 
 - Python 3.10 or newer
 - pip (Python package manager)
-- System libraries for WeasyPrint PDF generation (see below)
-
-### WeasyPrint System Dependencies
-
-WeasyPrint requires system-level libraries for rendering PDFs. On Ubuntu/Debian:
+- System libraries for WeasyPrint PDF generation:
 
 ```bash
 sudo apt install -y libpango-1.0-0 libpangocairo-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libffi-dev
 ```
 
-On other distributions, see the [WeasyPrint installation docs](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html).
-
-### Quick Start
+#### Quick Start
 
 ```bash
 # Clone the repository
@@ -789,9 +839,9 @@ python3 app.py
 
 Open your browser and go to `https://localhost:5002`. The database and default users are created automatically on the first run.
 
-> **Note:** The app runs with HTTPS using self-signed certificates (see SSL Setup below). Your browser will show a security warning -- this is expected for self-signed certs.
+> **Note:** The app runs with HTTPS using self-signed certificates. Your browser will show a security warning -- this is expected for self-signed certs.
 
-### Environment Variables
+#### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -800,27 +850,16 @@ Open your browser and go to `https://localhost:5002`. The database and default u
 | `GOOGLE_CLIENT_ID` | *(empty)* | Google OAuth client ID (for Google login integration) |
 | `GOOGLE_CLIENT_SECRET` | *(empty)* | Google OAuth client secret |
 
-Set these as environment variables or in a `.env` file:
+#### SSL Setup
 
-```bash
-export SECRET_KEY="your-secure-random-key-here"
-export DATABASE_URL="sqlite:///flyingplan.db"
-```
-
-### SSL Setup
-
-The app expects SSL certificates at `certs/cert.pem` and `certs/key.pem`. To generate self-signed certificates for development:
+The app expects SSL certificates at `certs/cert.pem` and `certs/key.pem`. To generate self-signed certificates:
 
 ```bash
 mkdir -p certs
 openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes -subj "/CN=localhost"
 ```
 
-For production, use certificates from a trusted CA (e.g. Let's Encrypt) or terminate SSL at your reverse proxy.
-
-### Production Deployment
-
-FlyingPlan includes a systemd service configuration for running as a background service:
+#### Production Deployment (systemd)
 
 ```ini
 [Unit]
@@ -840,7 +879,7 @@ Environment=FLASK_ENV=production
 WantedBy=multi-user.target
 ```
 
-Save this as `/etc/systemd/system/flyingplan.service`, then:
+Save as `/etc/systemd/system/flyingplan.service`, then:
 
 ```bash
 sudo systemctl daemon-reload
@@ -848,14 +887,14 @@ sudo systemctl enable flyingplan
 sudo systemctl start flyingplan
 ```
 
-#### Production Security Checklist
+#### Python Security Checklist
 
 - [ ] Change the default `SECRET_KEY` to a long random string
 - [ ] Change the default admin and pilot passwords
 - [ ] Set `FLASK_ENV=production`
 - [ ] Consider PostgreSQL instead of SQLite for concurrent access
 - [ ] Use a reverse proxy (nginx/Caddy) for SSL termination and static file serving
-- [ ] Run as a non-root user (update the `User=` line in the service file)
+- [ ] Run as a non-root user
 - [ ] Set up regular database backups
 - [ ] Restrict firewall access to ports 80/443 only
 
@@ -905,6 +944,24 @@ After running `flask seed-demo`, all demo users use password **`demo123`**.
 ---
 
 ## Tech Stack
+
+### PHP Version (Shared Hosting)
+
+| Component | Technology |
+|-----------|-----------|
+| Backend | CodeIgniter 4.6, PHP 8.1+ |
+| Database | MySQL / MariaDB (via MySQLi) |
+| Authentication | Session-based with bcrypt passwords |
+| Frontend | Bootstrap 5.3.3 |
+| Maps | Leaflet.js, Leaflet.Draw |
+| 3D Visualisation | Three.js |
+| Weather & Elevation | Open-Meteo API (free, no key required) |
+| PDF Reports | mPDF 8.3 |
+| Map Tiles | OpenStreetMap |
+| Mission Export | KMZ (DJI), KML, GeoJSON, CSV, GPX, Litchi CSV |
+| Tests | PHPUnit (63 tests) |
+
+### Python Version (Original)
 
 | Component | Technology |
 |-----------|-----------|
