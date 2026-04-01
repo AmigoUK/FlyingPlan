@@ -55,7 +55,7 @@ class Orders extends BaseController
         // Check if order already exists
         $existing = $db->table('orders')->where('flight_plan_id', $planId)->get()->getRow();
         if ($existing) {
-            return redirect()->to('/orders/' . $existing->id)
+            return redirect()->to(site_url('/orders/') . $existing->id)
                 ->with('flash_warning', 'An order already exists for this flight plan.');
         }
 
@@ -86,7 +86,7 @@ class Orders extends BaseController
         // Update flight plan status
         (new FlightPlanModel())->update($planId, ['status' => 'in_review']);
 
-        return redirect()->to('/orders/' . $orderId)->with('flash_success', 'Order created.');
+        return redirect()->to(site_url('/orders/') . $orderId)->with('flash_success', 'Order created.');
     }
 
     public function detail($orderId)
@@ -131,7 +131,7 @@ class Orders extends BaseController
 
         $pilotId = $this->request->getPost('pilot_id');
         if (empty($pilotId)) {
-            return redirect()->to('/orders/' . $orderId)->with('flash_danger', 'Please select a pilot.');
+            return redirect()->to(site_url('/orders/') . $orderId)->with('flash_danger', 'Please select a pilot.');
         }
 
         $pilot = $db->table('users')->where('id', $pilotId)->get()->getRow();
@@ -150,7 +150,7 @@ class Orders extends BaseController
 
         $this->logActivity($orderId, 'assigned', $order->status, 'assigned', $pilot->display_name ?? '');
 
-        return redirect()->to('/orders/' . $orderId)
+        return redirect()->to(site_url('/orders/') . $orderId)
             ->with('flash_success', 'Order assigned to ' . ($pilot->display_name ?? 'pilot') . '.');
     }
 
@@ -164,7 +164,7 @@ class Orders extends BaseController
         $validTransitions = self::ADMIN_VALID_TRANSITIONS[$order->status] ?? [];
 
         if (!in_array($newStatus, $validTransitions)) {
-            return redirect()->to('/orders/' . $orderId)
+            return redirect()->to(site_url('/orders/') . $orderId)
                 ->with('flash_danger', "Cannot change status from {$order->status} to {$newStatus}.");
         }
 
@@ -188,7 +188,7 @@ class Orders extends BaseController
         $this->logActivity($orderId, 'status_changed', $order->status, $newStatus);
 
         $label = ucwords(str_replace('_', ' ', $newStatus));
-        return redirect()->to('/orders/' . $orderId)->with('flash_success', "Status changed to {$label}.");
+        return redirect()->to(site_url('/orders/') . $orderId)->with('flash_success', "Status changed to {$label}.");
     }
 
     public function saveNotes($orderId)
@@ -202,7 +202,7 @@ class Orders extends BaseController
         ]);
 
         $this->logActivity($orderId, 'note_added', null, null, 'Admin notes updated');
-        return redirect()->to('/orders/' . $orderId)->with('flash_success', 'Notes saved.');
+        return redirect()->to(site_url('/orders/') . $orderId)->with('flash_success', 'Notes saved.');
     }
 
     public function downloadDeliverable($orderId, $dId)
@@ -212,14 +212,14 @@ class Orders extends BaseController
             ->where('id', $dId)->where('order_id', $orderId)->get()->getRow();
 
         if (!$deliv) {
-            return redirect()->to('/orders/' . $orderId)->with('flash_danger', 'Invalid deliverable.');
+            return redirect()->to(site_url('/orders/') . $orderId)->with('flash_danger', 'Invalid deliverable.');
         }
 
         $dir = WRITEPATH . 'uploads/orders/' . $orderId . '/';
         $path = realpath($dir . $deliv->stored_filename);
 
         if (!$path || !str_starts_with($path, realpath($dir))) {
-            return redirect()->to('/orders/' . $orderId)->with('flash_danger', 'File not found.');
+            return redirect()->to(site_url('/orders/') . $orderId)->with('flash_danger', 'File not found.');
         }
 
         return $this->response->download($path, null)->setFileName($deliv->original_filename);

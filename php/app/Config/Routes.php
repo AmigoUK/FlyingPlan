@@ -42,6 +42,7 @@ $routes->group('admin', ['filter' => 'auth:manager'], static function ($routes) 
     $routes->post('(:num)/generate-grid', 'Admin::generateGrid/$1');
     $routes->post('(:num)/elevation', 'Admin::getElevation/$1');
     $routes->post('(:num)/import-kmz', 'Admin::importKmz/$1');
+    $routes->post('(:num)/polygon', 'Admin::savePolygon/$1');
     $routes->post('(:num)/drone-model', 'Admin::saveDroneModel/$1');
     $routes->post('(:num)/duplicate', 'Admin::duplicate/$1');
     $routes->get('(:num)/export-kmz', 'Admin::exportKmz/$1');

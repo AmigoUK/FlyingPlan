@@ -201,7 +201,7 @@ class Admin extends BaseController
     {
         $fp = $this->getFp($planId);
         $data = $this->request->getJSON(true);
-        $polygon = $data['polygon'] ?? ($fp->area_polygon ? json_decode($fp->area_polygon, true) : null);
+        $polygon = $this->resolvePolygon($data, $fp);
 
         if (!$polygon || count($polygon) < 3) {
             return $this->response->setJSON(['success' => false, 'error' => 'No polygon defined'])->setStatusCode(400);
@@ -216,7 +216,7 @@ class Admin extends BaseController
     {
         $fp = $this->getFp($planId);
         $data = $this->request->getJSON(true);
-        $polygon = $data['polygon'] ?? ($fp->area_polygon ? json_decode($fp->area_polygon, true) : null);
+        $polygon = $this->resolvePolygon($data, $fp);
 
         if (!$polygon || count($polygon) < 3) {
             return $this->response->setJSON(['success' => false, 'error' => 'No polygon defined'])->setStatusCode(400);
@@ -235,7 +235,7 @@ class Admin extends BaseController
         $config = $data['config'] ?? $data;
 
         if ($mode === 'multi' || $mode === 'multi_face') {
-            $polygon = $data['polygon'] ?? ($fp->area_polygon ? json_decode($fp->area_polygon, true) : null);
+            $polygon = $this->resolvePolygon($data, $fp);
             if (!$polygon || count($polygon) < 2) {
                 return $this->response->setJSON(['success' => false, 'error' => 'No polygon defined'])->setStatusCode(400);
             }
@@ -376,6 +376,58 @@ class Admin extends BaseController
 
     // ── Drone Model & Duplicate ─────────────────────────────────
 
+    public function savePolygon($planId)
+    {
+        $fp = $this->getFp($planId);
+        $data = $this->request->getJSON(true);
+        $polygon = $data['polygon'] ?? null;
+
+        $update = ['area_polygon' => $polygon];
+        if ($polygon) {
+            $coords = json_decode($polygon, true);
+            if (is_array($coords) && count($coords) >= 3) {
+                $update['estimated_area_sqm'] = $this->calculatePolygonArea($coords);
+            }
+        } else {
+            $update['estimated_area_sqm'] = null;
+        }
+
+        (new FlightPlanModel())->update($planId, $update);
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    private function resolvePolygon(array $data, $fp): ?array
+    {
+        $raw = $data['polygon'] ?? null;
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+        if (is_array($raw) && count($raw) >= 3) {
+            return $raw;
+        }
+        if (!empty($fp->area_polygon)) {
+            return json_decode($fp->area_polygon, true);
+        }
+        return null;
+    }
+
+    private function calculatePolygonArea(array $coords): float
+    {
+        // Shoelace formula with lat/lng to metres approximation
+        $n = count($coords);
+        if ($n < 3) return 0;
+        $area = 0;
+        for ($i = 0; $i < $n; $i++) {
+            $j = ($i + 1) % $n;
+            $xi = $coords[$i][1] * 111320 * cos(deg2rad($coords[$i][0]));
+            $yi = $coords[$i][0] * 110540;
+            $xj = $coords[$j][1] * 111320 * cos(deg2rad($coords[$j][0]));
+            $yj = $coords[$j][0] * 110540;
+            $area += ($xi * $yj - $xj * $yi);
+        }
+        return abs($area / 2);
+    }
+
     public function saveDroneModel($planId)
     {
         $fp = $this->getFp($planId);
@@ -430,7 +482,7 @@ class Admin extends BaseController
         $fp = $this->getFp($planId);
 
         if (empty($wps)) {
-            return redirect()->to('/admin/' . $planId)->with('flash_warning', 'No waypoints to export.');
+            return redirect()->to(site_url('/admin/') . $planId)->with('flash_warning', 'No waypoints to export.');
         }
 
         $content = KmzGenerator::generateKmz($wps, $fp->reference, $fp->drone_model ?? 'mini_4_pro');
@@ -484,7 +536,7 @@ class Admin extends BaseController
         $wps = $this->getWaypointsData($planId);
         $fp = $this->getFp($planId);
         if (empty($wps)) {
-            return redirect()->to('/admin/' . $planId)->with('flash_warning', 'No waypoints to export.');
+            return redirect()->to(site_url('/admin/') . $planId)->with('flash_warning', 'No waypoints to export.');
         }
         $content = LitchiExport::generateLitchiCsv($wps);
         return $this->response->setContentType('text/csv')
@@ -497,7 +549,7 @@ class Admin extends BaseController
         $wps = $this->getWaypointsData($planId);
         $fp = $this->getFp($planId);
         if (empty($wps)) {
-            return redirect()->to('/admin/' . $planId)->with('flash_warning', 'No waypoints to export.');
+            return redirect()->to(site_url('/admin/') . $planId)->with('flash_warning', 'No waypoints to export.');
         }
         $content = PhotoPositions::generatePhotoPositionsCsv($wps);
         return $this->response->setContentType('text/csv')
@@ -510,7 +562,7 @@ class Admin extends BaseController
         $wps = $this->getWaypointsData($planId);
         $fp = $this->getFp($planId);
         if (empty($wps)) {
-            return redirect()->to('/admin/' . $planId)->with('flash_warning', 'No waypoints to export.');
+            return redirect()->to(site_url('/admin/') . $planId)->with('flash_warning', 'No waypoints to export.');
         }
         $content = ExportFormats::generateEnhancedGeojson($wps, $fp->reference, $fp->drone_model ?? 'mini_4_pro');
         return $this->response->setContentType('application/geo+json')

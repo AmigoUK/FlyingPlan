@@ -88,14 +88,15 @@ class Pilot extends BaseController
                 $data[$f] = !empty($val) ? $val : null;
             }
 
+            // Demo mode: block password and username changes
             $password = $this->request->getPost('password');
             if (!empty($password)) {
-                $data['password_hash'] = WerkzeugHash::hash($password);
+                return redirect()->to(site_url('pilot/profile'))->with('flash_danger', 'Password changes are disabled in demo mode.');
             }
 
             (new UserModel())->update($userId, $data);
             session()->set('display_name', $data['display_name']);
-            return redirect()->to('/pilot/profile')->with('flash_success', 'Profile updated.');
+            return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Profile updated.');
         }
 
         $certs = $db->table('pilot_certifications')->where('user_id', $userId)->get()->getResult();
@@ -142,23 +143,23 @@ class Pilot extends BaseController
     {
         $order = $this->getPilotOrder($orderId);
         if ($order->status !== 'assigned') {
-            return redirect()->to('/pilot/orders/' . $orderId)->with('flash_warning', 'Cannot accept this order.');
+            return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_warning', 'Cannot accept this order.');
         }
         (new OrderModel())->update($orderId, ['status' => 'accepted', 'accepted_at' => date('Y-m-d H:i:s')]);
         $this->logActivity($orderId, 'accepted');
-        return redirect()->to('/pilot/orders/' . $orderId)->with('flash_success', 'Order accepted.');
+        return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_success', 'Order accepted.');
     }
 
     public function declineOrder($orderId)
     {
         $order = $this->getPilotOrder($orderId);
         if ($order->status !== 'assigned') {
-            return redirect()->to('/pilot/orders/' . $orderId)->with('flash_warning', 'Cannot decline this order.');
+            return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_warning', 'Cannot decline this order.');
         }
         $reason = $this->request->getPost('reason');
         (new OrderModel())->update($orderId, ['status' => 'declined', 'decline_reason' => $reason]);
         $this->logActivity($orderId, 'declined', null, null, $reason);
-        return redirect()->to('/pilot')->with('flash_info', 'Order declined.');
+        return redirect()->to(site_url('pilot'))->with('flash_info', 'Order declined.');
     }
 
     public function updateStatus($orderId)
@@ -168,18 +169,18 @@ class Pilot extends BaseController
         $allowed = self::FORWARD_STATUSES[$order->status] ?? [];
 
         if (!in_array($newStatus, $allowed)) {
-            return redirect()->to('/pilot/orders/' . $orderId)->with('flash_danger', 'Invalid status transition.');
+            return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_danger', 'Invalid status transition.');
         }
 
         // Check risk assessment before starting flight
         if ($newStatus === 'in_progress') {
             if (!$order->risk_assessment_completed) {
-                return redirect()->to('/pilot/orders/' . $orderId)
+                return redirect()->to(site_url('/pilot/orders/') . $orderId)
                     ->with('flash_danger', 'Complete the risk assessment before starting the flight.');
             }
             $ra = \Config\Database::connect()->table('risk_assessments')->where('order_id', $orderId)->get()->getRow();
             if ($ra && $ra->decision === 'abort') {
-                return redirect()->to('/pilot/orders/' . $orderId)
+                return redirect()->to(site_url('/pilot/orders/') . $orderId)
                     ->with('flash_danger', 'Flight was aborted in risk assessment. Cannot proceed.');
             }
         }
@@ -195,7 +196,7 @@ class Pilot extends BaseController
         $this->logActivity($orderId, 'status_changed', $order->status, $newStatus);
 
         $label = ucwords(str_replace('_', ' ', $newStatus));
-        return redirect()->to('/pilot/orders/' . $orderId)->with('flash_success', "Status updated to {$label}.");
+        return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_success', "Status updated to {$label}.");
     }
 
     public function saveNotes($orderId)
@@ -203,7 +204,7 @@ class Pilot extends BaseController
         $order = $this->getPilotOrder($orderId);
         (new OrderModel())->update($orderId, ['pilot_notes' => $this->request->getPost('pilot_notes')]);
         $this->logActivity($orderId, 'note_added', null, null, 'Pilot notes updated');
-        return redirect()->to('/pilot/orders/' . $orderId)->with('flash_success', 'Notes saved.');
+        return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_success', 'Notes saved.');
     }
 
     // ── Flight Params & Category ────────────────────────────────
@@ -266,7 +267,7 @@ class Pilot extends BaseController
             $params['category_blockers'] = !empty($result->blockers) ? json_encode($result->blockers) : null;
 
             (new OrderModel())->update($orderId, $params);
-            return redirect()->to('/pilot/orders/' . $orderId)->with('flash_success', "Category: {$result->category}");
+            return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_success', "Category: {$result->category}");
         }
 
         return view('pilot/flight_params', ['order' => $order, 'equipment' => $equipment]);
@@ -338,7 +339,7 @@ class Pilot extends BaseController
 
         // POST — create risk assessment
         if ($existingRa) {
-            return redirect()->to('/pilot/orders/' . $orderId)->with('flash_warning', 'Risk assessment already completed.');
+            return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_warning', 'Risk assessment already completed.');
         }
 
         $raData = [
@@ -366,7 +367,7 @@ class Pilot extends BaseController
         }
 
         if ($missing > 0) {
-            return redirect()->to('/pilot/orders/' . $orderId . '/risk-assessment')
+            return redirect()->to(site_url('/pilot/orders/') . $orderId . '/risk-assessment')
                 ->with('flash_danger', "All required safety checks must be confirmed. {$missing} remaining.");
         }
 
@@ -401,11 +402,11 @@ class Pilot extends BaseController
         $this->logActivity($orderId, 'risk_assessment_completed', null, $decision);
 
         if ($decision === 'abort') {
-            return redirect()->to('/pilot/orders/' . $orderId)
+            return redirect()->to(site_url('/pilot/orders/') . $orderId)
                 ->with('flash_warning', 'Risk assessment recorded. Flight aborted — this order cannot proceed.');
         }
 
-        return redirect()->to('/pilot/orders/' . $orderId)
+        return redirect()->to(site_url('/pilot/orders/') . $orderId)
             ->with('flash_success', 'Pre-flight risk assessment completed. You may now start the flight.');
     }
 
@@ -417,12 +418,12 @@ class Pilot extends BaseController
         $file = $this->request->getFile('file');
 
         if (!$file || !$file->isValid()) {
-            return redirect()->to('/pilot/orders/' . $orderId)->with('flash_danger', 'No file selected.');
+            return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_danger', 'No file selected.');
         }
 
         $ext = strtolower($file->getExtension());
         if (!in_array($ext, self::ALLOWED_DELIVERABLE_EXT)) {
-            return redirect()->to('/pilot/orders/' . $orderId)->with('flash_danger', 'File type not allowed.');
+            return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_danger', 'File type not allowed.');
         }
 
         $dir = WRITEPATH . 'uploads/orders/' . $orderId . '/';
@@ -439,7 +440,7 @@ class Pilot extends BaseController
         ]);
 
         $this->logActivity($orderId, 'deliverable_uploaded', null, $file->getClientName());
-        return redirect()->to('/pilot/orders/' . $orderId)->with('flash_success', 'Deliverable uploaded.');
+        return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_success', 'Deliverable uploaded.');
     }
 
     public function deleteDeliverable($orderId, $dId)
@@ -454,7 +455,7 @@ class Pilot extends BaseController
         if (file_exists($path)) unlink($path);
 
         (new OrderDeliverableModel())->delete($dId);
-        return redirect()->to('/pilot/orders/' . $orderId)->with('flash_success', 'Deliverable removed.');
+        return redirect()->to(site_url('/pilot/orders/') . $orderId)->with('flash_success', 'Deliverable removed.');
     }
 
     // ── Certifications, Memberships, Equipment, Documents ───────
@@ -462,7 +463,7 @@ class Pilot extends BaseController
     public function addCertification()
     {
         $certName = $this->request->getPost('cert_name');
-        if (empty($certName)) return redirect()->to('/pilot/profile')->with('flash_danger', 'Certification name is required.');
+        if (empty($certName)) return redirect()->to(site_url('pilot/profile'))->with('flash_danger', 'Certification name is required.');
 
         (new PilotCertificationModel())->insert([
             'user_id' => session('user_id'), 'cert_name' => $certName,
@@ -471,7 +472,7 @@ class Pilot extends BaseController
             'issue_date' => $this->request->getPost('issue_date') ?: null,
             'expiry_date' => $this->request->getPost('expiry_date') ?: null,
         ]);
-        return redirect()->to('/pilot/profile')->with('flash_success', 'Certification added.');
+        return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Certification added.');
     }
 
     public function deleteCertification($certId)
@@ -479,13 +480,13 @@ class Pilot extends BaseController
         $cert = (new PilotCertificationModel())->find($certId);
         if (!$cert || $cert->user_id != session('user_id')) return $this->response->setStatusCode(403);
         (new PilotCertificationModel())->delete($certId);
-        return redirect()->to('/pilot/profile')->with('flash_success', 'Certification deleted.');
+        return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Certification deleted.');
     }
 
     public function addMembership()
     {
         $orgName = $this->request->getPost('org_name');
-        if (empty($orgName)) return redirect()->to('/pilot/profile')->with('flash_danger', 'Organisation name is required.');
+        if (empty($orgName)) return redirect()->to(site_url('pilot/profile'))->with('flash_danger', 'Organisation name is required.');
 
         (new PilotMembershipModel())->insert([
             'user_id' => session('user_id'), 'org_name' => $orgName,
@@ -493,7 +494,7 @@ class Pilot extends BaseController
             'membership_type' => $this->request->getPost('membership_type'),
             'expiry_date' => $this->request->getPost('expiry_date') ?: null,
         ]);
-        return redirect()->to('/pilot/profile')->with('flash_success', 'Membership added.');
+        return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Membership added.');
     }
 
     public function deleteMembership($memId)
@@ -501,13 +502,13 @@ class Pilot extends BaseController
         $mem = (new PilotMembershipModel())->find($memId);
         if (!$mem || $mem->user_id != session('user_id')) return $this->response->setStatusCode(403);
         (new PilotMembershipModel())->delete($memId);
-        return redirect()->to('/pilot/profile')->with('flash_success', 'Membership deleted.');
+        return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Membership deleted.');
     }
 
     public function addEquipment()
     {
         $droneModel = $this->request->getPost('drone_model');
-        if (empty($droneModel)) return redirect()->to('/pilot/profile')->with('flash_danger', 'Drone model is required.');
+        if (empty($droneModel)) return redirect()->to(site_url('pilot/profile'))->with('flash_danger', 'Drone model is required.');
 
         $classMark = $this->request->getPost('class_mark');
         if ($classMark && !in_array($classMark, PilotEquipmentModel::CLASS_MARKS)) $classMark = null;
@@ -527,7 +528,7 @@ class Pilot extends BaseController
             'max_speed_ms' => $this->request->getPost('max_speed_ms') ? (float) $this->request->getPost('max_speed_ms') : null,
             'max_dimension_m' => $this->request->getPost('max_dimension_m') ? (float) $this->request->getPost('max_dimension_m') : null,
         ]);
-        return redirect()->to('/pilot/profile')->with('flash_success', 'Equipment added.');
+        return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Equipment added.');
     }
 
     public function deleteEquipment($equipId)
@@ -535,16 +536,16 @@ class Pilot extends BaseController
         $equip = (new PilotEquipmentModel())->find($equipId);
         if (!$equip || $equip->user_id != session('user_id')) return $this->response->setStatusCode(403);
         (new PilotEquipmentModel())->delete($equipId);
-        return redirect()->to('/pilot/profile')->with('flash_success', 'Equipment removed.');
+        return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Equipment removed.');
     }
 
     public function uploadDocument()
     {
         $file = $this->request->getFile('file');
-        if (!$file || !$file->isValid()) return redirect()->to('/pilot/profile')->with('flash_danger', 'No file selected.');
+        if (!$file || !$file->isValid()) return redirect()->to(site_url('pilot/profile'))->with('flash_danger', 'No file selected.');
 
         $ext = strtolower($file->getExtension());
-        if (!in_array($ext, self::ALLOWED_DOC_EXT)) return redirect()->to('/pilot/profile')->with('flash_danger', 'File type not allowed.');
+        if (!in_array($ext, self::ALLOWED_DOC_EXT)) return redirect()->to(site_url('pilot/profile'))->with('flash_danger', 'File type not allowed.');
 
         $dir = WRITEPATH . 'uploads/pilots/' . session('user_id') . '/';
         if (!is_dir($dir)) mkdir($dir, 0755, true);
@@ -559,7 +560,7 @@ class Pilot extends BaseController
             'file_size' => $file->getSize(), 'mime_type' => $file->getClientMimeType(),
             'expiry_date' => $this->request->getPost('expiry_date') ?: null,
         ]);
-        return redirect()->to('/pilot/profile')->with('flash_success', 'Document uploaded.');
+        return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Document uploaded.');
     }
 
     public function deleteDocument($docId)
@@ -571,7 +572,7 @@ class Pilot extends BaseController
         if (file_exists($path)) unlink($path);
 
         (new PilotDocumentModel())->delete($docId);
-        return redirect()->to('/pilot/profile')->with('flash_success', 'Document deleted.');
+        return redirect()->to(site_url('pilot/profile'))->with('flash_success', 'Document deleted.');
     }
 
     public function downloadDocument($docId)
@@ -580,7 +581,7 @@ class Pilot extends BaseController
         if (!$doc || $doc->user_id != session('user_id')) return $this->response->setStatusCode(403);
 
         $path = WRITEPATH . 'uploads/pilots/' . session('user_id') . '/' . $doc->stored_filename;
-        if (!file_exists($path)) return redirect()->to('/pilot/profile')->with('flash_danger', 'File not found.');
+        if (!file_exists($path)) return redirect()->to(site_url('pilot/profile'))->with('flash_danger', 'File not found.');
 
         return $this->response->download($path, null)->setFileName($doc->original_filename);
     }

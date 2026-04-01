@@ -45,7 +45,7 @@ class PublicForm extends BaseController
             foreach ($errors as $err) {
                 session()->setFlashdata('flash_danger', $err);
             }
-            return redirect()->to('/');
+            return redirect()->to(site_url(''));
         }
 
         $fpModel = new FlightPlanModel();
@@ -161,7 +161,7 @@ class PublicForm extends BaseController
             }
         }
 
-        return redirect()->to('/confirmation?ref=' . $data['reference']);
+        return redirect()->to(site_url('/confirmation?ref=') . $data['reference']);
     }
 
     public function confirmation()

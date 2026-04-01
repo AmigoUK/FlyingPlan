@@ -237,7 +237,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-cloud-sun"></i> Weather</span>
                 <button class="btn btn-sm btn-outline-secondary" id="btn-load-weather"
-                        onclick="fetch('/pilot/orders/<?= esc($order->id) ?>/weather').then(function(r){return r.json()}).then(function(d){if(typeof WeatherPanel!=='undefined')WeatherPanel.render('weather-panel',d)})">
+                        onclick="fetch('<?= site_url('pilot/orders/' . $order->id . '/weather') ?>').then(function(r){return r.json()}).then(function(d){if(typeof WeatherPanel!=='undefined')WeatherPanel.render('weather-panel',d)})">
                     <i class="bi bi-arrow-repeat"></i> Refresh
                 </button>
             </div>

@@ -22,35 +22,8 @@ class Pilots extends BaseController
 
     public function create()
     {
-        if ($this->request->getMethod() === 'POST') {
-            $username = $this->request->getPost('username');
-            $displayName = $this->request->getPost('display_name');
-            $password = $this->request->getPost('password');
-
-            if (empty($username) || empty($displayName) || empty($password)) {
-                return redirect()->to('/pilots/new')
-                    ->with('flash_danger', 'Username, display name, and password are required.');
-            }
-
-            $userModel = new UserModel();
-            if ($userModel->findByUsername($username)) {
-                return redirect()->to('/pilots/new')
-                    ->with('flash_danger', "Username '{$username}' already exists.");
-            }
-
-            $data = $this->buildPilotData();
-            $data['username'] = $username;
-            $data['display_name'] = $displayName;
-            $data['password_hash'] = WerkzeugHash::hash($password);
-            $data['role'] = 'pilot';
-            $data['is_active_user'] = 1;
-
-            $pilotId = $userModel->insert($data);
-            return redirect()->to('/pilots/' . $pilotId)
-                ->with('flash_success', "Pilot '{$displayName}' created.");
-        }
-
-        return view('admin/pilots/new');
+        // Demo mode: block creating new users
+        return redirect()->to(site_url('pilots'))->with('flash_danger', 'Creating new users is disabled in demo mode.');
     }
 
     public function view($pilotId)
@@ -58,7 +31,7 @@ class Pilots extends BaseController
         $db = \Config\Database::connect();
         $pilot = $db->table('users')->where('id', $pilotId)->get()->getRow();
         if (!$pilot || $pilot->role !== 'pilot') {
-            return redirect()->to('/pilots')->with('flash_warning', 'User is not a pilot.');
+            return redirect()->to(site_url('pilots'))->with('flash_warning', 'User is not a pilot.');
         }
 
         $certs = $db->table('pilot_certifications')->where('user_id', $pilotId)->get()->getResult();
@@ -82,13 +55,14 @@ class Pilots extends BaseController
         if (!$pilot) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
 
         $data = $this->buildPilotData();
+        // Demo mode: block password changes
         $password = $this->request->getPost('password');
         if (!empty($password)) {
-            $data['password_hash'] = WerkzeugHash::hash($password);
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Password changes are disabled in demo mode.');
         }
 
         $userModel->update($pilotId, $data);
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Pilot profile updated.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Pilot profile updated.');
     }
 
     public function toggleActive($pilotId)
@@ -104,7 +78,7 @@ class Pilots extends BaseController
         if ($this->request->isAJAX()) {
             return $this->response->setJSON(['ok' => true, 'is_active' => $newActive, 'message' => $msg]);
         }
-        return redirect()->to('/pilots')->with('flash_success', $msg);
+        return redirect()->to(site_url('pilots'))->with('flash_success', $msg);
     }
 
     public function setAvailability($pilotId)
@@ -115,7 +89,7 @@ class Pilots extends BaseController
         if ($this->request->isAJAX()) {
             return $this->response->setJSON(['ok' => true, 'status' => $status]);
         }
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Availability updated.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Availability updated.');
     }
 
     // ── Certifications ──────────────────────────────────────────
@@ -124,7 +98,7 @@ class Pilots extends BaseController
     {
         $certName = $this->request->getPost('cert_name');
         if (empty($certName)) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'Certification name is required.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Certification name is required.');
         }
 
         (new PilotCertificationModel())->insert([
@@ -136,17 +110,17 @@ class Pilots extends BaseController
             'expiry_date'  => $this->request->getPost('expiry_date') ?: null,
         ]);
 
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Certification added.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Certification added.');
     }
 
     public function deleteCertification($pilotId, $certId)
     {
         $cert = (new PilotCertificationModel())->find($certId);
         if (!$cert || $cert->user_id != $pilotId) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'Invalid certification.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Invalid certification.');
         }
         (new PilotCertificationModel())->delete($certId);
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Certification deleted.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Certification deleted.');
     }
 
     // ── Memberships ─────────────────────────────────────────────
@@ -155,7 +129,7 @@ class Pilots extends BaseController
     {
         $orgName = $this->request->getPost('org_name');
         if (empty($orgName)) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'Organisation name is required.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Organisation name is required.');
         }
 
         (new PilotMembershipModel())->insert([
@@ -166,17 +140,17 @@ class Pilots extends BaseController
             'expiry_date'       => $this->request->getPost('expiry_date') ?: null,
         ]);
 
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Membership added.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Membership added.');
     }
 
     public function deleteMembership($pilotId, $memId)
     {
         $mem = (new PilotMembershipModel())->find($memId);
         if (!$mem || $mem->user_id != $pilotId) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'Invalid membership.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Invalid membership.');
         }
         (new PilotMembershipModel())->delete($memId);
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Membership deleted.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Membership deleted.');
     }
 
     // ── Equipment ───────────────────────────────────────────────
@@ -185,7 +159,7 @@ class Pilots extends BaseController
     {
         $droneModel = $this->request->getPost('drone_model');
         if (empty($droneModel)) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'Drone model is required.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Drone model is required.');
         }
 
         $classMark = $this->request->getPost('class_mark');
@@ -210,17 +184,17 @@ class Pilots extends BaseController
             'max_dimension_m'         => $this->request->getPost('max_dimension_m') ? (float) $this->request->getPost('max_dimension_m') : null,
         ]);
 
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Equipment added.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Equipment added.');
     }
 
     public function deleteEquipment($pilotId, $equipId)
     {
         $equip = (new PilotEquipmentModel())->find($equipId);
         if (!$equip || $equip->user_id != $pilotId) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'Invalid equipment.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Invalid equipment.');
         }
         (new PilotEquipmentModel())->delete($equipId);
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Equipment removed.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Equipment removed.');
     }
 
     // ── Documents ───────────────────────────────────────────────
@@ -229,12 +203,12 @@ class Pilots extends BaseController
     {
         $file = $this->request->getFile('file');
         if (!$file || !$file->isValid()) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'No file selected.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'No file selected.');
         }
 
         $ext = strtolower($file->getExtension());
         if (!in_array($ext, self::ALLOWED_DOC_EXT)) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'File type not allowed.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'File type not allowed.');
         }
 
         $uploadDir = WRITEPATH . 'uploads/pilots/' . $pilotId . '/';
@@ -254,19 +228,19 @@ class Pilots extends BaseController
             'expiry_date'       => $this->request->getPost('expiry_date') ?: null,
         ]);
 
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Document uploaded.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Document uploaded.');
     }
 
     public function downloadDocument($pilotId, $docId)
     {
         $doc = (new PilotDocumentModel())->find($docId);
         if (!$doc || $doc->user_id != $pilotId) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'Invalid document.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Invalid document.');
         }
 
         $path = WRITEPATH . 'uploads/pilots/' . $pilotId . '/' . $doc->stored_filename;
         if (!file_exists($path)) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'File not found.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'File not found.');
         }
 
         return $this->response->download($path, null)->setFileName($doc->original_filename);
@@ -276,14 +250,14 @@ class Pilots extends BaseController
     {
         $doc = (new PilotDocumentModel())->find($docId);
         if (!$doc || $doc->user_id != $pilotId) {
-            return redirect()->to('/pilots/' . $pilotId)->with('flash_danger', 'Invalid document.');
+            return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_danger', 'Invalid document.');
         }
 
         $path = WRITEPATH . 'uploads/pilots/' . $pilotId . '/' . $doc->stored_filename;
         if (file_exists($path)) unlink($path);
 
         (new PilotDocumentModel())->delete($docId);
-        return redirect()->to('/pilots/' . $pilotId)->with('flash_success', 'Document deleted.');
+        return redirect()->to(site_url('/pilots/') . $pilotId)->with('flash_success', 'Document deleted.');
     }
 
     // ── Helper ──────────────────────────────────────────────────

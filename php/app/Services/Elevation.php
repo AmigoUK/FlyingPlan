@@ -58,6 +58,10 @@ class Elevation
 
                 if ($response !== false) {
                     $data = json_decode($response, true);
+                    if (!is_array($data)) {
+                        log_message('warning', 'Elevation API returned invalid JSON');
+                        continue;
+                    }
                     $elevations = $data['elevation'] ?? [];
 
                     foreach ($elevations as $j => $elev) {

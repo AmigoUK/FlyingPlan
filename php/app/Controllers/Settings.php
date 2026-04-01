@@ -43,7 +43,7 @@ class Settings extends BaseController
             'dark_mode'     => $this->request->getPost('dark_mode') ? 1 : 0,
         ]);
 
-        return redirect()->to('/settings')->with('flash_success', 'Branding settings updated.');
+        return redirect()->to(site_url('settings'))->with('flash_success', 'Branding settings updated.');
     }
 
     public function formVisibility()
@@ -59,7 +59,7 @@ class Settings extends BaseController
             'guide_mode'                => $this->request->getPost('guide_mode') ? 1 : 0,
         ]);
 
-        return redirect()->to('/settings')->with('flash_success', 'Form visibility settings updated.');
+        return redirect()->to(site_url('settings'))->with('flash_success', 'Form visibility settings updated.');
     }
 
     // ── Job Types ────────────────────────────────────────────────
@@ -70,12 +70,12 @@ class Settings extends BaseController
         $label = $this->request->getPost('label');
 
         if (empty($value) || empty($label)) {
-            return redirect()->to('/settings')->with('flash_danger', 'Value and label are required.');
+            return redirect()->to(site_url('settings'))->with('flash_danger', 'Value and label are required.');
         }
 
         $model = new JobTypeModel();
         if ($model->where('value', $value)->first()) {
-            return redirect()->to('/settings')->with('flash_danger', "Job type '{$value}' already exists.");
+            return redirect()->to(site_url('settings'))->with('flash_danger', "Job type '{$value}' already exists.");
         }
 
         $icon = $this->request->getPost('icon') ?: 'bi-briefcase';
@@ -92,7 +92,7 @@ class Settings extends BaseController
             'sort_order' => $maxSort + 1,
         ]);
 
-        return redirect()->to('/settings')->with('flash_success', "Job type '{$label}' created.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Job type '{$label}' created.");
     }
 
     public function editJobType($id)
@@ -103,7 +103,7 @@ class Settings extends BaseController
 
         $label = $this->request->getPost('label');
         if (empty($label)) {
-            return redirect()->to('/settings')->with('flash_danger', 'Label is required.');
+            return redirect()->to(site_url('settings'))->with('flash_danger', 'Label is required.');
         }
 
         $icon = $this->request->getPost('icon') ?: $jt->icon;
@@ -115,7 +115,7 @@ class Settings extends BaseController
             'category' => $this->request->getPost('category') ?: $jt->category,
         ]);
 
-        return redirect()->to('/settings')->with('flash_success', "Job type '{$label}' updated.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Job type '{$label}' updated.");
     }
 
     public function toggleJobType($id)
@@ -131,7 +131,7 @@ class Settings extends BaseController
         if ($this->request->isAJAX()) {
             return $this->response->setJSON(['ok' => true, 'is_active' => $newActive, 'message' => $msg]);
         }
-        return redirect()->to('/settings')->with('flash_success', $msg);
+        return redirect()->to(site_url('settings'))->with('flash_success', $msg);
     }
 
     public function deleteJobType($id)
@@ -142,11 +142,11 @@ class Settings extends BaseController
 
         $inUse = \Config\Database::connect()->table('flight_plans')->where('job_type', $jt->value)->countAllResults();
         if ($inUse > 0) {
-            return redirect()->to('/settings')->with('flash_danger', "Cannot delete '{$jt->label}' — it is used by existing flight plans.");
+            return redirect()->to(site_url('settings'))->with('flash_danger', "Cannot delete '{$jt->label}' — it is used by existing flight plans.");
         }
 
         $model->delete($id);
-        return redirect()->to('/settings')->with('flash_success', "Job type '{$jt->label}' deleted.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Job type '{$jt->label}' deleted.");
     }
 
     // ── Purpose Options ─────────────────────────────────────────
@@ -157,12 +157,12 @@ class Settings extends BaseController
         $label = $this->request->getPost('label');
 
         if (empty($value) || empty($label)) {
-            return redirect()->to('/settings')->with('flash_danger', 'Value and label are required.');
+            return redirect()->to(site_url('settings'))->with('flash_danger', 'Value and label are required.');
         }
 
         $model = new PurposeOptionModel();
         if ($model->where('value', $value)->first()) {
-            return redirect()->to('/settings')->with('flash_danger', "Purpose option '{$value}' already exists.");
+            return redirect()->to(site_url('settings'))->with('flash_danger', "Purpose option '{$value}' already exists.");
         }
 
         $icon = $this->request->getPost('icon') ?: 'bi-question-circle';
@@ -175,7 +175,7 @@ class Settings extends BaseController
             'is_active' => 1, 'sort_order' => $maxSort + 1,
         ]);
 
-        return redirect()->to('/settings')->with('flash_success', "Purpose option '{$label}' created.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Purpose option '{$label}' created.");
     }
 
     public function editPurpose($id)
@@ -185,13 +185,13 @@ class Settings extends BaseController
         if (!$po) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
 
         $label = $this->request->getPost('label');
-        if (empty($label)) return redirect()->to('/settings')->with('flash_danger', 'Label is required.');
+        if (empty($label)) return redirect()->to(site_url('settings'))->with('flash_danger', 'Label is required.');
 
         $icon = $this->request->getPost('icon') ?: $po->icon;
         if (!str_starts_with($icon, 'bi-')) $icon = 'bi-' . $icon;
 
         $model->update($id, ['label' => $label, 'icon' => $icon]);
-        return redirect()->to('/settings')->with('flash_success', "Purpose option '{$label}' updated.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Purpose option '{$label}' updated.");
     }
 
     public function togglePurpose($id)
@@ -207,7 +207,7 @@ class Settings extends BaseController
         if ($this->request->isAJAX()) {
             return $this->response->setJSON(['ok' => true, 'is_active' => $newActive, 'message' => $msg]);
         }
-        return redirect()->to('/settings')->with('flash_success', $msg);
+        return redirect()->to(site_url('settings'))->with('flash_success', $msg);
     }
 
     public function deletePurpose($id)
@@ -217,7 +217,7 @@ class Settings extends BaseController
         if (!$po) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
 
         $model->delete($id);
-        return redirect()->to('/settings')->with('flash_success', "Purpose option '{$po->label}' deleted.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Purpose option '{$po->label}' deleted.");
     }
 
     // ── Heard-About Options ─────────────────────────────────────
@@ -228,12 +228,12 @@ class Settings extends BaseController
         $label = $this->request->getPost('label');
 
         if (empty($value) || empty($label)) {
-            return redirect()->to('/settings')->with('flash_danger', 'Value and label are required.');
+            return redirect()->to(site_url('settings'))->with('flash_danger', 'Value and label are required.');
         }
 
         $model = new HeardAboutOptionModel();
         if ($model->where('value', $value)->first()) {
-            return redirect()->to('/settings')->with('flash_danger', "Heard-about option '{$value}' already exists.");
+            return redirect()->to(site_url('settings'))->with('flash_danger', "Heard-about option '{$value}' already exists.");
         }
 
         $icon = $this->request->getPost('icon') ?: 'bi-question-circle';
@@ -246,7 +246,7 @@ class Settings extends BaseController
             'is_active' => 1, 'sort_order' => $maxSort + 1,
         ]);
 
-        return redirect()->to('/settings')->with('flash_success', "Heard-about option '{$label}' created.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Heard-about option '{$label}' created.");
     }
 
     public function editHeardAbout($id)
@@ -256,13 +256,13 @@ class Settings extends BaseController
         if (!$ha) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
 
         $label = $this->request->getPost('label');
-        if (empty($label)) return redirect()->to('/settings')->with('flash_danger', 'Label is required.');
+        if (empty($label)) return redirect()->to(site_url('settings'))->with('flash_danger', 'Label is required.');
 
         $icon = $this->request->getPost('icon') ?: $ha->icon;
         if (!str_starts_with($icon, 'bi-')) $icon = 'bi-' . $icon;
 
         $model->update($id, ['label' => $label, 'icon' => $icon]);
-        return redirect()->to('/settings')->with('flash_success', "Heard-about option '{$label}' updated.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Heard-about option '{$label}' updated.");
     }
 
     public function toggleHeardAbout($id)
@@ -278,7 +278,7 @@ class Settings extends BaseController
         if ($this->request->isAJAX()) {
             return $this->response->setJSON(['ok' => true, 'is_active' => $newActive, 'message' => $msg]);
         }
-        return redirect()->to('/settings')->with('flash_success', $msg);
+        return redirect()->to(site_url('settings'))->with('flash_success', $msg);
     }
 
     public function deleteHeardAbout($id)
@@ -288,6 +288,6 @@ class Settings extends BaseController
         if (!$ha) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
 
         $model->delete($id);
-        return redirect()->to('/settings')->with('flash_success', "Heard-about option '{$ha->label}' deleted.");
+        return redirect()->to(site_url('settings'))->with('flash_success', "Heard-about option '{$ha->label}' deleted.");
     }
 }

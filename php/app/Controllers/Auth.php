@@ -43,7 +43,7 @@ class Auth extends Controller
     {
         if ($this->request->getMethod() === 'POST') {
             if ($this->isRateLimited()) {
-                return redirect()->to('/login')
+                return redirect()->to(site_url('login'))
                     ->with('flash_danger', 'Too many login attempts. Please wait 30 seconds.');
             }
 
@@ -72,13 +72,13 @@ class Auth extends Controller
 
                 // Role-based redirect
                 if ($user->role === 'pilot') {
-                    return redirect()->to('/pilot');
+                    return redirect()->to(site_url('pilot'));
                 }
-                return redirect()->to('/admin');
+                return redirect()->to(site_url('admin'));
             }
 
             $this->recordFailure();
-            return redirect()->to('/login')
+            return redirect()->to(site_url('login'))
                 ->with('flash_danger', 'Invalid username or password.');
         }
 
@@ -91,7 +91,7 @@ class Auth extends Controller
     public function logout()
     {
         session()->destroy();
-        return redirect()->to('/login')
+        return redirect()->to(site_url('login'))
             ->with('flash_success', 'You have been logged out.');
     }
 }
