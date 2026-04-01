@@ -423,32 +423,53 @@
                     </h2>
                     <div id="secWeather" class="accordion-collapse collapse" data-bs-parent="#raAccordion">
                         <div class="accordion-body">
-                            <div class="form-check mb-3">
-                                <input class="form-check-input ra-check" type="checkbox" name="weather_acceptable" id="weather_acceptable" value="1" data-section="Weather">
-                                <label class="form-check-label" for="weather_acceptable">Weather conditions acceptable for flight</label>
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input ra-check" type="checkbox" name="weather_acceptable" id="weather_acceptable" value="1" data-section="Weather">
+                                    <label class="form-check-label" for="weather_acceptable">Weather conditions acceptable for flight</label>
+                                </div>
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" id="btnFetchWeather">
+                                        <i class="bi bi-cloud-arrow-down"></i> Fetch Live Weather
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#" id="weatherFromOrder"><i class="bi bi-pin-map me-2"></i>Order location</a></li>
+                                        <li><a class="dropdown-item" href="#" id="weatherFromGPS"><i class="bi bi-geo-alt me-2"></i>My current GPS</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li class="px-3 py-1">
+                                            <label class="form-label small mb-1">Postcode / place</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" class="form-control" id="weatherPostcodeInput" placeholder="e.g. M1 4BT">
+                                                <button class="btn btn-primary" type="button" id="weatherFromPostcode"><i class="bi bi-search"></i></button>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
+                            <div id="weatherFetchStatus" class="mb-2"></div>
                             <div class="row g-2">
                                 <div class="col-md-4">
                                     <label class="form-label small">Wind speed (km/h)</label>
-                                    <input type="number" class="form-control form-control-sm" name="weather_wind_speed" step="0.1" min="0" placeholder="e.g. 15">
+                                    <input type="number" class="form-control form-control-sm" name="weather_wind_speed" id="ra_wind_speed" step="0.1" min="0" placeholder="e.g. 15">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Wind direction</label>
-                                    <input type="text" class="form-control form-control-sm" name="weather_wind_direction" placeholder="e.g. NW">
+                                    <input type="text" class="form-control form-control-sm" name="weather_wind_direction" id="ra_wind_direction" placeholder="e.g. NW">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Visibility (km)</label>
-                                    <input type="number" class="form-control form-control-sm" name="weather_visibility" step="0.1" min="0" placeholder="e.g. 10">
+                                    <input type="number" class="form-control form-control-sm" name="weather_visibility" id="ra_visibility" step="0.1" min="0" placeholder="e.g. 10">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Precipitation</label>
-                                    <input type="text" class="form-control form-control-sm" name="weather_precipitation" placeholder="e.g. None">
+                                    <input type="text" class="form-control form-control-sm" name="weather_precipitation" id="ra_precipitation" placeholder="e.g. None">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Temperature (&deg;C)</label>
-                                    <input type="number" class="form-control form-control-sm" name="weather_temperature" step="0.1" placeholder="e.g. 18">
+                                    <input type="number" class="form-control form-control-sm" name="weather_temperature" id="ra_temperature" step="0.1" placeholder="e.g. 18">
                                 </div>
                             </div>
+                            <div id="weatherWarnings" class="mt-2"></div>
                         </div>
                     </div>
                 </div>
@@ -472,8 +493,14 @@
                                 <label class="form-check-label" for="equip_battery_adequate">Battery level adequate</label>
                             </div>
                             <div class="mb-3 ms-4">
-                                <label class="form-label small">Battery level (%)</label>
-                                <input type="number" class="form-control form-control-sm" name="equip_battery_level" min="0" max="100" placeholder="e.g. 95" style="max-width: 120px;">
+                                <label class="form-label small">Battery level</label>
+                                <select name="equip_battery_level" class="form-select form-select-sm" style="max-width: 180px;">
+                                    <option value="">-- Select --</option>
+                                    <option value="100">76–100% (Full)</option>
+                                    <option value="63">51–75%</option>
+                                    <option value="38">25–50%</option>
+                                    <option value="12">Below 25%</option>
+                                </select>
                             </div>
                             <div class="form-check mb-2">
                                 <input class="form-check-input ra-check" type="checkbox" name="equip_propellers_ok" id="equip_propellers_ok" value="1" data-section="Equip">
@@ -768,7 +795,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="pilot_declaration" id="pilot_declaration" value="1">
                             <label class="form-check-label small" for="pilot_declaration">
-                                I declare that this pre-flight risk assessment has been completed on-site and all information is accurate to the best of my knowledge.
+                                I declare that I have reviewed the pre-flight checklist items relevant to this operation. All information recorded is accurate to the best of my knowledge.
                             </label>
                         </div>
                     </div>
@@ -844,15 +871,11 @@
     }
 
     function updateSubmitButton() {
-        var allChecked = true;
-        document.querySelectorAll('.ra-check').forEach(function(cb) {
-            if (!cb.checked) allChecked = false;
-        });
         var hasDecision = document.getElementById('decisionSelect').value !== '';
         var hasRisk = document.querySelector('input[name="risk_level"]:checked') !== null;
         var hasDeclaration = document.getElementById('pilot_declaration').checked;
 
-        document.getElementById('submitBtn').disabled = !(allChecked && hasDecision && hasRisk && hasDeclaration);
+        document.getElementById('submitBtn').disabled = !(hasDecision && hasRisk && hasDeclaration);
     }
 
     document.querySelectorAll('.ra-check').forEach(function(cb) {
@@ -882,6 +905,160 @@
         });
     } else {
         document.getElementById('gpsText').textContent = 'GPS not supported by browser';
+    }
+    // Fetch live weather for risk assessment
+    function fetchWeatherByCoords(lat, lng, locationLabel) {
+        var statusEl = document.getElementById('weatherFetchStatus');
+        statusEl.textContent = 'Fetching weather for ' + locationLabel + '...';
+        statusEl.className = 'mb-2 small text-muted';
+
+        var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lng
+            + '&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation,cloud_cover,visibility'
+            + '&wind_speed_unit=kmh&timezone=auto';
+
+        fetch(url)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var c = data.current || {};
+
+                var windField = document.getElementById('ra_wind_speed');
+                var dirField = document.getElementById('ra_wind_direction');
+                var visField = document.getElementById('ra_visibility');
+                var precField = document.getElementById('ra_precipitation');
+                var tempField = document.getElementById('ra_temperature');
+
+                if (windField && c.wind_speed_10m != null) windField.value = c.wind_speed_10m;
+                if (dirField && c.wind_direction_10m != null) {
+                    var dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+                    dirField.value = dirs[Math.round(c.wind_direction_10m / 22.5) % 16];
+                }
+                if (visField && c.visibility != null) visField.value = (c.visibility / 1000).toFixed(1);
+                if (precField) precField.value = (c.precipitation != null && c.precipitation > 0) ? c.precipitation + ' mm' : 'None';
+                if (tempField && c.temperature_2m != null) tempField.value = c.temperature_2m;
+
+                // Warnings (simple client-side check)
+                var warningsDiv = document.getElementById('weatherWarnings');
+                warningsDiv.textContent = '';
+                var warnings = [];
+                if (c.wind_speed_10m > 38) warnings.push('Wind speed (' + c.wind_speed_10m + ' km/h) may exceed drone limits');
+                if (c.wind_gusts_10m > 50) warnings.push('Strong gusts detected (' + c.wind_gusts_10m + ' km/h)');
+                if (c.precipitation > 0) warnings.push('Precipitation detected (' + c.precipitation + ' mm) — most drones are not waterproof');
+                if (c.visibility < 1000) warnings.push('Low visibility (' + c.visibility + 'm) — maintain VLOS');
+
+                warnings.forEach(function(w) {
+                    var a = document.createElement('div');
+                    a.className = 'alert alert-warning py-1 px-2 mb-1 small';
+                    a.textContent = w;
+                    warningsDiv.appendChild(a);
+                });
+                if (warnings.length === 0) {
+                    var ok = document.createElement('div');
+                    ok.className = 'alert alert-success py-1 px-2 mb-1 small';
+                    ok.textContent = 'No weather warnings detected';
+                    warningsDiv.appendChild(ok);
+                }
+
+                statusEl.textContent = 'Weather for ' + locationLabel + ' (Open-Meteo, ' + new Date().toLocaleTimeString() + ')';
+                statusEl.className = 'mb-2 small text-success';
+            })
+            .catch(function() {
+                statusEl.textContent = 'Failed to fetch weather. Check connection.';
+                statusEl.className = 'mb-2 small text-danger';
+            });
+    }
+
+    // Option 1: Order location
+    var orderBtn = document.getElementById('weatherFromOrder');
+    if (orderBtn) {
+        orderBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            fetch('<?= site_url('pilot/orders/' . $order->id . '/weather') ?>')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) {
+                        document.getElementById('weatherFetchStatus').textContent = 'Order location unavailable: ' + data.error;
+                        document.getElementById('weatherFetchStatus').className = 'mb-2 small text-danger';
+                        return;
+                    }
+                    var c = data.current || {};
+                    var windField = document.getElementById('ra_wind_speed');
+                    var dirField = document.getElementById('ra_wind_direction');
+                    var visField = document.getElementById('ra_visibility');
+                    var precField = document.getElementById('ra_precipitation');
+                    var tempField = document.getElementById('ra_temperature');
+
+                    if (windField && c.wind_speed_kmh != null) windField.value = c.wind_speed_kmh;
+                    if (dirField && c.wind_dir_deg != null) {
+                        var dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+                        dirField.value = dirs[Math.round(c.wind_dir_deg / 22.5) % 16];
+                    }
+                    if (visField && c.visibility_m != null) visField.value = (c.visibility_m / 1000).toFixed(1);
+                    if (precField) precField.value = (c.precipitation_mm != null && c.precipitation_mm > 0) ? c.precipitation_mm + ' mm' : 'None';
+                    if (tempField && c.temp_c != null) tempField.value = c.temp_c;
+
+                    var warningsDiv = document.getElementById('weatherWarnings');
+                    warningsDiv.textContent = '';
+                    (data.drone_warnings || []).forEach(function(w) {
+                        var a = document.createElement('div');
+                        a.className = 'alert alert-warning py-1 px-2 mb-1 small';
+                        a.textContent = w;
+                        warningsDiv.appendChild(a);
+                    });
+                    if (!(data.drone_warnings || []).length) {
+                        var ok = document.createElement('div');
+                        ok.className = 'alert alert-success py-1 px-2 mb-1 small';
+                        ok.textContent = 'No weather warnings for this drone';
+                        warningsDiv.appendChild(ok);
+                    }
+                    document.getElementById('weatherFetchStatus').textContent = 'Weather for order location (Open-Meteo, ' + new Date().toLocaleTimeString() + ')';
+                    document.getElementById('weatherFetchStatus').className = 'mb-2 small text-success';
+                });
+        });
+    }
+
+    // Option 2: GPS
+    var gpsBtn = document.getElementById('weatherFromGPS');
+    if (gpsBtn) {
+        gpsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!navigator.geolocation) {
+                document.getElementById('weatherFetchStatus').textContent = 'GPS not supported by browser.';
+                document.getElementById('weatherFetchStatus').className = 'mb-2 small text-danger';
+                return;
+            }
+            document.getElementById('weatherFetchStatus').textContent = 'Acquiring GPS...';
+            document.getElementById('weatherFetchStatus').className = 'mb-2 small text-muted';
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                fetchWeatherByCoords(pos.coords.latitude.toFixed(4), pos.coords.longitude.toFixed(4), 'your GPS location');
+            }, function() {
+                document.getElementById('weatherFetchStatus').textContent = 'GPS denied or unavailable.';
+                document.getElementById('weatherFetchStatus').className = 'mb-2 small text-danger';
+            }, { timeout: 8000 });
+        });
+    }
+
+    // Option 3: Postcode
+    var postcodeBtn = document.getElementById('weatherFromPostcode');
+    if (postcodeBtn) {
+        postcodeBtn.addEventListener('click', function() {
+            var q = (document.getElementById('weatherPostcodeInput').value || '').trim();
+            if (!q) return;
+            document.getElementById('weatherFetchStatus').textContent = 'Looking up ' + q + '...';
+            document.getElementById('weatherFetchStatus').className = 'mb-2 small text-muted';
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q + ', UK') + '&limit=1')
+                .then(function(r) { return r.json(); })
+                .then(function(results) {
+                    if (!results.length) {
+                        document.getElementById('weatherFetchStatus').textContent = 'Location not found: ' + q;
+                        document.getElementById('weatherFetchStatus').className = 'mb-2 small text-danger';
+                        return;
+                    }
+                    fetchWeatherByCoords(results[0].lat, results[0].lon, q);
+                });
+        });
+        document.getElementById('weatherPostcodeInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); postcodeBtn.click(); }
+        });
     }
 })();
 </script>

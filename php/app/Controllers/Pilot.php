@@ -359,16 +359,8 @@ class Pilot extends BaseController
             $allChecks = array_merge($allChecks, RiskAssessmentModel::NIGHT_CHECK_FIELDS);
         }
 
-        $missing = 0;
         foreach ($allChecks as $field) {
-            $val = $this->request->getPost($field) ? 1 : 0;
-            $raData[$field] = $val;
-            if (!$val) $missing++;
-        }
-
-        if ($missing > 0) {
-            return redirect()->to(site_url('/pilot/orders/') . $orderId . '/risk-assessment')
-                ->with('flash_danger', "All required safety checks must be confirmed. {$missing} remaining.");
+            $raData[$field] = $this->request->getPost($field) ? 1 : 0;
         }
 
         $riskLevel = $this->request->getPost('risk_level');
