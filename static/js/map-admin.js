@@ -658,7 +658,7 @@
             .then(function (r) { return r.json(); })
             .then(function (resp) {
                 if (resp.success) {
-                    _toast("Waypoints saved (" + resp.count + " points)", "success");
+                    _toast("Waypoints saved (" + resp.count + " points)", "success"); if(typeof gtag==="function")gtag("event","demo_waypoints_save",{count:resp.count});
                     if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("waypoints");
                 } else {
                     _toast("Error: " + (resp.error || "Unknown"), "danger");
@@ -794,7 +794,7 @@
                             addWaypoint(L.latLng(w.lat, w.lng), w);
                         });
                         updateRoute();
-                        _toast("Generated " + resp.count + " pattern waypoints", "success");
+                        _toast("Generated " + resp.count + " pattern waypoints", "success"); if(typeof gtag==="function")gtag("event","demo_pattern_generate",{count:resp.count});
                         if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("patterns");
                     } else {
                         _toast("Pattern error: " + (resp.error || "Unknown"), "danger");
@@ -833,7 +833,7 @@
                             addWaypoint(L.latLng(w.lat, w.lng), w);
                         });
                         updateRoute();
-                        _toast("Generated " + resp.count + " grid waypoints", "success");
+                        _toast("Generated " + resp.count + " grid waypoints", "success"); if(typeof gtag==="function")gtag("event","demo_grid_generate",{count:resp.count});
                         if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("grid");
                     } else {
                         _toast("Grid error: " + (resp.error || "Unknown"), "danger");
@@ -976,7 +976,7 @@
                             if (!CoverageHeatmap.isVisible()) CoverageHeatmap.toggle();
                             CoverageHeatmap.renderStats("coverage-panel", resp.stats);
                         }
-                        _toast("Coverage analysis complete", "success");
+                        _toast("Coverage analysis complete", "success"); if(typeof gtag==="function")gtag("event","demo_coverage_analysis");
                         if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("coverage");
                     } else {
                         _toast("Error: " + (resp.error || "Unknown"), "danger");
@@ -1162,7 +1162,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (typeof WeatherPanel !== "undefined") {
-                        WeatherPanel.render("weather-panel", data);
+                        WeatherPanel.render("weather-panel", data); if(typeof gtag==="function")gtag("event","demo_weather_check",{source:"admin"});
                     }
                 })
                 .catch(function () { _toast("Weather load failed", "danger"); });

@@ -123,3 +123,11 @@
 
 <?= $this->include('partials/assign_modal') ?>
 <?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+if (typeof gtag === 'function') {
+    gtag('event', 'demo_login', { role: '<?= esc(session('role') ?? 'unknown') ?>', page: 'admin_dashboard' });
+}
+</script>
+<?= $this->endSection() ?>

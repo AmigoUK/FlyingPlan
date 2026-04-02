@@ -12,6 +12,14 @@ $_businessName = $_appSettings->business_name ?? 'FlyingPlan';
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
     <title><?= $this->renderSection('title') ?> - <?= esc($_businessName) ?></title>
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0B1ES0CFNZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-0B1ES0CFNZ', { 'anonymize_ip': true });
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="<?= base_url('static/css/style.css') ?>" rel="stylesheet">

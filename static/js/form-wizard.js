@@ -178,6 +178,9 @@
             e.preventDefault();
         } else {
             sessionStorage.removeItem(STORAGE_KEY);
+            if (typeof gtag === "function") {
+                gtag("event", "demo_form_submit", { form: "flight_brief" });
+            }
         }
     });
 

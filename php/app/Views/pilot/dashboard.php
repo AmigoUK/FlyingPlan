@@ -79,3 +79,11 @@ $completed = array_filter($orders, fn($o) => !in_array($o->status, ['assigned', 
 </div>
 <?php endif; ?>
 <?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+if (typeof gtag === 'function') {
+    gtag('event', 'demo_login', { role: '<?= esc(session('role') ?? 'unknown') ?>', page: 'pilot_dashboard' });
+}
+</script>
+<?= $this->endSection() ?>

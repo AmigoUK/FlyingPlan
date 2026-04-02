@@ -804,7 +804,7 @@
                         <i class="bi bi-geo-alt"></i> <span id="gpsText">Acquiring GPS location...</span>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100" id="submitBtn" disabled>
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn" disabled onclick="if(typeof gtag==='function')gtag('event','demo_risk_assessment',{decision:document.getElementById('decisionSelect').value})">
                         <i class="bi bi-check-circle"></i> Submit Assessment
                     </button>
                 </div>
@@ -960,6 +960,7 @@
 
                 statusEl.textContent = 'Weather for ' + locationLabel + ' (Open-Meteo, ' + new Date().toLocaleTimeString() + ')';
                 statusEl.className = 'mb-2 small text-success';
+                if (typeof gtag === 'function') gtag('event', 'demo_weather_check', { source: 'risk_assessment_' + locationLabel.replace(/\s+/g, '_') });
             })
             .catch(function() {
                 statusEl.textContent = 'Failed to fetch weather. Check connection.';
@@ -1012,6 +1013,7 @@
                     }
                     document.getElementById('weatherFetchStatus').textContent = 'Weather for order location (Open-Meteo, ' + new Date().toLocaleTimeString() + ')';
                     document.getElementById('weatherFetchStatus').className = 'mb-2 small text-success';
+                    if (typeof gtag === 'function') gtag('event', 'demo_weather_check', { source: 'risk_assessment_order' });
                 });
         });
     }
