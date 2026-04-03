@@ -30,6 +30,7 @@ $routes->get('/help', 'Help::index');
 // Admin routes (manager role required)
 $routes->group('admin', ['filter' => 'auth:manager'], static function ($routes) {
     $routes->get('/', 'Admin::dashboard');
+    $routes->post('quick-create', 'Admin::quickCreate');
     $routes->get('(:num)', 'Admin::detail/$1');
     $routes->post('(:num)/waypoints', 'Admin::saveWaypoints/$1');
     $routes->post('(:num)/status', 'Admin::updateStatus/$1');

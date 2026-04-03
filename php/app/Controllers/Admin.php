@@ -30,6 +30,36 @@ class Admin extends BaseController
 {
     // ── Dashboard & Detail ──────────────────────────────────────
 
+    public function quickCreate()
+    {
+        $name = $this->request->getPost('customer_name');
+        $email = $this->request->getPost('customer_email');
+        $jobType = $this->request->getPost('job_type');
+        $jobDesc = $this->request->getPost('job_description');
+
+        if (empty($name) || empty($email) || empty($jobType) || empty($jobDesc)) {
+            return redirect()->to(site_url('admin'))->with('flash_danger', 'Name, email, job type, and description are required.');
+        }
+
+        $fpModel = new FlightPlanModel();
+        $data = [
+            'reference'        => $fpModel->generateReference(),
+            'status'           => 'new',
+            'customer_name'    => $name,
+            'customer_email'   => $email,
+            'customer_phone'   => $this->request->getPost('customer_phone') ?: null,
+            'job_type'         => $jobType,
+            'job_description'  => $jobDesc,
+            'location_address' => $this->request->getPost('location_address') ?: null,
+            'preferred_dates'  => $this->request->getPost('preferred_dates') ?: null,
+            'consent_given'    => 1,
+            'source'           => 'operator_created',
+        ];
+
+        $planId = $fpModel->insert($data);
+        return redirect()->to(site_url('admin/' . $planId))->with('flash_success', "Brief {$data['reference']} created.");
+    }
+
     public function dashboard()
     {
         $db = \Config\Database::connect();

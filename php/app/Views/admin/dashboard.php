@@ -4,7 +4,12 @@
 <?= $this->section('content') ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-grid-3x3-gap"></i> Flight Plan Dashboard</h2>
-    <span class="badge bg-secondary"><?= count($plans) ?> submission<?= count($plans) != 1 ? 's' : '' ?></span>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-secondary"><?= count($plans) ?> submission<?= count($plans) != 1 ? 's' : '' ?></span>
+        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#quickCreateModal">
+            <i class="bi bi-plus-circle"></i> New Brief
+        </button>
+    </div>
 </div>
 
 <!-- Filters -->
@@ -128,6 +133,7 @@
 <?php endif; ?>
 
 <?= $this->include('partials/assign_modal') ?>
+<?= $this->include('admin/partials/quick_create_modal') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
