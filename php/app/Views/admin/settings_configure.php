@@ -32,8 +32,8 @@ $alwaysRequired = \Config\FormFieldRegistry::getAlwaysRequired();
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Default Drone</label>
                     <select name="default_drone_model" class="form-select form-select-sm">
-                        <?php foreach (\App\Services\DroneProfiles::getChoices() as $val => $label): ?>
-                        <option value="<?= esc($val) ?>" <?= ($settings->default_drone_model ?? '') === $val ? 'selected' : '' ?>><?= esc($label) ?></option>
+                        <?php foreach (\App\Services\DroneProfiles::getChoices() as $choice): ?>
+                        <option value="<?= esc($choice[0]) ?>" <?= ($settings->default_drone_model ?? '') === $choice[0] ? 'selected' : '' ?>><?= esc($choice[1]) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

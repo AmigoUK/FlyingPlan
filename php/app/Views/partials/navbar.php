@@ -11,7 +11,10 @@
                 <li class="nav-item">
                     <a class="nav-link" href="<?= site_url('admin') ?>">Dashboard</a>
                 </li>
-                <?php if ((new \App\Models\AppSettingsModel())->isModuleEnabled('team')): ?>
+                <?php
+                $_navModules = json_decode(($_appSettings->modules_json ?? '{}'), true) ?: [];
+                if (!empty($_navModules['team'])):
+                ?>
                 <li class="nav-item">
                     <a class="nav-link" href="<?= site_url('orders') ?>">Orders</a>
                 </li>
