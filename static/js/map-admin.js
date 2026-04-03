@@ -238,12 +238,20 @@
         };
         waypoints.push(wp);
 
-        var marker = L.marker(latlng, {
-            draggable: true,
-            icon: _waypointIcon(idx, wp),
-        }).addTo(map);
-
-        marker.bindTooltip("WP " + idx, { direction: "top", offset: [0, -15] });
+        // Use lightweight circleMarker for large waypoint sets (grid missions)
+        var isLargeSet = waypoints.length > 80;
+        var marker;
+        if (isLargeSet) {
+            marker = L.circleMarker(latlng, {
+                radius: 4, color: "#198754", fillColor: "#198754", fillOpacity: 0.8, weight: 1
+            }).addTo(map);
+        } else {
+            marker = L.marker(latlng, {
+                draggable: true,
+                icon: _waypointIcon(idx, wp),
+            }).addTo(map);
+            marker.bindTooltip("WP " + idx, { direction: "top", offset: [0, -15] });
+        }
 
         marker.on("dragend", function () {
             var pos = marker.getLatLng();
@@ -458,6 +466,23 @@
             p.className = "text-muted small";
             p.textContent = "Click on the map to add waypoints.";
             list.appendChild(p);
+            return;
+        }
+
+        // For large waypoint counts (grid missions), show compact summary
+        if (waypoints.length > 100) {
+            list.textContent = "";
+            var summary = document.createElement("div");
+            summary.className = "alert alert-info py-2 small";
+            summary.textContent = waypoints.length + " waypoints (grid mission). Click a marker on the map to edit individual waypoints.";
+            list.appendChild(summary);
+
+            var stats = document.createElement("div");
+            stats.className = "small text-muted";
+            var alt = waypoints[0] ? waypoints[0].altitude_m : "?";
+            var spd = waypoints[0] ? waypoints[0].speed_ms : "?";
+            stats.textContent = "Alt: " + alt + "m | Speed: " + spd + "m/s | Points: " + waypoints.length;
+            list.appendChild(stats);
             return;
         }
 

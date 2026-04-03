@@ -32,10 +32,24 @@ class GridGenerator
             $polyM[] = GeoUtils::toMetres($c[0], $c[1], $centerLat, $centerLng);
         }
 
+        // Cap photo interval to prevent excessive waypoint generation
+        // Min 3m interval, and limit total estimated points to ~500
+        if ($photoInterval && $photoInterval > 0) {
+            $photoInterval = max(3.0, $photoInterval);
+        }
+
         $waypoints = self::generateScanLines(
             $polyM, $spacingM, $angleDeg, $altitudeM,
             $speedMs, $gimbalPitch, $actionType, $centerLat, $centerLng, $photoInterval
         );
+
+        // Hard cap at 500 waypoints to prevent browser hang
+        if (count($waypoints) > 500) {
+            $waypoints = array_slice($waypoints, 0, 500);
+            for ($i = 0; $i < count($waypoints); $i++) {
+                $waypoints[$i]['index'] = $i;
+            }
+        }
 
         if ($pattern === 'crosshatch') {
             $crossWps = self::generateScanLines(
