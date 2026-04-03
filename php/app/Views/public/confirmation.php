@@ -9,18 +9,20 @@
                 <div class="mb-3">
                     <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
                 </div>
-                <h3 class="mb-3">Flight Brief Submitted!</h3>
+                <h3 class="mb-3">Your request has been received</h3>
+                <p class="text-muted mb-2">
+                    We'll review your brief and get in touch by email or phone to discuss the details.
+                </p>
                 <p class="text-muted mb-4">
-                    Your drone flight brief has been received. Our pilot will review it shortly.
+                    We aim to respond within <strong>1 working day</strong>.
                 </p>
                 <div class="alert alert-info">
                     <strong>Your Reference Code:</strong>
                     <h4 class="mt-1 mb-0"><?= esc($reference ?? '') ?></h4>
                 </div>
-                <p class="text-muted small">Please save this reference code for your records.</p>
-                <a href="<?= site_url('/') ?>" class="btn btn-outline-primary mt-3">
-                    <i class="bi bi-plus-circle"></i> Submit Another
-                </a>
+                <p class="text-muted small">Keep your reference code safe — you may need it if you contact us.</p>
+                <p class="mt-4 mb-0">Thank you for choosing our drone services.</p>
+                <p class="mt-3"><a href="<?= site_url('/') ?>" class="text-muted small">Submit another request</a></p>
             </div>
         </div>
     </div>

@@ -12,18 +12,22 @@ class Orders extends BaseController
 {
     private const ADMIN_VALID_TRANSITIONS = [
         'pending_assignment' => ['assigned', 'cancelled', 'closed'],
-        'assigned'           => ['accepted', 'declined', 'pending_assignment', 'closed'],
-        'accepted'           => ['in_progress', 'declined', 'assigned', 'closed'],
-        'in_progress'        => ['flight_complete', 'closed'],
+        'assigned'           => ['accepted', 'declined', 'pending_assignment', 'cancelled', 'closed'],
+        'accepted'           => ['in_progress', 'declined', 'assigned', 'cancelled', 'closed'],
+        'in_progress'        => ['flight_complete', 'cancelled', 'closed'],
         'flight_complete'    => ['delivered', 'closed'],
         'delivered'          => ['closed'],
         'declined'           => ['assigned', 'pending_assignment', 'closed'],
         'closed'             => [],
+        'cancelled'          => [],
     ];
 
     public function index()
     {
         $db = \Config\Database::connect();
+        $perPage = 25;
+        $page = max(1, (int) $this->request->getGet('page'));
+
         $builder = $db->table('orders o')
             ->select('o.*, fp.reference, fp.customer_name, fp.job_type, u.display_name as pilot_name')
             ->join('flight_plans fp', 'fp.id = o.flight_plan_id')
@@ -35,14 +39,22 @@ class Orders extends BaseController
         $pilotFilter = $this->request->getGet('pilot_id');
         if ($pilotFilter) $builder->where('o.pilot_id', $pilotFilter);
 
-        $orders = $builder->orderBy('o.created_at', 'DESC')->get()->getResult();
+        $total = $builder->countAllResults(false);
+        $orders = $builder->orderBy('o.created_at', 'DESC')
+            ->limit($perPage, ($page - 1) * $perPage)
+            ->get()->getResult();
+
         $pilots = $db->table('users')->where('role', 'pilot')->orderBy('display_name')->get()->getResult();
+        $totalPages = (int) ceil($total / $perPage);
 
         return view('admin/orders/list', [
             'orders'        => $orders,
             'pilots'        => $pilots,
             'status_filter' => $statusFilter,
             'pilot_filter'  => $pilotFilter,
+            'page'          => $page,
+            'total_pages'   => $totalPages,
+            'total'         => $total,
         ]);
     }
 

@@ -27,17 +27,8 @@ class OrderModel extends Model
 
     public const STATUSES = [
         'pending_assignment', 'assigned', 'accepted', 'in_progress',
-        'flight_complete', 'delivered', 'closed', 'declined',
+        'flight_complete', 'delivered', 'closed', 'declined', 'cancelled',
     ];
 
-    public const ADMIN_VALID_TRANSITIONS = [
-        'pending_assignment' => ['assigned'],
-        'assigned'           => ['pending_assignment'],
-        'accepted'           => [],
-        'in_progress'        => [],
-        'flight_complete'    => ['delivered'],
-        'delivered'          => ['closed'],
-        'closed'             => [],
-        'declined'           => ['pending_assignment'],
-    ];
+    // Note: Admin status transitions are defined in Controllers/Orders.php::ADMIN_VALID_TRANSITIONS
 }

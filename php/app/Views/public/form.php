@@ -19,7 +19,7 @@
             <div class="step active" data-step="1">Your Details</div>
             <div class="step" data-step="2">Job Brief</div>
             <div class="step" data-step="3">Location</div>
-            <div class="step" data-step="4">Flight Prefs</div>
+            <div class="step" data-step="4">Preferences</div>
             <div class="step" data-step="5">Review</div>
         </div>
 
@@ -79,7 +79,7 @@
                 <div id="business-fields" style="display: none;">
                     <div class="row g-3 mt-1">
                         <div class="col-md-6">
-                            <label for="business_abn" class="form-label">ABN / Registration</label>
+                            <label for="business_abn" class="form-label">Company Reg / VAT Number</label>
                             <input type="text" class="form-control" id="business_abn" name="business_abn">
                         </div>
                         <div class="col-md-6">
@@ -203,7 +203,7 @@
                         <label for="address-search" class="form-label">Search Address</label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="address-search"
-                                   placeholder="Type an address and press Enter...">
+                                   placeholder="Enter a postcode or address (e.g. B15 2TT or 12 High Street, Birmingham)">
                             <button type="button" class="btn btn-outline-primary" id="btn-search-address">
                                 <i class="bi bi-search"></i> Search
                             </button>
@@ -214,7 +214,7 @@
                         <div class="form-text mt-1">
                             <i class="bi bi-pin-map"></i> <strong>Click</strong> to place pin |
                             <i class="bi bi-bounding-box"></i> Use draw tools for area |
-                            <i class="bi bi-star"></i> Right-click to add POI
+                            <i class="bi bi-star"></i> Right-click to mark a point of interest
                         </div>
                     </div>
                     <div class="col-12">
@@ -235,7 +235,7 @@
                         <i class="bi bi-arrow-left"></i> Back
                     </button>
                     <button type="button" class="btn btn-primary btn-next">
-                        Next: Flight Prefs <i class="bi bi-arrow-right"></i>
+                        Next: Preferences <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
             </div>
@@ -262,9 +262,9 @@
                     <div class="col-md-6">
                         <label class="form-label">Camera Angle</label>
                         <select class="form-select" name="camera_angle">
-                            <option value="straight_down">Straight Down (90&deg;)</option>
-                            <option value="45deg">45&deg; Angle</option>
-                            <option value="horizontal">Horizontal (0&deg;)</option>
+                            <option value="straight_down">Overhead (looking straight down)</option>
+                            <option value="45deg">Angled (45&deg; from above)</option>
+                            <option value="horizontal">Eye-level (looking ahead)</option>
                             <option value="pilot_decides" selected>Pilot Decides</option>
                         </select>
                     </div>
@@ -284,9 +284,9 @@
                         </select>
                     </div>
                     <div class="col-12">
-                        <label for="no_fly_notes" class="form-label">No-Fly Zone Notes</label>
+                        <label for="no_fly_notes" class="form-label">Nearby Restrictions (optional)</label>
                         <textarea class="form-control" id="no_fly_notes" name="no_fly_notes" rows="2"
-                                  placeholder="Any nearby airports, restricted areas, or obstacles?"></textarea>
+                                  placeholder="Any airports, restricted areas, or obstacles we should know about?"></textarea>
                     </div>
                     <div class="col-12">
                         <label for="privacy_notes" class="form-label">Privacy Considerations</label>
@@ -390,7 +390,7 @@
                     <p class="mb-1"><strong>Type:</strong> <span id="rev-customer-type"></span></p>
                     <p class="mb-1"><strong>Company:</strong> <span id="rev-company"></span></p>
                     <div id="rev-business-fields" style="display: none;">
-                        <p class="mb-1"><strong>ABN:</strong> <span id="rev-abn"></span></p>
+                        <p class="mb-1"><strong>Reg/VAT:</strong> <span id="rev-abn"></span></p>
                         <p class="mb-1"><strong>Billing Contact:</strong> <span id="rev-billing-contact"></span></p>
                         <p class="mb-1"><strong>Billing Email:</strong> <span id="rev-billing-email"></span></p>
                         <p class="mb-1"><strong>PO #:</strong> <span id="rev-po"></span></p>

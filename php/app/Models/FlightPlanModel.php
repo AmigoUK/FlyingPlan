@@ -20,7 +20,7 @@ class FlightPlanModel extends Model
         'privacy_notes', 'customer_type', 'business_abn', 'billing_contact',
         'billing_email', 'purchase_order', 'footage_purpose', 'footage_purpose_other',
         'output_format', 'video_duration', 'shot_types', 'delivery_timeline',
-        'drone_model', 'admin_notes', 'consent_given',
+        'drone_model', 'admin_notes', 'consent_given', 'source',
     ];
 
     protected $useTimestamps = true;

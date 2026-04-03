@@ -33,17 +33,17 @@ class Admin extends BaseController
     public function dashboard()
     {
         $db = \Config\Database::connect();
-        $builder = $db->table('flight_plans');
+        $model = new FlightPlanModel();
 
         $statusFilter = $this->request->getGet('status');
-        if ($statusFilter) $builder->where('status', $statusFilter);
+        if ($statusFilter) $model->where('status', $statusFilter);
 
         $jobTypeFilter = $this->request->getGet('job_type');
-        if ($jobTypeFilter) $builder->where('job_type', $jobTypeFilter);
+        if ($jobTypeFilter) $model->where('job_type', $jobTypeFilter);
 
         $search = $this->request->getGet('q');
         if ($search) {
-            $builder->groupStart()
+            $model->groupStart()
                 ->like('customer_name', $search)
                 ->orLike('reference', $search)
                 ->orLike('customer_email', $search)
@@ -51,7 +51,8 @@ class Admin extends BaseController
             ->groupEnd();
         }
 
-        $plans = $builder->orderBy('created_at', 'DESC')->get()->getResult();
+        $plans = $model->orderBy('created_at', 'DESC')->paginate(25);
+        $pager = $model->pager;
         $pilots = $db->table('users')->where('role', 'pilot')->orderBy('display_name')->get()->getResult();
 
         // Attach order to each plan
@@ -61,6 +62,7 @@ class Admin extends BaseController
 
         return view('admin/dashboard', [
             'plans'         => $plans,
+            'pager'         => $pager,
             'pilots'        => $pilots,
             'status_filter' => $statusFilter,
             'job_type_filter' => $jobTypeFilter,

@@ -13,7 +13,7 @@
             <div class="col-md-4">
                 <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">All Statuses</option>
-                    <?php foreach (['pending_assignment','assigned','accepted','in_progress','flight_complete','delivered','closed','declined'] as $s): ?>
+                    <?php foreach (['pending_assignment','assigned','accepted','in_progress','flight_complete','delivered','closed','declined','cancelled'] as $s): ?>
                     <option value="<?= $s ?>" <?= ($status_filter ?? '') === $s ? 'selected' : '' ?>><?= ucwords(str_replace('_', ' ', $s)) ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -56,4 +56,17 @@
         </tbody>
     </table>
 </div>
+
+<?php if (($total_pages ?? 1) > 1): ?>
+<nav class="d-flex justify-content-center mt-3">
+    <ul class="pagination pagination-sm">
+        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+        <li class="page-item <?= ($page ?? 1) == $i ? 'active' : '' ?>">
+            <a class="page-link" href="?page=<?= $i ?><?= !empty($status_filter) ? '&status=' . urlencode($status_filter) : '' ?><?= !empty($pilot_filter) ? '&pilot_id=' . urlencode($pilot_filter) : '' ?>"><?= $i ?></a>
+        </li>
+        <?php endfor; ?>
+    </ul>
+</nav>
+<?php endif; ?>
+
 <?= $this->endSection() ?>

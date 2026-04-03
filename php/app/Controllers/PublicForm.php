@@ -108,6 +108,7 @@ class PublicForm extends BaseController
             'shot_types'         => $shotTypes,
             'delivery_timeline'  => $this->request->getPost('delivery_timeline'),
             'consent_given'      => 1,
+            'source'             => 'public_form',
         ];
 
         $fpId = $fpModel->insert($data);
