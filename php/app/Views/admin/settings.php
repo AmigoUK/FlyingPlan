@@ -11,6 +11,8 @@
 
 <?= $this->include('admin/settings_templates') ?>
 
+<?= $this->include('admin/settings_configure') ?>
+
 <!-- Branding -->
 <div class="card mb-4">
     <div class="card-header"><i class="bi bi-palette"></i> Branding</div>
@@ -62,74 +64,7 @@
     </div>
 </div>
 
-<!-- Guide Mode -->
-<div class="card mb-4">
-    <div class="card-header"><i class="bi bi-mortarboard"></i> Guide Mode</div>
-    <div class="card-body">
-        <form method="POST" action="<?= site_url('settings/form-visibility') ?>">
-            <?= csrf_field() ?>
-            <!-- carry current visibility values so they aren't wiped -->
-            <?php if (!empty($settings->show_heard_about)): ?><input type="hidden" name="show_heard_about" value="on"><?php endif; ?>
-            <?php if (!empty($settings->show_customer_type_toggle)): ?><input type="hidden" name="show_customer_type_toggle" value="on"><?php endif; ?>
-            <?php if (!empty($settings->show_purpose_fields)): ?><input type="hidden" name="show_purpose_fields" value="on"><?php endif; ?>
-            <?php if (!empty($settings->show_output_format)): ?><input type="hidden" name="show_output_format" value="on"><?php endif; ?>
-            <div class="form-check form-switch mb-2">
-                <input class="form-check-input" type="checkbox" name="guide_mode"
-                       id="sw-guide" <?= !empty($settings->guide_mode) ? 'checked' : '' ?>>
-                <label class="form-check-label" for="sw-guide">Enable Guide Mode</label>
-            </div>
-            <p class="text-muted small mb-2">When enabled, shows step-by-step instructions inside each flight planning tool to help new pilots learn the workflow.</p>
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save"></i> Save
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- Form Visibility -->
-<div class="card mb-4">
-    <div class="card-header"><i class="bi bi-eye"></i> Form Visibility</div>
-    <div class="card-body">
-        <form method="POST" action="<?= site_url('settings/form-visibility') ?>">
-            <?= csrf_field() ?>
-            <!-- carry guide_mode so it isn't wiped -->
-            <?php if (!empty($settings->guide_mode)): ?><input type="hidden" name="guide_mode" value="on"><?php endif; ?>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="show_heard_about"
-                               id="sw-heard" <?= !empty($settings->show_heard_about) ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="sw-heard">Show "How did you hear about us?"</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="show_customer_type_toggle"
-                               id="sw-ctype" <?= !empty($settings->show_customer_type_toggle) ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="sw-ctype">Show Private/Business Toggle</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="show_purpose_fields"
-                               id="sw-purpose" <?= !empty($settings->show_purpose_fields) ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="sw-purpose">Show Purpose Fields</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="show_output_format"
-                               id="sw-output" <?= !empty($settings->show_output_format) ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="sw-output">Show Output Format</label>
-                    </div>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">
-                <i class="bi bi-save"></i> Save Visibility
-            </button>
-        </form>
-    </div>
-</div>
+<!-- Note: Guide Mode and Form Visibility sections replaced by settings_configure.php above -->
 
 <!-- Job Types -->
 <div class="card mb-4">
