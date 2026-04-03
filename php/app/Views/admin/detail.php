@@ -706,6 +706,15 @@
             <div class="card-body p-0">
                 <div id="admin-map"></div>
             </div>
+            <div class="card-footer py-1 px-2">
+                <small class="text-body-secondary d-flex flex-wrap gap-3">
+                    <span><i class="bi bi-circle-fill text-danger" style="font-size:0.5rem;"></i> Customer pin</span>
+                    <span><i class="bi bi-circle-fill text-success" style="font-size:0.5rem;"></i> Photo waypoints</span>
+                    <span><i class="bi bi-star-fill" style="color:#fd7e14;font-size:0.5rem;"></i> Points of interest</span>
+                    <span><span style="display:inline-block;width:12px;height:3px;background:#0d6efd;vertical-align:middle;"></span> Area polygon</span>
+                    <span><span style="display:inline-block;width:12px;height:3px;background:#198754;border-top:1px dashed #198754;vertical-align:middle;"></span> Flight route</span>
+                </small>
+            </div>
         </div>
 
         <!-- 3D Preview -->
