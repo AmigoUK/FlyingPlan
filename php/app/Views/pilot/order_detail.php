@@ -54,7 +54,8 @@
         </div>
         <?php endif; ?>
 
-        <?php if ($order->status == 'accepted'): ?>
+        <?php $_complianceOn = (new \App\Models\AppSettingsModel())->isModuleEnabled('compliance'); ?>
+        <?php if ($_complianceOn && $order->status == 'accepted'): ?>
         <!-- Flight Parameters + Category -->
         <?php if (empty($order->operational_category)): ?>
         <div class="card mb-3 border-info">
@@ -102,7 +103,8 @@
         </div>
         <?php endif; ?>
 
-        <!-- Risk Assessment CTA -->
+        <!-- Risk Assessment CTA (compliance module gated) -->
+        <?php if ($_complianceOn): ?>
         <?php if (!empty($order->risk_assessment) && $order->risk_assessment->decision == 'abort'): ?>
         <div class="card mb-3 border-danger">
             <div class="card-body">
@@ -150,6 +152,8 @@
             </div>
         </div>
         <?php endif; ?>
+
+        <?php endif; /* compliance module gate */ ?>
 
         <?php if (!empty($allowed_next) && !in_array($order->status, ['assigned', 'declined', 'closed'])): ?>
         <div class="card mb-3">

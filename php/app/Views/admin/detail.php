@@ -8,6 +8,7 @@
 
 <?= $this->section('content') ?>
 <?php $settings = (new \App\Models\AppSettingsModel())->getSettings(); ?>
+<?php $_settingsModel = new \App\Models\AppSettingsModel(); ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
@@ -196,11 +197,14 @@
         </div>
 
         <!-- Route Stats -->
+        <?php if ($_settingsModel->isPanelEnabled('route_stats')): ?>
         <div class="card mb-3" data-card-key="route_stats">
             <div class="card-body py-2" id="route-stats"></div>
         </div>
+        <?php endif; ?>
 
         <!-- Path Tools -->
+        <?php if ($_settingsModel->isPanelEnabled('path_tools')): ?>
         <div class="card mb-3" data-card-key="path_tools">
             <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-pathtools" aria-expanded="true">
                 <span><i class="bi bi-tools"></i> Path Tools</span>
@@ -210,8 +214,10 @@
                 <div class="card-body py-2" id="path-tools-bar"></div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- GSD Calculator -->
+        <?php if ($_settingsModel->isPanelEnabled('gsd')): ?>
         <div class="card mb-3" data-card-key="gsd">
             <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-gsd" aria-expanded="true">
                 <span>
@@ -249,8 +255,10 @@
             </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Mission Patterns -->
+        <?php if ($_settingsModel->isPanelEnabled('patterns')): ?>
         <div class="card mb-3" data-card-key="patterns">
             <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-patterns" aria-expanded="true">
                 <span>
@@ -286,8 +294,10 @@
             </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Grid Mission -->
+        <?php if ($_settingsModel->isPanelEnabled('grid')): ?>
         <div class="card mb-3" data-card-key="grid">
             <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-grid" aria-expanded="true">
                 <span>
@@ -334,8 +344,10 @@
             </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Oblique Grid / 3D Mapping -->
+        <?php if ($_settingsModel->isPanelEnabled('oblique')): ?>
         <div class="card mb-3" data-card-key="oblique">
             <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-oblique" aria-expanded="true">
                 <span>
@@ -376,8 +388,10 @@
             </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Facade Scanner -->
+        <?php if ($_settingsModel->isPanelEnabled('facade')): ?>
         <div class="card mb-3" data-card-key="facade">
             <div class="card-header card-header-collapse" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-facade" aria-expanded="true">
                 <span>
@@ -424,8 +438,10 @@
             </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Coverage Analysis -->
+        <?php if ($_settingsModel->isPanelEnabled('coverage')): ?>
         <div class="card mb-3" data-card-key="coverage">
             <div class="card-header card-header-collapse d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-coverage" aria-expanded="true">
                 <span>
@@ -465,8 +481,10 @@
             </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Quality Report -->
+        <?php if ($_settingsModel->isPanelEnabled('quality')): ?>
         <div class="card mb-3" data-card-key="quality">
             <div class="card-header card-header-collapse d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-quality" aria-expanded="true">
                 <span>
@@ -509,6 +527,7 @@
             </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Waypoint panel (always expanded) -->
         <div class="card mb-3" data-card-key="waypoints">
@@ -571,6 +590,7 @@
         </div>
 
         <!-- Weather (collapsible, starts collapsed) -->
+        <?php if ($_settingsModel->isModuleEnabled('analytics')): ?>
         <div class="card mb-3">
             <div class="card-header card-header-collapse d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-weather" aria-expanded="false">
                 <span><i class="bi bi-cloud-sun"></i> Weather</span>
@@ -587,6 +607,7 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Admin notes (collapsible, starts collapsed) -->
         <div class="card mb-3">
@@ -618,9 +639,11 @@
                     <button class="btn btn-sm btn-outline-warning" id="btn-coverage-toggle" data-bs-toggle="tooltip" title="Show/hide photo overlap heatmap on the map">
                         <i class="bi bi-grid-fill"></i>
                     </button>
+                    <?php if ($_settingsModel->isModuleEnabled('analytics')): ?>
                     <button class="btn btn-sm btn-outline-danger" id="btn-airspace" data-bs-toggle="tooltip" title="Show/hide controlled airspace zones and restrictions">
                         <i class="bi bi-broadcast"></i>
                     </button>
+                    <?php endif; ?>
                     <div class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" id="toggle-satellite">
                         <label class="form-check-label small" for="toggle-satellite">Satellite</label>

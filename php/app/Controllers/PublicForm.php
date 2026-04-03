@@ -32,6 +32,17 @@ class PublicForm extends BaseController
         if (empty($locationLat) || empty($locationLng)) $errors[] = 'Location pin must be placed on the map.';
         if (empty($consent)) $errors[] = 'You must give consent to proceed.';
 
+        // Dynamic required field validation from template config
+        $settingsModel = new \App\Models\AppSettingsModel();
+        $fieldLabels = ['customer_phone' => 'Phone', 'customer_company' => 'Company', 'preferred_dates' => 'Preferred dates',
+            'footage_purpose' => 'Footage purpose', 'output_format' => 'Output format', 'video_duration' => 'Video duration',
+            'shot_types' => 'Shot types', 'delivery_timeline' => 'Delivery timeline', 'altitude_preset' => 'Altitude'];
+        foreach ($fieldLabels as $field => $label) {
+            if ($settingsModel->getFieldMode($field) === 'required' && empty($this->request->getPost($field))) {
+                $errors[] = "$label is required.";
+            }
+        }
+
         // Validate job type
         if (!empty($jobType)) {
             $jtModel = new JobTypeModel();

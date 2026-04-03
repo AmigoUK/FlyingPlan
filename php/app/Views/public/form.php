@@ -8,6 +8,7 @@
 
 <?= $this->section('content') ?>
 <?php $settings = (new \App\Models\AppSettingsModel())->getSettings(); ?>
+<?php $_settingsModel = new \App\Models\AppSettingsModel(); ?>
 
 <div class="row justify-content-center">
     <div class="col-lg-8">
@@ -31,9 +32,9 @@
             <div class="form-step active" data-step="1">
                 <h4 class="mb-3"><i class="bi bi-person"></i> Your Details</h4>
 
-                <?php if ($settings->show_customer_type_toggle): ?>
+                <?php if ($_settingsModel->getFieldMode('customer_type') !== 'hidden'): ?>
                 <div class="mb-3">
-                    <label class="form-label">Customer Type</label>
+                    <label class="form-label">Customer Type<?php if ($_settingsModel->getFieldMode('customer_type') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
                     <div class="btn-group w-100" role="group">
                         <input type="radio" class="btn-check" name="customer_type" id="ct-private"
                                value="private" checked autocomplete="off">
@@ -62,46 +63,58 @@
                         <input type="email" class="form-control" id="customer_email" name="customer_email" required>
                         <div class="invalid-feedback">Please enter a valid email.</div>
                     </div>
+                    <?php if ($_settingsModel->getFieldMode('customer_phone') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label for="customer_phone" class="form-label">Phone</label>
-                        <input type="tel" class="form-control" id="customer_phone" name="customer_phone">
+                        <label for="customer_phone" class="form-label">Phone<?php if ($_settingsModel->getFieldMode('customer_phone') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <input type="tel" class="form-control" id="customer_phone" name="customer_phone"<?php if ($_settingsModel->getFieldMode('customer_phone') === 'required'): ?> required<?php endif; ?>>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('customer_company') !== 'hidden'): ?>
                     <div class="col-md-6">
                         <label for="customer_company" class="form-label">
                             Company <span id="company-required-star" class="text-danger" style="display: none;">*</span>
                         </label>
-                        <input type="text" class="form-control" id="customer_company" name="customer_company">
+                        <input type="text" class="form-control" id="customer_company" name="customer_company"<?php if ($_settingsModel->getFieldMode('customer_company') === 'required'): ?> required<?php endif; ?>>
                         <div class="invalid-feedback">Company name is required for business customers.</div>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Business-only fields -->
                 <div id="business-fields" style="display: none;">
                     <div class="row g-3 mt-1">
+                        <?php if ($_settingsModel->getFieldMode('business_abn') !== 'hidden'): ?>
                         <div class="col-md-6">
-                            <label for="business_abn" class="form-label">Company Reg / VAT Number</label>
-                            <input type="text" class="form-control" id="business_abn" name="business_abn">
+                            <label for="business_abn" class="form-label">Company Reg / VAT Number<?php if ($_settingsModel->getFieldMode('business_abn') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                            <input type="text" class="form-control" id="business_abn" name="business_abn"<?php if ($_settingsModel->getFieldMode('business_abn') === 'required'): ?> required<?php endif; ?>>
                         </div>
+                        <?php endif; ?>
+                        <?php if ($_settingsModel->getFieldMode('billing_contact') !== 'hidden'): ?>
                         <div class="col-md-6">
-                            <label for="billing_contact" class="form-label">Billing Contact</label>
-                            <input type="text" class="form-control" id="billing_contact" name="billing_contact">
+                            <label for="billing_contact" class="form-label">Billing Contact<?php if ($_settingsModel->getFieldMode('billing_contact') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                            <input type="text" class="form-control" id="billing_contact" name="billing_contact"<?php if ($_settingsModel->getFieldMode('billing_contact') === 'required'): ?> required<?php endif; ?>>
                         </div>
+                        <?php endif; ?>
+                        <?php if ($_settingsModel->getFieldMode('billing_email') !== 'hidden'): ?>
                         <div class="col-md-6">
-                            <label for="billing_email" class="form-label">Billing Email</label>
-                            <input type="email" class="form-control" id="billing_email" name="billing_email">
+                            <label for="billing_email" class="form-label">Billing Email<?php if ($_settingsModel->getFieldMode('billing_email') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                            <input type="email" class="form-control" id="billing_email" name="billing_email"<?php if ($_settingsModel->getFieldMode('billing_email') === 'required'): ?> required<?php endif; ?>>
                         </div>
+                        <?php endif; ?>
+                        <?php if ($_settingsModel->getFieldMode('purchase_order') !== 'hidden'): ?>
                         <div class="col-md-6">
-                            <label for="purchase_order" class="form-label">Purchase Order #</label>
-                            <input type="text" class="form-control" id="purchase_order" name="purchase_order">
+                            <label for="purchase_order" class="form-label">Purchase Order #<?php if ($_settingsModel->getFieldMode('purchase_order') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                            <input type="text" class="form-control" id="purchase_order" name="purchase_order"<?php if ($_settingsModel->getFieldMode('purchase_order') === 'required'): ?> required<?php endif; ?>>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
-                <?php if ($settings->show_heard_about): ?>
+                <?php if ($_settingsModel->getFieldMode('heard_about') !== 'hidden'): ?>
                 <div class="row g-3 mt-1">
                     <div class="col-12">
-                        <label for="heard_about" class="form-label">How did you hear about us?</label>
-                        <select class="form-select" id="heard_about" name="heard_about">
+                        <label for="heard_about" class="form-label">How did you hear about us?<?php if ($_settingsModel->getFieldMode('heard_about') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" id="heard_about" name="heard_about"<?php if ($_settingsModel->getFieldMode('heard_about') === 'required'): ?> required<?php endif; ?>>
                             <option value="">-- Select --</option>
                             <?php foreach ((new \App\Models\HeardAboutOptionModel())->getActive() as $ha): ?>
                             <option value="<?= $ha->value ?>"><?= esc($ha->label) ?></option>
@@ -143,45 +156,55 @@
                         </select>
                         <div class="invalid-feedback">Please select a job type.</div>
                     </div>
+                    <?php if ($_settingsModel->getFieldMode('urgency') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label for="urgency" class="form-label">Urgency</label>
-                        <select class="form-select" id="urgency" name="urgency">
+                        <label for="urgency" class="form-label">Urgency<?php if ($_settingsModel->getFieldMode('urgency') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" id="urgency" name="urgency"<?php if ($_settingsModel->getFieldMode('urgency') === 'required'): ?> required<?php endif; ?>>
                             <option value="low">Low</option>
                             <option value="normal" selected>Normal</option>
                             <option value="high">High</option>
                             <option value="urgent">Urgent</option>
                         </select>
                     </div>
+                    <?php endif; ?>
                     <div class="col-12">
                         <label for="job_description" class="form-label">Job Description <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="job_description" name="job_description"
                                   rows="4" required placeholder="Describe what you need..."></textarea>
                         <div class="invalid-feedback">Please describe the job.</div>
                     </div>
+                    <?php if ($_settingsModel->getFieldMode('preferred_dates') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label for="preferred_dates" class="form-label">Preferred Dates</label>
+                        <label for="preferred_dates" class="form-label">Preferred Dates<?php if ($_settingsModel->getFieldMode('preferred_dates') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
                         <input type="text" class="form-control" id="preferred_dates" name="preferred_dates"
-                               placeholder="e.g. Next week, March 20-25">
+                               placeholder="e.g. Next week, March 20-25"<?php if ($_settingsModel->getFieldMode('preferred_dates') === 'required'): ?> required<?php endif; ?>>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('time_window') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label for="time_window" class="form-label">Time Window</label>
-                        <select class="form-select" id="time_window" name="time_window">
+                        <label for="time_window" class="form-label">Time Window<?php if ($_settingsModel->getFieldMode('time_window') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" id="time_window" name="time_window"<?php if ($_settingsModel->getFieldMode('time_window') === 'required'): ?> required<?php endif; ?>>
                             <option value="morning">Morning</option>
                             <option value="afternoon">Afternoon</option>
                             <option value="flexible" selected>Flexible</option>
                         </select>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('special_requirements') !== 'hidden'): ?>
                     <div class="col-12">
-                        <label for="special_requirements" class="form-label">Special Requirements</label>
+                        <label for="special_requirements" class="form-label">Special Requirements<?php if ($_settingsModel->getFieldMode('special_requirements') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
                         <textarea class="form-control" id="special_requirements" name="special_requirements"
-                                  rows="2" placeholder="Any special instructions or requirements..."></textarea>
+                                  rows="2" placeholder="Any special instructions or requirements..."<?php if ($_settingsModel->getFieldMode('special_requirements') === 'required'): ?> required<?php endif; ?>></textarea>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('attachments') !== 'hidden'): ?>
                     <div class="col-12">
-                        <label for="attachments" class="form-label">Reference Files</label>
+                        <label for="attachments" class="form-label">Reference Files<?php if ($_settingsModel->getFieldMode('attachments') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
                         <input type="file" class="form-control" id="attachments" name="attachments[]"
-                               multiple accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx">
+                               multiple accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx"<?php if ($_settingsModel->getFieldMode('attachments') === 'required'): ?> required<?php endif; ?>>
                         <div class="form-text">Upload images, PDFs, or documents (max 32 MB total).</div>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="d-flex justify-content-between mt-4">
@@ -212,8 +235,8 @@
                     <div class="col-12">
                         <div id="customer-map"></div>
                         <div class="form-text mt-1">
-                            <i class="bi bi-pin-map"></i> <strong>Click</strong> to place pin |
-                            <i class="bi bi-bounding-box"></i> Use draw tools for area |
+                            <i class="bi bi-pin-map"></i> <strong>Click</strong> to place pin<?php if ($_settingsModel->getFieldMode('area_polygon') !== 'hidden'): ?> |
+                            <i class="bi bi-bounding-box"></i> Use draw tools for area<?php endif; ?> |
                             <i class="bi bi-star"></i> Right-click to mark a point of interest
                         </div>
                     </div>
@@ -245,9 +268,10 @@
                 <h4 class="mb-3"><i class="bi bi-sliders"></i> Flight Preferences</h4>
 
                 <div class="row g-3">
+                    <?php if ($_settingsModel->getFieldMode('altitude_preset') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label class="form-label">Altitude</label>
-                        <select class="form-select" id="altitude_preset" name="altitude_preset">
+                        <label class="form-label">Altitude<?php if ($_settingsModel->getFieldMode('altitude_preset') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" id="altitude_preset" name="altitude_preset"<?php if ($_settingsModel->getFieldMode('altitude_preset') === 'required'): ?> required<?php endif; ?>>
                             <option value="low">Low (15-30m) - Detail shots</option>
                             <option value="medium" selected>Medium (30-60m) - Standard</option>
                             <option value="high">High (60-120m) - Wide coverage</option>
@@ -259,50 +283,71 @@
                         <input type="number" class="form-control" id="altitude_custom_m"
                                name="altitude_custom_m" min="5" max="120" value="30">
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('camera_angle') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label class="form-label">Camera Angle</label>
-                        <select class="form-select" name="camera_angle">
+                        <label class="form-label">Camera Angle<?php if ($_settingsModel->getFieldMode('camera_angle') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" name="camera_angle"<?php if ($_settingsModel->getFieldMode('camera_angle') === 'required'): ?> required<?php endif; ?>>
                             <option value="straight_down">Overhead (looking straight down)</option>
                             <option value="45deg">Angled (45&deg; from above)</option>
                             <option value="horizontal">Eye-level (looking ahead)</option>
                             <option value="pilot_decides" selected>Pilot Decides</option>
                         </select>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('video_resolution') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label class="form-label">Video Resolution</label>
-                        <select class="form-select" name="video_resolution">
+                        <label class="form-label">Video Resolution<?php if ($_settingsModel->getFieldMode('video_resolution') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" name="video_resolution"<?php if ($_settingsModel->getFieldMode('video_resolution') === 'required'): ?> required<?php endif; ?>>
                             <option value="4k" selected>4K</option>
                             <option value="1080p">1080p</option>
                         </select>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('photo_mode') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label class="form-label">Photo Mode</label>
-                        <select class="form-select" name="photo_mode">
+                        <label class="form-label">Photo Mode<?php if ($_settingsModel->getFieldMode('photo_mode') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" name="photo_mode"<?php if ($_settingsModel->getFieldMode('photo_mode') === 'required'): ?> required<?php endif; ?>>
                             <option value="single" selected>Single Shot</option>
                             <option value="interval">Interval (Timelapse)</option>
                             <option value="panorama">Panorama</option>
                         </select>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('no_fly_notes') !== 'hidden'): ?>
                     <div class="col-12">
-                        <label for="no_fly_notes" class="form-label">Nearby Restrictions (optional)</label>
+                        <label for="no_fly_notes" class="form-label">Nearby Restrictions<?php if ($_settingsModel->getFieldMode('no_fly_notes') === 'required'): ?> <span class="text-danger">*</span><?php else: ?> (optional)<?php endif; ?></label>
                         <textarea class="form-control" id="no_fly_notes" name="no_fly_notes" rows="2"
-                                  placeholder="Any airports, restricted areas, or obstacles we should know about?"></textarea>
+                                  placeholder="Any airports, restricted areas, or obstacles we should know about?"<?php if ($_settingsModel->getFieldMode('no_fly_notes') === 'required'): ?> required<?php endif; ?>></textarea>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('privacy_notes') !== 'hidden'): ?>
                     <div class="col-12">
-                        <label for="privacy_notes" class="form-label">Privacy Considerations</label>
+                        <label for="privacy_notes" class="form-label">Privacy Considerations<?php if ($_settingsModel->getFieldMode('privacy_notes') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
                         <textarea class="form-control" id="privacy_notes" name="privacy_notes" rows="2"
-                                  placeholder="Neighbouring properties, people, or sensitive areas?"></textarea>
+                                  placeholder="Neighbouring properties, people, or sensitive areas?"<?php if ($_settingsModel->getFieldMode('privacy_notes') === 'required'): ?> required<?php endif; ?>></textarea>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Footage Purpose & Output section -->
-                <?php if ($settings->show_purpose_fields): ?>
+                <?php
+                    $_anyPurposeFieldVisible = (
+                        $_settingsModel->getFieldMode('footage_purpose') !== 'hidden' ||
+                        $_settingsModel->getFieldMode('output_format') !== 'hidden' ||
+                        $_settingsModel->getFieldMode('video_duration') !== 'hidden' ||
+                        $_settingsModel->getFieldMode('shot_types') !== 'hidden' ||
+                        $_settingsModel->getFieldMode('delivery_timeline') !== 'hidden'
+                    );
+                ?>
+                <?php if ($_anyPurposeFieldVisible): ?>
                 <hr class="my-4">
                 <h5 class="mb-3"><i class="bi bi-bullseye"></i> Footage Purpose & Output</h5>
                 <div class="row g-3">
+                    <?php if ($_settingsModel->getFieldMode('footage_purpose') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label for="footage_purpose" class="form-label">What is the footage for?</label>
-                        <select class="form-select" id="footage_purpose" name="footage_purpose">
+                        <label for="footage_purpose" class="form-label">What is the footage for?<?php if ($_settingsModel->getFieldMode('footage_purpose') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" id="footage_purpose" name="footage_purpose"<?php if ($_settingsModel->getFieldMode('footage_purpose') === 'required'): ?> required<?php endif; ?>>
                             <option value="">-- Select --</option>
                             <?php foreach ((new \App\Models\PurposeOptionModel())->getActive() as $po): ?>
                             <option value="<?= $po->value ?>"><?= esc($po->label) ?></option>
@@ -314,10 +359,11 @@
                         <input type="text" class="form-control" id="footage_purpose_other" name="footage_purpose_other"
                                placeholder="Describe the purpose...">
                     </div>
-                    <?php if ($settings->show_output_format): ?>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('output_format') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label for="output_format" class="form-label">Output Format</label>
-                        <select class="form-select" id="output_format" name="output_format">
+                        <label for="output_format" class="form-label">Output Format<?php if ($_settingsModel->getFieldMode('output_format') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" id="output_format" name="output_format"<?php if ($_settingsModel->getFieldMode('output_format') === 'required'): ?> required<?php endif; ?>>
                             <option value="">-- Select --</option>
                             <option value="raw">Raw Footage</option>
                             <option value="edited_video">Edited Video</option>
@@ -327,13 +373,16 @@
                         </select>
                     </div>
                     <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('video_duration') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label for="video_duration" class="form-label">Video Duration Expectation</label>
+                        <label for="video_duration" class="form-label">Video Duration Expectation<?php if ($_settingsModel->getFieldMode('video_duration') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
                         <input type="text" class="form-control" id="video_duration" name="video_duration"
-                               placeholder='e.g. "2-3 minutes", "full event"'>
+                               placeholder='e.g. "2-3 minutes", "full event"'<?php if ($_settingsModel->getFieldMode('video_duration') === 'required'): ?> required<?php endif; ?>>
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('shot_types') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label class="form-label">Specific Shots Needed</label>
+                        <label class="form-label">Specific Shots Needed<?php if ($_settingsModel->getFieldMode('shot_types') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
                         <div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input shot-type-check" type="checkbox" value="overview" id="shot-overview">
@@ -354,9 +403,11 @@
                         </div>
                         <input type="hidden" id="shot_types_json" name="shot_types_json" value="[]">
                     </div>
+                    <?php endif; ?>
+                    <?php if ($_settingsModel->getFieldMode('delivery_timeline') !== 'hidden'): ?>
                     <div class="col-md-6">
-                        <label for="delivery_timeline" class="form-label">Delivery Timeline</label>
-                        <select class="form-select" id="delivery_timeline" name="delivery_timeline">
+                        <label for="delivery_timeline" class="form-label">Delivery Timeline<?php if ($_settingsModel->getFieldMode('delivery_timeline') === 'required'): ?> <span class="text-danger">*</span><?php endif; ?></label>
+                        <select class="form-select" id="delivery_timeline" name="delivery_timeline"<?php if ($_settingsModel->getFieldMode('delivery_timeline') === 'required'): ?> required<?php endif; ?>>
                             <option value="">-- Select --</option>
                             <option value="asap">ASAP</option>
                             <option value="1_week">1 Week</option>
@@ -365,6 +416,7 @@
                             <option value="flexible">Flexible</option>
                         </select>
                     </div>
+                    <?php endif; ?>
                 </div>
                 <?php endif; ?>
 

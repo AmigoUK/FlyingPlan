@@ -124,16 +124,48 @@
         },
     };
 
+    // Check if a step has any visible form fields
+    function isStepEmpty(stepNum) {
+        var stepEl = document.querySelector('.form-step[data-step="' + stepNum + '"]');
+        if (!stepEl) return true;
+        // A step is empty if it has no visible inputs, selects, or textareas (excluding hidden inputs)
+        var fields = stepEl.querySelectorAll('input:not([type="hidden"]), select, textarea');
+        return fields.length === 0;
+    }
+
+    // Find next non-empty step in a direction
+    function findNextStep(from, direction) {
+        var s = from + direction;
+        while (s >= 1 && s <= 5) {
+            if (!isStepEmpty(s)) return s;
+            s += direction;
+        }
+        return from; // no valid step found, stay
+    }
+
     function goToStep(step) {
         if (step < 1 || step > 5) return;
+
+        // Skip empty steps (auto-advance)
+        if (isStepEmpty(step) && step !== 5) {
+            var direction = step > currentStep ? 1 : -1;
+            step = findNextStep(step, direction);
+        }
 
         steps.forEach(function (el) {
             el.classList.remove("active");
         });
         progressSteps.forEach(function (el, i) {
+            var stepNum = i + 1;
             el.classList.remove("active", "completed");
-            if (i + 1 < step) el.classList.add("completed");
-            if (i + 1 === step) el.classList.add("active");
+            // Hide empty steps from progress bar
+            if (isStepEmpty(stepNum) && stepNum !== 5) {
+                el.style.display = "none";
+            } else {
+                el.style.display = "";
+                if (stepNum < step) el.classList.add("completed");
+                if (stepNum === step) el.classList.add("active");
+            }
         });
 
         var target = document.querySelector('.form-step[data-step="' + step + '"]');

@@ -11,12 +11,14 @@
                 <li class="nav-item">
                     <a class="nav-link" href="<?= site_url('admin') ?>">Dashboard</a>
                 </li>
+                <?php if ((new \App\Models\AppSettingsModel())->isModuleEnabled('team')): ?>
                 <li class="nav-item">
                     <a class="nav-link" href="<?= site_url('orders') ?>">Orders</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="<?= site_url('pilots') ?>">Pilots</a>
                 </li>
+                <?php endif; ?>
                 <?php if (session('role') === 'admin'): ?>
                 <li class="nav-item">
                     <a class="nav-link" href="<?= site_url('settings') ?>">Settings</a>
