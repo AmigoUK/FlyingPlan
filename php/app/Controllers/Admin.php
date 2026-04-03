@@ -256,7 +256,20 @@ class Admin extends BaseController
             return $this->response->setJSON(['success' => false, 'error' => 'No polygon defined'])->setStatusCode(400);
         }
 
-        $waypoints = GridGenerator::generateGrid($polygon, $data['config'] ?? $data);
+        $config = $data['config'] ?? $data;
+
+        // Auto-calculate photo interval from drone model + overlap if not provided
+        if (empty($config['photo_interval_m'])) {
+            $droneModel = $fp->drone_model ?? 'mini_4_pro';
+            $altitude = (float) ($config['altitude_m'] ?? 30);
+            $overlapPct = (int) ($config['overlap_pct'] ?? 70);
+            $gsd = GsdCalculator::calculateGsd($droneModel, $altitude, $overlapPct);
+            if (!empty($gsd['photo_interval_m'])) {
+                $config['photo_interval_m'] = $gsd['photo_interval_m'];
+            }
+        }
+
+        $waypoints = GridGenerator::generateGrid($polygon, $config);
         $this->replaceWaypoints($planId, $waypoints);
         return $this->response->setJSON(['success' => true, 'count' => count($waypoints), 'waypoints' => $waypoints]);
     }

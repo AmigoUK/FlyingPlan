@@ -1208,6 +1208,9 @@
                         });
                         updateRoute();
                         _toast("Terrain follow applied (" + resp.count + " points)", "success");
+                        // Auto-refresh elevation profile
+                        var elevBtn = document.getElementById("btn-get-elevation");
+                        if (elevBtn) elevBtn.click();
                     } else {
                         _toast("Error: " + (resp.error || "Unknown"), "danger");
                     }

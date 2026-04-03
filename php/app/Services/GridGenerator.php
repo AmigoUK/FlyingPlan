@@ -15,13 +15,14 @@ class GridGenerator
             return [];
         }
 
-        $spacingM    = $config['spacing_m'] ?? 20;
-        $angleDeg    = $config['angle_deg'] ?? 0;
-        $altitudeM   = $config['altitude_m'] ?? 30;
-        $speedMs     = $config['speed_ms'] ?? 5;
-        $pattern     = $config['pattern'] ?? 'parallel';
-        $gimbalPitch = $config['gimbal_pitch_deg'] ?? -90;
-        $actionType  = $config['action_type'] ?? 'takePhoto';
+        $spacingM       = $config['spacing_m'] ?? 20;
+        $angleDeg       = $config['angle_deg'] ?? 0;
+        $altitudeM      = $config['altitude_m'] ?? 30;
+        $speedMs        = $config['speed_ms'] ?? 5;
+        $pattern        = $config['pattern'] ?? 'parallel';
+        $gimbalPitch    = $config['gimbal_pitch_deg'] ?? -90;
+        $actionType     = $config['action_type'] ?? 'takePhoto';
+        $photoInterval  = $config['photo_interval_m'] ?? null;
 
         $centerLat = array_sum(array_column($polygonCoords, 0)) / count($polygonCoords);
         $centerLng = array_sum(array_column($polygonCoords, 1)) / count($polygonCoords);
@@ -33,19 +34,20 @@ class GridGenerator
 
         $waypoints = self::generateScanLines(
             $polyM, $spacingM, $angleDeg, $altitudeM,
-            $speedMs, $gimbalPitch, $actionType, $centerLat, $centerLng
+            $speedMs, $gimbalPitch, $actionType, $centerLat, $centerLng, $photoInterval
         );
 
         if ($pattern === 'crosshatch') {
             $crossWps = self::generateScanLines(
                 $polyM, $spacingM, $angleDeg + 90, $altitudeM,
-                $speedMs, $gimbalPitch, $actionType, $centerLat, $centerLng
+                $speedMs, $gimbalPitch, $actionType, $centerLat, $centerLng, $photoInterval
             );
-            $offset = count($waypoints);
-            foreach ($crossWps as &$w) {
-                $w['index'] += $offset;
+            // Re-index crosshatch waypoints
+            foreach ($crossWps as &$cwp) {
+                $cwp['index'] = count($waypoints);
+                $waypoints[] = $cwp;
             }
-            $waypoints = array_merge($waypoints, $crossWps);
+            unset($cwp);
         }
 
         return $waypoints;
@@ -54,7 +56,7 @@ class GridGenerator
     private static function generateScanLines(
         array $polyM, float $spacingM, float $angleDeg, float $altitudeM,
         float $speedMs, float $gimbalPitch, string $actionType,
-        float $centerLat, float $centerLng
+        float $centerLat, float $centerLng, ?float $photoIntervalM = null
     ): array {
         $angleRad = deg2rad($angleDeg);
 
@@ -91,20 +93,44 @@ class GridGenerator
                     [$startLat, $startLng] = GeoUtils::toLatLng($sx, $sy, $centerLat, $centerLng);
                     [$endLat, $endLng] = GeoUtils::toLatLng($ex, $ey, $centerLat, $centerLng);
 
-                    $wp = [
-                        'index' => count($waypoints), 'lat' => $startLat, 'lng' => $startLng,
+                    $baseWp = [
                         'altitude_m' => $altitudeM, 'speed_ms' => $speedMs, 'heading_deg' => null,
                         'gimbal_pitch_deg' => $gimbalPitch,
                         'turn_mode' => 'toPointAndPassWithContinuityCurvature',
                         'turn_damping_dist' => 0.0, 'hover_time_s' => 0.0,
                         'action_type' => $actionType, 'poi_lat' => null, 'poi_lng' => null,
                     ];
-                    $waypoints[] = $wp;
 
-                    $wp['index'] = count($waypoints);
-                    $wp['lat'] = $endLat;
-                    $wp['lng'] = $endLng;
-                    $waypoints[] = $wp;
+                    // Calculate pass length and intermediate photo points
+                    $passLengthM = abs($yEnd - $yStart);
+
+                    if ($photoIntervalM && $photoIntervalM > 0 && $passLengthM > $photoIntervalM) {
+                        // Interpolate photo capture points along the pass
+                        $numPoints = max(2, (int) ceil($passLengthM / $photoIntervalM) + 1);
+                        for ($p = 0; $p < $numPoints; $p++) {
+                            $t = $numPoints > 1 ? $p / ($numPoints - 1) : 0;
+                            $iy = $yStart + $t * ($yEnd - $yStart);
+                            [$ix, $iiy] = GeoUtils::rotate($x, $iy, $angleRad);
+                            [$iLat, $iLng] = GeoUtils::toLatLng($ix, $iiy, $centerLat, $centerLng);
+                            $wp = $baseWp;
+                            $wp['index'] = count($waypoints);
+                            $wp['lat'] = $iLat;
+                            $wp['lng'] = $iLng;
+                            $waypoints[] = $wp;
+                        }
+                    } else {
+                        // No photo interval — just start + end (original behaviour)
+                        $wp = $baseWp;
+                        $wp['index'] = count($waypoints);
+                        $wp['lat'] = $startLat;
+                        $wp['lng'] = $startLng;
+                        $waypoints[] = $wp;
+
+                        $wp['index'] = count($waypoints);
+                        $wp['lat'] = $endLat;
+                        $wp['lng'] = $endLng;
+                        $waypoints[] = $wp;
+                    }
                 }
                 $lineIdx++;
             }

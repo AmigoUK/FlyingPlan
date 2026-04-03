@@ -85,12 +85,19 @@ var ElevationProfile = (function () {
         // Danger zones (clearance < threshold)
         data.forEach(function (d) {
             var clearance = (d.flight_altitude_amsl || 0) - (d.ground_elevation_m || 0);
-            if (clearance < DANGER_CLEARANCE_M && clearance >= 0) {
+            if (clearance < DANGER_CLEARANCE_M) {
                 var x = xPos(d.distance_m);
                 var y1 = yPos(d.ground_elevation_m || 0);
                 var y2 = yPos(d.flight_altitude_amsl || 0);
-                ctx.fillStyle = "rgba(220, 53, 69, 0.3)";
-                ctx.fillRect(x - 3, y2, 6, y1 - y2);
+                if (clearance < 0) {
+                    // Below terrain — solid red
+                    ctx.fillStyle = "rgba(220, 53, 69, 0.7)";
+                    ctx.fillRect(x - 3, y1, 6, y2 - y1);
+                } else {
+                    // Low clearance — semi-transparent red
+                    ctx.fillStyle = "rgba(220, 53, 69, 0.3)";
+                    ctx.fillRect(x - 3, y2, 6, y1 - y2);
+                }
             }
         });
 

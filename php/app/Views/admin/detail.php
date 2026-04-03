@@ -759,8 +759,8 @@
 <input type="hidden" id="app-base-url" value="<?= rtrim(base_url(), '/') ?>">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://unpkg.com/three@0.147.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script src="<?= base_url('static/js/airspace-layer.js') ?>"></script>
 <script src="<?= base_url('static/js/weather-panel.js') ?>"></script>
 <script src="<?= base_url('static/js/map-measure.js') ?>"></script>
