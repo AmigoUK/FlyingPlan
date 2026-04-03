@@ -9,6 +9,8 @@
     </a>
 </div>
 
+<?= $this->include('admin/settings_templates') ?>
+
 <!-- Branding -->
 <div class="card mb-4">
     <div class="card-header"><i class="bi bi-palette"></i> Branding</div>
