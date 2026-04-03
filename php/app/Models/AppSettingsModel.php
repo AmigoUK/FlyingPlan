@@ -26,11 +26,21 @@ class AppSettingsModel extends Model
     {
         $settings = $this->find(1);
         if (!$settings) {
+            // Apply General template defaults on first create
+            $generalTemplate = \Config\TemplateDefinitions::get('general');
             $this->insert([
-                'id'            => 1,
-                'business_name' => 'FlyingPlan',
-                'primary_color' => '#0d6efd',
-                'tagline'       => 'Drone Flight Brief',
+                'id'                   => 1,
+                'business_name'        => 'FlyingPlan',
+                'primary_color'        => '#0d6efd',
+                'tagline'              => 'Drone Flight Brief',
+                'active_template'      => 'general',
+                'modules_json'         => json_encode($generalTemplate['modules'] ?? []),
+                'solo_mode'            => ($generalTemplate['solo_mode'] ?? false) ? 1 : 0,
+                'guide_mode'           => ($generalTemplate['guide_mode'] ?? true) ? 1 : 0,
+                'default_drone_model'  => $generalTemplate['default_drone_model'] ?? 'mini_4_pro',
+                'form_fields_json'     => json_encode($generalTemplate['form_fields'] ?? []),
+                'planning_panels_json' => json_encode($generalTemplate['planning_panels'] ?? []),
+                'pilot_steps_json'     => json_encode($generalTemplate['pilot_steps'] ?? []),
             ]);
             $settings = $this->find(1);
         }
