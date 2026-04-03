@@ -129,6 +129,11 @@ $routes->group('settings', ['filter' => 'auth:admin'], static function ($routes)
     $routes->get('/', 'Settings::index');
     $routes->post('branding', 'Settings::branding');
     $routes->post('form-visibility', 'Settings::formVisibility');
+    $routes->post('apply-template', 'Settings::applyTemplate');
+    $routes->post('operating-mode', 'Settings::saveOperatingMode');
+    $routes->post('form-fields', 'Settings::saveFormFields');
+    $routes->post('planning-panels', 'Settings::savePlanningPanels');
+    $routes->post('pilot-steps', 'Settings::savePilotSteps');
     $routes->post('job-types/new', 'Settings::createJobType');
     $routes->post('job-types/(:num)/edit', 'Settings::editJobType/$1');
     $routes->post('job-types/(:num)/toggle', 'Settings::toggleJobType/$1');

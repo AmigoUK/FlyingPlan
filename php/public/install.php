@@ -246,6 +246,13 @@ function getSchemaStatements(): array {
             `show_output_format` tinyint(1) NOT NULL DEFAULT 1,
             `guide_mode` tinyint(1) NOT NULL DEFAULT 1,
             `dark_mode` tinyint(1) NOT NULL DEFAULT 1,
+            `active_template` varchar(40) NOT NULL DEFAULT 'general',
+            `modules_json` text DEFAULT NULL,
+            `solo_mode` tinyint(1) NOT NULL DEFAULT 0,
+            `default_drone_model` varchar(50) NOT NULL DEFAULT 'mini_4_pro',
+            `form_fields_json` text DEFAULT NULL,
+            `planning_panels_json` text DEFAULT NULL,
+            `pilot_steps_json` text DEFAULT NULL,
             PRIMARY KEY (`id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 

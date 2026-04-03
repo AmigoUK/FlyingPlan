@@ -290,4 +290,71 @@ class Settings extends BaseController
         $model->delete($id);
         return redirect()->to(site_url('settings'))->with('flash_success', "Heard-about option '{$ha->label}' deleted.");
     }
+
+    // ── Template System (Phase 1) ──────────────────────────────
+
+    public function applyTemplate()
+    {
+        $templateId = $this->request->getPost('template_id');
+        $model = new AppSettingsModel();
+        if ($model->applyTemplate($templateId)) {
+            return redirect()->to(site_url('settings'))->with('flash_success', "Template '{$templateId}' applied successfully.");
+        }
+        return redirect()->to(site_url('settings'))->with('flash_danger', 'Unknown template.');
+    }
+
+    public function saveOperatingMode()
+    {
+        $model = new AppSettingsModel();
+        $modules = [
+            'planning'   => !empty($this->request->getPost('module_planning')),
+            'compliance' => !empty($this->request->getPost('module_compliance')),
+            'team'       => !empty($this->request->getPost('module_team')),
+            'analytics'  => !empty($this->request->getPost('module_analytics')),
+        ];
+        $model->update(1, [
+            'modules_json' => json_encode($modules),
+            'solo_mode'    => !empty($this->request->getPost('solo_mode')) ? 1 : 0,
+            'guide_mode'   => !empty($this->request->getPost('guide_mode')) ? 1 : 0,
+            'default_drone_model' => $this->request->getPost('default_drone_model') ?: 'mini_4_pro',
+            'active_template' => 'custom',
+        ]);
+        return redirect()->to(site_url('settings'))->with('flash_success', 'Operating mode saved.');
+    }
+
+    public function saveFormFields()
+    {
+        $fields = $this->request->getPost('fields') ?? [];
+        $model = new AppSettingsModel();
+        $model->update(1, [
+            'form_fields_json' => json_encode($fields),
+            'active_template'  => 'custom',
+        ]);
+        return redirect()->to(site_url('settings'))->with('flash_success', 'Form field configuration saved.');
+    }
+
+    public function savePlanningPanels()
+    {
+        $panels = $this->request->getPost('panels') ?? [];
+        $model = new AppSettingsModel();
+        $model->update(1, [
+            'planning_panels_json' => json_encode($panels),
+            'active_template'      => 'custom',
+        ]);
+        return redirect()->to(site_url('settings'))->with('flash_success', 'Planning tools configuration saved.');
+    }
+
+    public function savePilotSteps()
+    {
+        $steps = [
+            'flight_params'   => !empty($this->request->getPost('flight_params')),
+            'risk_assessment' => !empty($this->request->getPost('risk_assessment')),
+        ];
+        $model = new AppSettingsModel();
+        $model->update(1, [
+            'pilot_steps_json' => json_encode($steps),
+            'active_template'  => 'custom',
+        ]);
+        return redirect()->to(site_url('settings'))->with('flash_success', 'Pilot workflow configuration saved.');
+    }
 }
