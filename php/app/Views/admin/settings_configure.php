@@ -58,7 +58,7 @@ $alwaysRequired = \Config\FormFieldRegistry::getAlwaysRequired();
                                        <?= !empty($modules[$key]) ? 'checked' : '' ?>>
                                 <label class="form-check-label fw-bold small" for="mod_<?= $key ?>"><?= $mod['label'] ?></label>
                             </div>
-                            <p class="text-muted small mb-0 mt-1"><?= $mod['desc'] ?></p>
+                            <p class="text-body-secondary small mb-0 mt-1"><?= $mod['desc'] ?></p>
                         </div>
                     </div>
                 </div>
@@ -142,13 +142,13 @@ $alwaysRequired = \Config\FormFieldRegistry::getAlwaysRequired();
                 ];
                 foreach ($panelList as $key => $p): ?>
                 <div class="col-sm-6 col-lg-4">
-                    <div class="form-check form-switch p-2 rounded <?= !empty($panels[$key]) ? 'bg-light' : '' ?>">
+                    <div class="form-check form-switch p-2 rounded border <?= !empty($panels[$key]) ? 'border-success' : 'border-secondary opacity-75' ?>">
                         <input class="form-check-input ms-0 me-2" type="checkbox" name="panels[<?= $key ?>]" id="panel_<?= $key ?>" value="1"
                                <?= ($panels[$key] ?? true) ? 'checked' : '' ?>>
                         <label class="form-check-label" for="panel_<?= $key ?>">
                             <i class="bi <?= $p['icon'] ?> me-1"></i>
                             <strong class="small"><?= $p['label'] ?></strong>
-                            <br><span class="text-muted" style="font-size: 0.75rem;"><?= $p['desc'] ?></span>
+                            <br><span class="text-body-secondary" style="font-size: 0.75rem;"><?= $p['desc'] ?></span>
                         </label>
                     </div>
                 </div>
