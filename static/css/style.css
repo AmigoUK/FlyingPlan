@@ -278,7 +278,7 @@
 .map-toolbox {
     position: absolute;
     top: 10px;
-    left: 10px;
+    left: 50px;
     z-index: 1000;
     display: flex;
     flex-direction: column;

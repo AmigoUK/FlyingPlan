@@ -65,12 +65,24 @@
     // Leaflet.Draw for admin polygon editing
     if (typeof L.Control.Draw !== "undefined") {
         var drawControl = new L.Control.Draw({
+            position: 'topleft',
             draw: {
-                polyline: false, circle: false, circlemarker: false, marker: false,
-                polygon: { shapeOptions: { color: "#0d6efd", fillOpacity: 0.15 } },
-                rectangle: { shapeOptions: { color: "#0d6efd", fillOpacity: 0.15 } },
+                polyline: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polygon: {
+                    allowIntersection: false,
+                    shapeOptions: { color: "#0d6efd", fillOpacity: 0.15, weight: 2 }
+                },
+                rectangle: {
+                    shapeOptions: { color: "#0d6efd", fillOpacity: 0.15, weight: 2 }
+                },
             },
-            edit: { featureGroup: drawnItems },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            },
         });
         map.addControl(drawControl);
 
@@ -1287,7 +1299,7 @@
 
     // Toast helper - uses DOM methods, no innerHTML
     function _toast(msg, type) {
-        var container = document.querySelector(".flash-messages") || document.querySelector("main");
+        var container = document.querySelector(".flash-messages") || document.querySelector("main") || document.body;
         var div = document.createElement("div");
         div.className = "alert alert-" + type + " alert-dismissible fade show";
         div.textContent = msg;
