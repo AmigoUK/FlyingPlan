@@ -81,7 +81,8 @@ $alwaysRequired = \Config\FormFieldRegistry::getAlwaysRequired();
             <?= csrf_field() ?>
 
             <?php foreach ($fieldRegistry as $step => $fields): ?>
-            <h6 class="mt-3 mb-2 text-muted"><i class="bi bi-<?= $step ?>-circle"></i> Step <?= $step ?>: <?= $stepLabels[$step] ?? '' ?></h6>
+            <?php $stepIcons = [1 => 'bi-person', 2 => 'bi-briefcase', 3 => 'bi-geo-alt', 4 => 'bi-sliders']; ?>
+            <h6 class="mt-3 mb-2 text-muted"><i class="bi <?= $stepIcons[$step] ?? 'bi-circle' ?>"></i> Step <?= $step ?>: <?= $stepLabels[$step] ?? '' ?></h6>
             <div class="table-responsive">
                 <table class="table table-sm table-borderless mb-3">
                     <?php foreach ($fields as $name => $def): ?>
