@@ -2,6 +2,7 @@
 <?= $this->section('title') ?>Dashboard<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+<?php $_soloMode = !empty((new \App\Models\AppSettingsModel())->getSettings()->solo_mode); ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-grid-3x3-gap"></i> Flight Plan Dashboard</h2>
     <div class="d-flex align-items-center gap-2">
@@ -104,6 +105,10 @@
                         <span class="badge badge-<?= $fp->order->status ?>">
                             <?= ucwords(str_replace('_', ' ', $fp->order->status)) ?>
                         </span>
+                    </a>
+                    <?php elseif ($_soloMode): ?>
+                    <a href="<?= site_url('admin/' . $fp->id) ?>" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Open
                     </a>
                     <?php else: ?>
                     <button class="btn btn-sm btn-outline-success"

@@ -627,6 +627,59 @@
         </div>
     </div>
 
+        <?php if (!empty($_settingsModel->getSettings()->solo_mode) && !empty($order)): ?>
+        <!-- Solo Operator Workflow -->
+        <div class="card mb-3 border-primary">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-person-check"></i> Solo Workflow
+                <span class="badge bg-light text-primary ms-2"><?= ucwords(str_replace('_', ' ', $order->status)) ?></span>
+            </div>
+            <div class="card-body">
+                <?php
+                $soloTransitions = [
+                    'accepted' => ['in_progress'],
+                    'in_progress' => ['flight_complete'],
+                    'flight_complete' => ['delivered'],
+                    'delivered' => ['closed'],
+                ];
+                $allowed = $soloTransitions[$order->status] ?? [];
+                ?>
+
+                <?php if (!empty($allowed)): ?>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Update Status</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php foreach ($allowed as $next): ?>
+                        <form method="POST" action="<?= site_url('orders/' . $order->id . '/status') ?>" class="d-inline">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="status" value="<?= $next ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-arrow-right-circle"></i> <?= ucwords(str_replace('_', ' ', $next)) ?>
+                            </button>
+                        </form>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($order->status === 'closed'): ?>
+                <div class="alert alert-success py-2 mb-0 small"><i class="bi bi-check-circle"></i> Job completed and closed.</div>
+                <?php endif; ?>
+
+                <?php if ($_settingsModel->isModuleEnabled('compliance')): ?>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <a href="<?= site_url('pilot/orders/' . $order->id . '/flight-params') ?>" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-sliders"></i> Flight Params
+                    </a>
+                    <a href="<?= site_url('pilot/orders/' . $order->id . '/risk-assessment') ?>" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-clipboard-check"></i> Risk Assessment
+                    </a>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
     <!-- Right: Map -->
     <div class="col-lg-7">
         <div class="card">

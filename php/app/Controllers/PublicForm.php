@@ -173,6 +173,25 @@ class PublicForm extends BaseController
             }
         }
 
+        // Solo mode: auto-create order assigned to admin
+        $settingsModel = new \App\Models\AppSettingsModel();
+        $settings = $settingsModel->getSettings();
+        if (!empty($settings->solo_mode)) {
+            $adminUser = \Config\Database::connect()->table('users')->where('role', 'admin')->get()->getRow();
+            if ($adminUser) {
+                $orderModel = new \App\Models\OrderModel();
+                $orderId = $orderModel->insert([
+                    'flight_plan_id' => $fpId,
+                    'pilot_id'       => $adminUser->id,
+                    'assigned_by_id' => $adminUser->id,
+                    'status'         => 'accepted',
+                    'assigned_at'    => date('Y-m-d H:i:s'),
+                    'accepted_at'    => date('Y-m-d H:i:s'),
+                ]);
+                $fpModel->update($fpId, ['status' => 'in_review']);
+            }
+        }
+
         return redirect()->to(site_url('/confirmation?ref=') . $data['reference']);
     }
 

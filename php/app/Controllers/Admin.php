@@ -57,6 +57,23 @@ class Admin extends BaseController
         ];
 
         $planId = $fpModel->insert($data);
+
+        // Solo mode: auto-create order assigned to self
+        $settingsModel = new \App\Models\AppSettingsModel();
+        $settings = $settingsModel->getSettings();
+        if (!empty($settings->solo_mode)) {
+            $userId = session('user_id');
+            (new \App\Models\OrderModel())->insert([
+                'flight_plan_id' => $planId,
+                'pilot_id'       => $userId,
+                'assigned_by_id' => $userId,
+                'status'         => 'accepted',
+                'assigned_at'    => date('Y-m-d H:i:s'),
+                'accepted_at'    => date('Y-m-d H:i:s'),
+            ]);
+            $fpModel->update($planId, ['status' => 'in_review']);
+        }
+
         return redirect()->to(site_url('admin/' . $planId))->with('flash_success', "Brief {$data['reference']} created.");
     }
 
