@@ -20,6 +20,7 @@ $routes->get('/confirmation', 'PublicForm::confirmation');
 $routes->get('/login', 'Auth::login');
 $routes->post('/login', 'Auth::login');
 $routes->post('/logout', 'Auth::logout');
+$routes->get('/demo-login/(:segment)', 'Auth::demoLogin/$1');
 
 // Shared mission view (no auth required)
 $routes->get('/shared/(:segment)', 'Shared::view/$1');

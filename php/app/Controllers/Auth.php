@@ -94,4 +94,41 @@ class Auth extends Controller
         return redirect()->to(site_url('login'))
             ->with('flash_success', 'You have been logged out.');
     }
+
+    /**
+     * GET /demo-login/{username} — one-click demo login
+     */
+    public function demoLogin(string $username)
+    {
+        $allowed = [
+            'admin'       => 'Admin123!',
+            'pilot'       => 'Pilot123!',
+            'pilot.singh' => 'Pilot123!',
+            'pilot.chen'  => 'Pilot123!',
+        ];
+
+        if (!isset($allowed[$username])) {
+            return redirect()->to(site_url('login'))->with('flash_danger', 'Invalid demo account.');
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->findByUsername($username);
+        if (!$user) {
+            return redirect()->to(site_url('login'))->with('flash_danger', 'Demo user not found.');
+        }
+
+        if (!WerkzeugHash::verify($allowed[$username], $user->password_hash)) {
+            return redirect()->to(site_url('login'))->with('flash_danger', 'Demo login failed.');
+        }
+
+        session()->set([
+            'user_id'      => $user->id,
+            'username'     => $user->username,
+            'display_name' => $user->display_name,
+            'role'         => $user->role,
+            'logged_in'    => true,
+        ]);
+
+        return redirect()->to(site_url($user->role === 'pilot' ? 'pilot' : 'admin'));
+    }
 }
