@@ -12,6 +12,7 @@ var GridPlanner = (function () {
         "grid-angle": "Compass direction of flight lines. 0\u00b0 = North-South, 90\u00b0 = East-West. Align with the longest edge of your survey area.",
         "grid-altitude": "Flight altitude in metres above ground.",
         "grid-speed": "Drone ground speed during the mission. Slower = sharper photos but longer battery use.",
+        "grid-overlap": "Front overlap between consecutive photos. 70% for standard surveys, 80%+ for 3D reconstruction. Photos are automatically placed along each flight line.",
         "grid-pattern": "Parallel: single-direction passes (fast). Crosshatch: two perpendicular passes (better coverage for mapping).",
     };
 
@@ -37,6 +38,7 @@ var GridPlanner = (function () {
             { id: "grid-angle", label: "Direction (\u00b0 from N)", type: "number", value: 0, min: 0, max: 359, step: 1 },
             { id: "grid-altitude", label: "Altitude (m)", type: "number", value: 30, min: 5, max: 120, step: 1 },
             { id: "grid-speed", label: "Speed (m/s)", type: "number", value: 5, min: 1, max: 15, step: 0.5 },
+            { id: "grid-overlap", label: "Photo Overlap (%)", type: "number", value: 70, min: 30, max: 95, step: 5 },
         ];
 
         fields.forEach(function (f) {
@@ -98,6 +100,7 @@ var GridPlanner = (function () {
             angle_deg: parseFloat(document.getElementById("grid-angle").value) || 0,
             altitude_m: parseFloat(document.getElementById("grid-altitude").value) || 30,
             speed_ms: parseFloat(document.getElementById("grid-speed").value) || 5,
+            overlap_pct: parseInt(document.getElementById("grid-overlap").value) || 70,
             pattern: document.getElementById("grid-pattern").value || "parallel",
             gimbal_pitch_deg: -90,
             action_type: "takePhoto",

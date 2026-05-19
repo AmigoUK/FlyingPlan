@@ -9,3 +9,12 @@ dist/
 build/
 .env
 *.log
+
+# Local TLS dev certs
+certs/*.pem
+
+# CodeIgniter writable runtime
+php/writable/session/ci_session*
+php/writable/session/sess_*
+php/writable/mpdf/
+php/writable/.installed

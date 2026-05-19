@@ -11,6 +11,7 @@
     var planLat = parseFloat(document.getElementById("plan-lat").value) || -33.87;
     var planLng = parseFloat(document.getElementById("plan-lng").value) || 151.21;
     var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+    var appBase = (document.getElementById("app-base-url") || {}).value || "";
 
     // Tile layers
     var streetLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -48,13 +49,74 @@
         .addTo(map)
         .bindTooltip("Customer Location", { direction: "top" });
 
-    // Customer polygon
+    // Customer polygon + admin draw tools
     var polygonRaw = document.getElementById("plan-polygon").value;
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
     if (polygonRaw) {
         try {
             var coords = JSON.parse(polygonRaw);
-            L.polygon(coords, { color: "#0d6efd", fillOpacity: 0.1, interactive: false }).addTo(map);
+            var existingPoly = L.polygon(coords, { color: "#0d6efd", fillOpacity: 0.1 });
+            drawnItems.addLayer(existingPoly);
         } catch (e) { /* ignore */ }
+    }
+
+    // Leaflet.Draw for admin polygon editing
+    if (typeof L.Control.Draw !== "undefined") {
+        var drawControl = new L.Control.Draw({
+            position: 'topleft',
+            draw: {
+                polyline: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polygon: {
+                    allowIntersection: false,
+                    shapeOptions: { color: "#0d6efd", fillOpacity: 0.15, weight: 2 }
+                },
+                rectangle: {
+                    shapeOptions: { color: "#0d6efd", fillOpacity: 0.15, weight: 2 }
+                },
+            },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            },
+        });
+        map.addControl(drawControl);
+
+        map.on(L.Draw.Event.CREATED, function (ev) {
+            drawnItems.clearLayers();
+            drawnItems.addLayer(ev.layer);
+            _savePolygon(ev.layer);
+        });
+        map.on(L.Draw.Event.EDITED, function () {
+            drawnItems.eachLayer(function (layer) { _savePolygon(layer); });
+        });
+        map.on(L.Draw.Event.DELETED, function () {
+            document.getElementById("plan-polygon").value = "";
+            fetch(appBase + "/admin/" + planId + "/polygon", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({ polygon: null }),
+            });
+        });
+    }
+
+    function _savePolygon(layer) {
+        var latlngs = layer.getLatLngs()[0].map(function (ll) { return [ll.lat, ll.lng]; });
+        var json = JSON.stringify(latlngs);
+        document.getElementById("plan-polygon").value = json;
+        fetch(appBase + "/admin/" + planId + "/polygon", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+            body: JSON.stringify({ polygon: json }),
+        }).then(function (r) { return r.json(); })
+          .then(function (resp) {
+              if (resp.success) _toast("Area polygon saved", "success");
+          })
+          .catch(function () { _toast("Failed to save polygon", "danger"); });
     }
 
     // Customer POIs (orange stars)
@@ -176,12 +238,20 @@
         };
         waypoints.push(wp);
 
-        var marker = L.marker(latlng, {
-            draggable: true,
-            icon: _waypointIcon(idx, wp),
-        }).addTo(map);
-
-        marker.bindTooltip("WP " + idx, { direction: "top", offset: [0, -15] });
+        // Use lightweight circleMarker for large waypoint sets (grid missions)
+        var isLargeSet = waypoints.length > 80;
+        var marker;
+        if (isLargeSet) {
+            marker = L.circleMarker(latlng, {
+                radius: 4, color: "#198754", fillColor: "#198754", fillOpacity: 0.8, weight: 1
+            }).addTo(map);
+        } else {
+            marker = L.marker(latlng, {
+                draggable: true,
+                icon: _waypointIcon(idx, wp),
+            }).addTo(map);
+            marker.bindTooltip("WP " + idx, { direction: "top", offset: [0, -15] });
+        }
 
         marker.on("dragend", function () {
             var pos = marker.getLatLng();
@@ -399,6 +469,23 @@
             return;
         }
 
+        // For large waypoint counts (grid missions), show compact summary
+        if (waypoints.length > 100) {
+            list.textContent = "";
+            var summary = document.createElement("div");
+            summary.className = "alert alert-info py-2 small";
+            summary.textContent = waypoints.length + " waypoints (grid mission). Click a marker on the map to edit individual waypoints.";
+            list.appendChild(summary);
+
+            var stats = document.createElement("div");
+            stats.className = "small text-muted";
+            var alt = waypoints[0] ? waypoints[0].altitude_m : "?";
+            var spd = waypoints[0] ? waypoints[0].speed_ms : "?";
+            stats.textContent = "Alt: " + alt + "m | Speed: " + spd + "m/s | Points: " + waypoints.length;
+            list.appendChild(stats);
+            return;
+        }
+
         // Build DOM elements instead of innerHTML to avoid XSS concerns
         list.textContent = "";
         waypoints.forEach(function (wp, i) {
@@ -597,7 +684,7 @@
             };
         });
 
-        fetch("/admin/" + planId + "/waypoints", {
+        fetch(appBase + "/admin/" + planId + "/waypoints", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -608,7 +695,7 @@
             .then(function (r) { return r.json(); })
             .then(function (resp) {
                 if (resp.success) {
-                    _toast("Waypoints saved (" + resp.count + " points)", "success");
+                    _toast("Waypoints saved (" + resp.count + " points)", "success"); if(typeof gtag==="function")gtag("event","demo_waypoints_save",{count:resp.count});
                     if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("waypoints");
                 } else {
                     _toast("Error: " + (resp.error || "Unknown"), "danger");
@@ -635,7 +722,7 @@
     // Status change
     document.getElementById("status-select").addEventListener("change", function () {
         var self = this;
-        fetch("/admin/" + planId + "/status", {
+        fetch(appBase + "/admin/" + planId + "/status", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -702,7 +789,7 @@
             if (!btn) return;
             var alt = parseFloat(document.getElementById("gsd-altitude").value) || 30;
             var overlap = parseFloat(document.getElementById("gsd-overlap").value) || 70;
-            fetch("/admin/" + planId + "/gsd", {
+            fetch(appBase + "/admin/" + planId + "/gsd", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify({ altitude_m: alt, overlap_pct: overlap }),
@@ -728,7 +815,7 @@
             config.config.center_lng = planLng;
             config.config.start_lat = planLat;
             config.config.start_lng = planLng;
-            fetch("/admin/" + planId + "/generate-pattern", {
+            fetch(appBase + "/admin/" + planId + "/generate-pattern", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify(config),
@@ -744,7 +831,7 @@
                             addWaypoint(L.latLng(w.lat, w.lng), w);
                         });
                         updateRoute();
-                        _toast("Generated " + resp.count + " pattern waypoints", "success");
+                        _toast("Generated " + resp.count + " pattern waypoints", "success"); if(typeof gtag==="function")gtag("event","demo_pattern_generate",{count:resp.count});
                         if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("patterns");
                     } else {
                         _toast("Pattern error: " + (resp.error || "Unknown"), "danger");
@@ -767,7 +854,7 @@
                 _toast("No polygon area defined", "warning");
                 return;
             }
-            fetch("/admin/" + planId + "/generate-grid", {
+            fetch(appBase + "/admin/" + planId + "/generate-grid", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify({ polygon: polygon, config: config }),
@@ -783,7 +870,7 @@
                             addWaypoint(L.latLng(w.lat, w.lng), w);
                         });
                         updateRoute();
-                        _toast("Generated " + resp.count + " grid waypoints", "success");
+                        _toast("Generated " + resp.count + " grid waypoints", "success"); if(typeof gtag==="function")gtag("event","demo_grid_generate",{count:resp.count});
                         if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("grid");
                     } else {
                         _toast("Grid error: " + (resp.error || "Unknown"), "danger");
@@ -805,7 +892,7 @@
                 _toast("No polygon area defined", "warning");
                 return;
             }
-            fetch("/admin/" + planId + "/generate-oblique-grid", {
+            fetch(appBase + "/admin/" + planId + "/generate-oblique-grid", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify({ polygon: polygon, config: config }),
@@ -854,7 +941,7 @@
                 body.face_end = [_facadePoints[1].lat, _facadePoints[1].lng];
             }
 
-            fetch("/admin/" + planId + "/generate-facade-scan", {
+            fetch(appBase + "/admin/" + planId + "/generate-facade-scan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify(body),
@@ -913,7 +1000,7 @@
                 _toast("Add waypoints first", "warning");
                 return;
             }
-            fetch("/admin/" + planId + "/coverage-analysis", {
+            fetch(appBase + "/admin/" + planId + "/coverage-analysis", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify({}),
@@ -926,7 +1013,7 @@
                             if (!CoverageHeatmap.isVisible()) CoverageHeatmap.toggle();
                             CoverageHeatmap.renderStats("coverage-panel", resp.stats);
                         }
-                        _toast("Coverage analysis complete", "success");
+                        _toast("Coverage analysis complete", "success"); if(typeof gtag==="function")gtag("event","demo_coverage_analysis");
                         if (typeof WorkflowManager !== "undefined") WorkflowManager.markStepComplete("coverage");
                     } else {
                         _toast("Error: " + (resp.error || "Unknown"), "danger");
@@ -957,7 +1044,7 @@
                 _toast("Add waypoints first", "warning");
                 return;
             }
-            fetch("/admin/" + planId + "/quality-report", {
+            fetch(appBase + "/admin/" + planId + "/quality-report", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify({}),
@@ -984,7 +1071,7 @@
             var container = document.getElementById("three-preview-container");
             if (container) container.style.display = "block";
 
-            fetch("/admin/" + planId + "/terrain-mesh")
+            fetch(appBase + "/admin/" + planId + "/terrain-mesh")
                 .then(function (r) { return r.json(); })
                 .then(function (terrainData) {
                     if (typeof ThreePreview !== "undefined") {
@@ -1020,7 +1107,7 @@
                 _toast("Add waypoints first", "warning");
                 return;
             }
-            fetch("/admin/" + planId + "/elevation", {
+            fetch(appBase + "/admin/" + planId + "/elevation", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify({}),
@@ -1056,7 +1143,7 @@
     var shareBtn = document.getElementById("btn-share");
     if (shareBtn) {
         shareBtn.addEventListener("click", function () {
-            fetch("/admin/" + planId + "/share", {
+            fetch(appBase + "/admin/" + planId + "/share", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify({ expires_days: 30 }),
@@ -1085,7 +1172,7 @@
         if (airspaceBtn) {
             airspaceBtn.addEventListener("click", function () {
                 if (!_airspaceLoaded) {
-                    fetch("/admin/" + planId + "/airspace")
+                    fetch(appBase + "/admin/" + planId + "/airspace")
                         .then(function (r) { return r.json(); })
                         .then(function (data) {
                             AirspaceLayer.loadData(data.geojson);
@@ -1108,11 +1195,11 @@
     var weatherBtn = document.getElementById("btn-load-weather");
     if (weatherBtn) {
         weatherBtn.addEventListener("click", function () {
-            fetch("/admin/" + planId + "/weather")
+            fetch(appBase + "/admin/" + planId + "/weather")
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (typeof WeatherPanel !== "undefined") {
-                        WeatherPanel.render("weather-panel", data);
+                        WeatherPanel.render("weather-panel", data); if(typeof gtag==="function")gtag("event","demo_weather_check",{source:"admin"});
                     }
                 })
                 .catch(function () { _toast("Weather load failed", "danger"); });
@@ -1129,7 +1216,7 @@
             }
             var agl = prompt("Target AGL (metres above ground):", "30");
             if (agl === null) return;
-            fetch("/admin/" + planId + "/terrain-follow", {
+            fetch(appBase + "/admin/" + planId + "/terrain-follow", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify({ target_agl_m: parseFloat(agl) || 30 }),
@@ -1146,6 +1233,9 @@
                         });
                         updateRoute();
                         _toast("Terrain follow applied (" + resp.count + " points)", "success");
+                        // Auto-refresh elevation profile
+                        var elevBtn = document.getElementById("btn-get-elevation");
+                        if (elevBtn) elevBtn.click();
                     } else {
                         _toast("Error: " + (resp.error || "Unknown"), "danger");
                     }
@@ -1161,7 +1251,7 @@
             if (!importInput.files.length) return;
             var formData = new FormData();
             formData.append("kmz_file", importInput.files[0]);
-            fetch("/admin/" + planId + "/import-kmz", {
+            fetch(appBase + "/admin/" + planId + "/import-kmz", {
                 method: "POST",
                 headers: { "X-CSRFToken": csrfToken },
                 body: formData,
@@ -1196,7 +1286,7 @@
     var droneSelect = document.getElementById("drone-model-select");
     if (droneSelect) {
         droneSelect.addEventListener("change", function () {
-            fetch("/admin/" + planId + "/drone-model", {
+            fetch(appBase + "/admin/" + planId + "/drone-model", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -1221,7 +1311,7 @@
     // Save notes
     document.getElementById("btn-save-notes").addEventListener("click", function () {
         var notes = document.getElementById("admin-notes").value;
-        fetch("/admin/" + planId + "/notes", {
+        fetch(appBase + "/admin/" + planId + "/notes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -1237,7 +1327,7 @@
 
     // Toast helper - uses DOM methods, no innerHTML
     function _toast(msg, type) {
-        var container = document.querySelector(".flash-messages") || document.querySelector("main");
+        var container = document.querySelector(".flash-messages") || document.querySelector("main") || document.body;
         var div = document.createElement("div");
         div.className = "alert alert-" + type + " alert-dismissible fade show";
         div.textContent = msg;

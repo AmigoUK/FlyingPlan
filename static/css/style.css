@@ -76,9 +76,9 @@
 }
 
 /* Status badges */
-.badge-new { background-color: var(--fp-primary, #0d6efd); }
+.badge-new { background-color: var(--fp-primary, #0d6efd); color: #fff; }
 .badge-in_review { background-color: #ffc107; color: #000; }
-.badge-route_planned { background-color: #6f42c1; }
+.badge-route_planned { background-color: #6f42c1; color: #fff; }
 .badge-completed { background-color: #198754; }
 .badge-cancelled { background-color: #dc3545; }
 
@@ -89,7 +89,7 @@
 }
 
 .waypoint-item {
-    border-left: 3px solid var(--fp-primary, #0d6efd);
+    border-left: 3px solid var(--fp-primary-subtle, var(--fp-primary, #0d6efd));
     padding: 0.5rem 0.75rem;
     margin-bottom: 0.5rem;
     background: #f8f9fa;
@@ -104,13 +104,13 @@
 
 /* Urgency colors */
 .urgency-low { color: #198754; }
-.urgency-normal { color: var(--fp-primary, #0d6efd); }
+.urgency-normal { color: var(--fp-primary-text, var(--fp-primary, #0d6efd)); }
 .urgency-high { color: #fd7e14; }
 .urgency-urgent { color: #dc3545; font-weight: 600; }
 
 /* Review summary */
 .review-section {
-    border-left: 3px solid var(--fp-primary, #0d6efd);
+    border-left: 3px solid var(--fp-primary-subtle, var(--fp-primary, #0d6efd));
     padding-left: 1rem;
     margin-bottom: 1rem;
 }
@@ -221,7 +221,7 @@
     color: #6c757d;
 }
 .wf-step:hover {
-    color: var(--fp-primary, #0d6efd);
+    color: var(--fp-primary-text, var(--fp-primary, #0d6efd));
 }
 .wf-step-circle {
     width: 26px;
@@ -278,7 +278,7 @@
 .map-toolbox {
     position: absolute;
     top: 10px;
-    left: 10px;
+    left: 50px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -318,7 +318,7 @@
 .camera-drag-handle {
     width: 12px;
     height: 12px;
-    background: var(--fp-primary, #0d6efd);
+    background: var(--fp-primary-subtle, var(--fp-primary, #0d6efd));
     border: 2px solid #fff;
     border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0,0,0,.4);
@@ -337,6 +337,9 @@
 [data-bs-theme="dark"] #customer-map, [data-bs-theme="dark"] #admin-map { border-color: #495057; }
 [data-bs-theme="dark"] .map-toolbox-btn { background: #2b3035; border-color: #495057; color: #dee2e6; }
 [data-bs-theme="dark"] .map-toolbox-btn:hover { background: #343a40; }
+[data-bs-theme="dark"] .badge-closed { background-color: #495057; }
+[data-bs-theme="dark"] .waypoint-item { border-left-color: var(--fp-primary-subtle, #6ea8fe); }
+[data-bs-theme="dark"] .review-section { border-left-color: var(--fp-primary-subtle, #6ea8fe); }
 
 /* Responsive map */
 @media (max-width: 768px) {
