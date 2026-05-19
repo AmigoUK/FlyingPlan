@@ -24,43 +24,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Step 2: Test DB & create tables
     if ($action === 'setup_db') {
-        $db = @new mysqli(
-            $_POST['db_host'],
-            $_POST['db_user'],
-            $_POST['db_pass'],
-            '',
-            (int) ($_POST['db_port'] ?: 3306)
-        );
-        if ($db->connect_error) {
-            $error = 'Connection failed: ' . htmlspecialchars($db->connect_error);
-            $step = 2;
-        } else {
-            $dbName = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['db_name']);
+        $dbHost = $_POST['db_host'];
+        $dbUser = $_POST['db_user'];
+        $dbPass = $_POST['db_pass'];
+        $dbPort = (int) ($_POST['db_port'] ?: 3306);
+        $dbName = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['db_name']);
+
+        try {
+            // Optionally create the database first (requires elevated privileges)
             if (!empty($_POST['create_db'])) {
-                $db->query("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            }
-            if (!$db->select_db($dbName)) {
-                $error = "Database '$dbName' does not exist. Check the name or enable 'Create database'.";
-                $step = 2;
-            } else {
-                // Create tables
-                $tableErrors = createTables($db);
-                if ($tableErrors) {
-                    $error = 'Table creation errors: ' . implode('; ', $tableErrors);
-                    $step = 2;
-                } else {
-                    // Store DB config in session for later steps
-                    $_SESSION['fp_db'] = [
-                        'host' => $_POST['db_host'],
-                        'port' => (int) ($_POST['db_port'] ?: 3306),
-                        'name' => $dbName,
-                        'user' => $_POST['db_user'],
-                        'pass' => $_POST['db_pass'],
-                    ];
-                    $step = 3;
+                mysqli_report(MYSQLI_REPORT_OFF);
+                $tmpDb = @new mysqli($dbHost, $dbUser, $dbPass, '', $dbPort);
+                if (!$tmpDb->connect_error) {
+                    $tmpDb->query("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                    $tmpDb->close();
                 }
             }
+
+            // Connect directly WITH the database name
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            $db = new mysqli($dbHost, $dbUser, $dbPass, $dbName, $dbPort);
+
+            // Create tables
+            $tableErrors = createTables($db);
+            if ($tableErrors) {
+                $error = 'Table creation errors: ' . implode('; ', $tableErrors);
+                $step = 2;
+            } else {
+                $_SESSION['fp_db'] = [
+                    'host' => $dbHost,
+                    'port' => $dbPort,
+                    'name' => $dbName,
+                    'user' => $dbUser,
+                    'pass' => $dbPass,
+                ];
+                $step = 3;
+            }
             $db->close();
+        } catch (mysqli_sql_exception $e) {
+            $error = 'Database error: ' . htmlspecialchars($e->getMessage());
+            $step = 2;
         }
     }
 
@@ -125,20 +128,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         else {
             $baseURL = $_POST['base_url'] ?? detectBaseURL();
             if (substr($baseURL, -1) !== '/') $baseURL .= '/';
+
+            // Quote values that may contain special characters
+            $escapedPass = str_replace('"', '\\"', $dbc['pass']);
             $envContent = "CI_ENVIRONMENT = production\n\n";
-            $envContent .= "app.baseURL = '$baseURL'\n\n";
+            $envContent .= "app.baseURL = '{$baseURL}'\n\n";
             $envContent .= "database.default.hostname = {$dbc['host']}\n";
             $envContent .= "database.default.database = {$dbc['name']}\n";
             $envContent .= "database.default.username = {$dbc['user']}\n";
-            $envContent .= "database.default.password = {$dbc['pass']}\n";
+            $envContent .= "database.default.password = \"{$escapedPass}\"\n";
             $envContent .= "database.default.DBDriver = MySQLi\n";
             $envContent .= "database.default.port = {$dbc['port']}\n";
 
             $envPath = dirname(__DIR__) . '/.env';
-            if (file_put_contents($envPath, $envContent) === false) {
+            if (@file_put_contents($envPath, $envContent) === false) {
                 $error = 'Could not write .env file. Check permissions on: ' . dirname(__DIR__);
                 $step = 5;
             } else {
+                // Auto-configure RewriteBase for subfolder installs
+                $subPath = dirname($_SERVER['SCRIPT_NAME']);
+                if ($subPath && $subPath !== '/' && $subPath !== '\\') {
+                    $htaccessPath = __DIR__ . '/.htaccess';
+                    $htaccess = @file_get_contents($htaccessPath);
+                    if ($htaccess) {
+                        $htaccess = preg_replace('/RewriteBase\s+.*/', 'RewriteBase ' . rtrim($subPath, '/') . '/', $htaccess);
+                        @file_put_contents($htaccessPath, $htaccess);
+                    }
+                }
+
                 // Create lock file
                 file_put_contents($writablePath . '/.installed', date('Y-m-d H:i:s'));
                 $_SESSION['fp_installed'] = true;
@@ -768,6 +785,7 @@ $detectedURL = detectBaseURL();
                     <div class="col-12">
                         <label class="form-label">Database Name</label>
                         <input type="text" name="db_name" class="form-control" value="<?= htmlspecialchars($_POST['db_name'] ?? 'flyingplan') ?>" required>
+                        <div class="form-text">On shared hosting, often prefixed with your account name (e.g. accountname_dbname).</div>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Username</label>
@@ -779,9 +797,10 @@ $detectedURL = detectBaseURL();
                     </div>
                     <div class="col-12">
                         <div class="form-check">
-                            <input type="checkbox" name="create_db" value="1" class="form-check-input" id="createDb" checked>
+                            <input type="checkbox" name="create_db" value="1" class="form-check-input" id="createDb">
                             <label class="form-check-label" for="createDb">Create database if it doesn't exist</label>
                         </div>
+                        <div class="form-text">On shared hosting, create the database in your hosting panel first and leave this unchecked.</div>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 mt-3">Connect & Create Tables <i class="bi bi-arrow-right"></i></button>
